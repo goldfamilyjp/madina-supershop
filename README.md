@@ -153,16 +153,21 @@ layer; this feature is the second, permanent layer.
 - **Privacy rule:** the script returns the **full address and email only when the postal code
   matches** the one on file. A phone number on its own reveals just the customer's **name and
   saved preferences** — knowing someone's number is not enough to pull their address.
-- **Order numbers:** on Confirm, the order is POSTed to the script first (max ~8 seconds). The
+- **Order numbers:** on Confirm, the order is POSTed to the script first — **two attempts,
+  25 seconds each** (Apps Script cold starts routinely exceed the old single 8-second shot,
+  which used to drop real orders to the no-number fallback). Both attempts send the identical
+  body, including a **`clientOrderId`** generated once per Confirm press, so a duplicate sheet
+  row left by a lost-response retry is identifiable by that shared ID. While the POST is in
+  flight the Confirm button reads “送信中… / Sending order… / Mengirim…”. The
   script — under a lock, so numbers are never duplicated — assigns the next number
   (**MS-0001, MS-0002, …**), appends the order to its **“Orders”** sheet and upserts the
   customer in **“Customers”** (details refreshed, order count +1; a field is only overwritten
   when the new order carries a value, so a pickup order never wipes a saved address). The
   number comes back and is printed at the **top of the ticket**, as the **first line of the
   WhatsApp order text**, and stored in the Orders row.
-- **Fallback — an order is never lost:** on *any* script failure (offline, timeout, bad
-  response) the shop falls back to the Google Form POST exactly as before, with no order
-  number shown. And when the script path succeeds, the Form POST is **skipped** — the
+- **Fallback — an order is never lost:** only when *both* script attempts fail (offline,
+  timeout, bad response) does the shop fall back to the Google Form POST exactly as before,
+  with no order number shown. And when the script path succeeds, the Form POST is **skipped** — the
   script's Orders sheet is the record then, so nothing is ever double-recorded. The
   confirmation email and the device-local remember-me run the same either way.
 - **Points balance at checkout:** at the same moments (phone blur / 10–11 digits, debounced),
@@ -562,8 +567,11 @@ otherwise corrupt the count. Staff adjust the stock when an order is confirmed.
 ## Languages (shop front)
 
 The shop front is **trilingual — Japanese, English and Indonesian — shown together** on labels.
-**Owner's rule: all languages render at the same font size; the 2nd/3rd language is never shrunk**
-(the `.en` / `.idn` spans inherit the label's size). The WhatsApp order message, the ticket and the
+**Owner's rule (2026-11-22, replacing the earlier equal-font-size rule): every trilingual unit
+renders as a VERTICAL stack — English first, bold, full size (the main line); Japanese below it
+at ~0.85em, normal weight; Indonesian below that at ~0.85em, normal weight and muted** — never
+side-by-side (the `.en` / `.jp` / `.idn` spans + the `stack3()` helper in `index.html` carry the
+hierarchy). The WhatsApp order message, the ticket and the
 confirmation email stay JP+EN (they are shop-facing documents). Products may carry an optional
 **`idn`** field (Indonesian name — the field is called `idn`, not `id`, because `id` is already the
 product's slug); the card shows the Indonesian name line only when present. The admin product form
@@ -638,9 +646,10 @@ from the admin, and customers see them in two prominent places on the shop front
   rendered at all.
 - **Board section:** directly under the hero, a “📢 お知らせ / News / Berita” section lists
   **all** visible notices, newest date first, each with its date — at most 5. Hidden when empty.
-- **Language:** the shop shows all three languages together everywhere, so each notice renders in
-  the shop's primary language (Japanese) with the fallback chain Japanese → English → Indonesian
-  (first non-empty text wins) — a notice written only in English still shows, in English.
+- **Language:** the shop shows all three languages together everywhere, so each notice renders as
+  the trilingual stack — every language the owner filled in, English first (main/bold), then
+  Japanese, then Indonesian; a notice written in a single language shows that text as the main
+  line.
 - **Performance & accessibility:** notices ride inside `products.json` (no extra downloads, no
   libraries, CSS-only animation). Customers who prefer reduced motion get **no rotation and no
   pulsing** (`prefers-reduced-motion`).
