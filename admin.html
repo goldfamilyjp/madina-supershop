@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Madina Halal Supershop — Admin Panel</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
 <style>
 :root{ --green:#0b4530; --green-dark:#07301f; --gold:#e3c04a; --gold-soft:#f6ecd2; --bg:#f2f7f2; --ink:#1d2a1d; --muted:#5c6b5c; --line:#dde6dc; --red:#b3261e; }
 *{box-sizing:border-box; margin:0; padding:0;}
@@ -119,6 +120,8 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <label for="fPhotoFile">…or choose a photo file</label>
     <input type="file" id="fPhotoFile" accept="image/*">
     <img class="photo-preview" id="photoPreview" alt="">
+    <div class="msg" id="ocrMsg"></div>
+    <p class="hint">Tip: choose a clear photo of the packet — the product name, size and category are read from the photo and filled in automatically. Always check them; you only need to type the price yourself.</p>
     <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">Show in shop
       <span class="switch"><input type="checkbox" id="fOn" checked><span class="sl"></span></span>
     </label>
@@ -204,6 +207,7 @@ var state = { categories: [], products: [] };
 var fileSha = null;
 var dirty = false;
 var editingId = null;
+var catTouched = false; /* true once the owner picks a category by hand (or edits a saved product) — photo OCR then leaves the category alone */
 
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -222,6 +226,13 @@ function slugify(s){
 function catLabel(id){
   var c = state.categories.filter(function(x){ return x.id === id; })[0];
   return c ? c.en : id;
+}
+/* Product visibility uses the "active" field (absent/true = shown in the shop,
+   false = hidden). Older product files used "on" for the same switch — fold it
+   into "active" on load so saving always writes the new field only. */
+function normalizeActive(p){
+  if (typeof p.active === "undefined") p.active = (p.on !== false);
+  if ("on" in p) delete p.on;
 }
 
 /* ---------- GitHub API layer ---------- */
@@ -246,6 +257,7 @@ function loadFromGitHub(){
       });
     })
     .then(function(how){
+      state.products.forEach(normalizeActive);
       dirty = false; editingId = null;
       $("mainPanel").hidden = false; $("formPanel").hidden = false;
       renderAll(); updateLastSavedNote();
@@ -312,18 +324,18 @@ function renderList(){
         + '<button type="button" class="mini edit" data-stock-dec="' + esc(p.id) + '">−1</button> '
         + '<button type="button" class="mini edit" data-stock-inc="' + esc(p.id) + '">+1</button></div>'
       : '<div class="d">No stock tracking</div>';
-    return '<div class="prow' + (p.on === false ? " off-row" : "") + '" data-row="' + esc(p.id) + '">' + thumb
+    return '<div class="prow' + (p.active === false ? " off-row" : "") + '" data-row="' + esc(p.id) + '">' + thumb
       + '<div class="info"><div class="n">' + esc(p.jp || p.en) + ' <span class="en">' + esc(p.en) + '</span></div>'
-      + '<div class="d">' + yen(p.price) + (p.size ? " ・ " + esc(p.size) : "") + " ・ " + esc(catLabel(p.cat)) + (p.on === false ? " ・ Hidden (OFF)" : "") + "</div>"
+      + '<div class="d">' + yen(p.price) + (p.size ? " ・ " + esc(p.size) : "") + " ・ " + esc(catLabel(p.cat)) + (p.active === false ? " ・ Hidden (OFF)" : "") + "</div>"
       + stockHtml + "</div>"
-      + '<label class="switch" title="Show ON/OFF"><input type="checkbox" data-toggle="' + esc(p.id) + '"' + (p.on === false ? "" : " checked") + '><span class="sl"></span></label>'
+      + '<label class="switch" title="Show / Hide in shop"><input type="checkbox" data-toggle="' + esc(p.id) + '"' + (p.active === false ? "" : " checked") + '><span class="sl"></span></label>'
       + '<button type="button" class="mini edit" data-edit="' + esc(p.id) + '">Edit</button>'
       + '<button type="button" class="mini del" data-del="' + esc(p.id) + '">Delete</button></div>';
   }).join("");
   $("productList").querySelectorAll("[data-edit]").forEach(function(b){ b.addEventListener("click", function(){ startEdit(this.getAttribute("data-edit")); }); });
   $("productList").querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click", function(){ deleteProduct(this.getAttribute("data-del")); }); });
   $("productList").querySelectorAll("[data-toggle]").forEach(function(t){ t.addEventListener("change", function(){
-    var p = findProduct(this.getAttribute("data-toggle")); if (p){ p.on = this.checked; markDirty(); renderList(); }
+    var p = findProduct(this.getAttribute("data-toggle")); if (p){ p.active = this.checked; markDirty(); renderList(); }
   }); });
   $("productList").querySelectorAll("[data-stock-inc]").forEach(function(b){ b.addEventListener("click", function(){
     var p = findProduct(this.getAttribute("data-stock-inc")); if (p && typeof p.stock === "number"){ p.stock += 1; markDirty(); renderList(); }
@@ -339,23 +351,25 @@ function markDirty(){ dirty = true; $("dirtyNote").style.display = "block"; hide
 /* ---------- form ---------- */
 function clearForm(){
   editingId = null;
+  catTouched = false;
   ["fId","fEn","fJp","fIdn","fPrice","fSize","fStock","fNewCat","fPhotoUrl"].forEach(function(id){ $(id).value = ""; });
   $("fPhotoFile").value = ""; $("fOn").checked = true;
   $("photoPreview").style.display = "none"; $("photoPreview").src = "";
   $("formTitle").innerHTML = '③ Add product';
   $("applyBtn").innerHTML = 'Add product';
-  $("cancelEditBtn").hidden = true; hideMsg($("formMsg"));
+  $("cancelEditBtn").hidden = true; hideMsg($("formMsg")); hideMsg($("ocrMsg"));
 }
 function startEdit(id){
   var p = findProduct(id); if (!p) return;
   editingId = id;
+  catTouched = true; /* a saved product's category was chosen deliberately — OCR must not replace it */
   $("fId").value = p.id; $("fEn").value = p.en || ""; $("fJp").value = p.jp || "";
   $("fIdn").value = p.idn || "";
   $("fPrice").value = p.price; $("fSize").value = p.size || "";
   $("fStock").value = (typeof p.stock === "number") ? p.stock : "";
   renderCatOptions(); $("fCat").value = p.cat || "other";
   $("fNewCat").value = ""; $("fPhotoUrl").value = p.photo && p.photo.indexOf("data:") !== 0 ? p.photo : "";
-  $("fOn").checked = p.on !== false;
+  $("fOn").checked = p.active !== false;
   if (p.photo){ $("photoPreview").src = p.photo; $("photoPreview").style.display = "block"; } else { $("photoPreview").style.display = "none"; }
   $("formTitle").innerHTML = '③ Edit product';
   $("applyBtn").innerHTML = 'Update product';
@@ -388,7 +402,7 @@ function applyForm(){
   }
   var data = {
     en: en, jp: $("fJp").value.trim(), idn: $("fIdn").value.trim(), price: Math.round(price),
-    size: $("fSize").value.trim(), stock: stockVal, cat: cat, photo: currentPhotoValue(), on: $("fOn").checked
+    size: $("fSize").value.trim(), stock: stockVal, cat: cat, photo: currentPhotoValue(), active: $("fOn").checked
   };
   if (editingId){
     var p = findProduct(editingId);
@@ -424,6 +438,7 @@ $("fPhotoFile").addEventListener("change", function(){
     var dataUrl = canvas.toDataURL("image/jpeg", 0.82);
     $("photoPreview").src = dataUrl; $("photoPreview").style.display = "block";
     $("fPhotoUrl").value = "";
+    runOcr(dataUrl);
   };
   img.src = url;
 });
@@ -431,6 +446,135 @@ $("fPhotoUrl").addEventListener("input", function(){
   var v = this.value.trim();
   if (v){ $("photoPreview").src = v; $("photoPreview").style.display = "block"; }
 });
+
+/* ---------- photo text reading (OCR pre-fill) ----------
+   After the owner picks a packet photo, read its printed text with
+   Tesseract.js (English + Japanese, loaded from CDN) and pre-fill the
+   form fields that are still EMPTY — text the owner typed is never
+   overwritten, and the category is only set when the owner has not
+   picked one by hand. OCR is a helper only: it never blocks saving,
+   and the owner is always told to check what was filled. The price is
+   never read from the photo — the owner types it himself. */
+var OCR_CAT_KEYWORDS = [
+  ["fish",   ["fish", "rui", "hilsa", "ilish", "pangas", "prawn", "shrimp"]],
+  ["tea",    ["tea", "chai"]],
+  ["rice",   ["basmati", "rice", "beras", "pulao", "biryani"]],
+  ["dal",    ["dal", "lentil", "lentils", "chana", "chickpea", "chickpeas", "masoor", "mung", "urad", "toor"]],
+  ["spices", ["masala", "spice", "spices", "chilli", "chili", "turmeric", "cumin", "coriander", "garam", "curry powder", "cardamom", "cinnamon", "pepper"]],
+  ["meat",   ["chicken", "beef", "mutton", "lamb", "goat", "meat"]],
+  ["frozen", ["frozen"]],
+  ["snacks", ["biscuit", "biscuits", "cookie", "cookies", "snack", "snacks", "chocolate", "candy"]],
+  ["drinks", ["juice", "drink", "drinks", "cola", "soda", "coffee"]]
+];
+function ocrHasWord(text, kw){
+  var escKw = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp("(^|[^a-z])" + escKw + "([^a-z]|$)", "i").test(text);
+}
+function ocrFmtUnit(u){ return u.toLowerCase() === "l" ? "L" : u.toLowerCase(); }
+function ocrDetectSize(text){
+  var flat = " " + String(text).replace(/\s+/g, " ") + " ";
+  var m = flat.match(/(\d+(?:[.,]\d+)?)\s*(kg|g|ml|l)\s*[x×]\s*(\d+)/i);
+  if (m) return m[1].replace(",", ".") + ocrFmtUnit(m[2]) + " x " + m[3];
+  m = flat.match(/(\d+(?:[.,]\d+)?)\s*(kg|g|ml|l)\b/i);
+  if (m) return m[1].replace(",", ".") + ocrFmtUnit(m[2]);
+  m = flat.match(/(\d+)\s*(bags|bag|pcs|pieces|packs|pack)\b/i);
+  if (m) return m[1] + " " + m[2].toLowerCase();
+  return "";
+}
+function ocrTitleCase(s){
+  return s.toLowerCase().replace(/(^|[\s\-\/])(\S)/g, function(m, p, c){ return p + c.toUpperCase(); });
+}
+function ocrCleanNameLine(line, size){
+  var s = " " + line + " ";
+  if (size){
+    var core = size.replace(" x ", "x").replace(/\s/g, "");
+    s = s.replace(new RegExp(core.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), " ");
+  }
+  s = s.replace(/(\d+(?:[.,]\d+)?)\s*(kg|g|ml|l)\b/gi, " ");
+  s = s.replace(/[¥￥$€£]|[0-9]+(?:[.,][0-9]+)?\s*(円|yen)/gi, " ");
+  s = s.replace(/[^A-Za-z0-9&'’\-\/ ]+/g, " ").replace(/\s+/g, " ").trim();
+  s = s.replace(/^[\-\/ ]+|[\-\/ ]+$/g, "");
+  return s;
+}
+function parseOcrText(text){
+  var out = { name: "", jp: "", size: "", cat: "" };
+  if (!text) return out;
+  out.size = ocrDetectSize(text);
+  var lines = String(text).split(/\r?\n/).map(function(l){ return l.trim(); }).filter(function(l){ return l.length >= 2; });
+  /* English name: the printed line with the most Latin letters wins;
+     a lone brand word on one line is joined with the next name-like line. */
+  var bestIdx = -1, bestScore = 0;
+  lines.forEach(function(line, i){
+    if (/[぀-ヿ一-鿿]/.test(line)) return;
+    var letters = (line.match(/[A-Za-z]/g) || []).length;
+    var cleaned = ocrCleanNameLine(line, out.size);
+    var cleanLetters = (cleaned.match(/[A-Za-z]/g) || []).length;
+    if (letters >= 3 && cleanLetters >= 2 && letters > bestScore){ bestScore = letters; bestIdx = i; }
+  });
+  if (bestIdx >= 0){
+    var name = ocrCleanNameLine(lines[bestIdx], out.size);
+    if (name && name.indexOf(" ") === -1 && bestIdx + 1 < lines.length && !/[぀-ヿ一-鿿]/.test(lines[bestIdx + 1])){
+      var next = ocrCleanNameLine(lines[bestIdx + 1], out.size);
+      if (next && (next.match(/[A-Za-z]/g) || []).length >= 3 && (name + " " + next).length <= 42) name = name + " " + next;
+    }
+    if ((name.match(/[A-Za-z]/g) || []).length >= 2) out.name = ocrTitleCase(name);
+  }
+  /* Japanese name: first mostly-Japanese line. */
+  for (var i = 0; i < lines.length; i++){
+    var jpChars = (lines[i].match(/[぀-ヿ一-鿿]/g) || []).length;
+    var latChars = (lines[i].match(/[A-Za-z]/g) || []).length;
+    if (jpChars >= 2 && latChars <= 2){ out.jp = lines[i].replace(/\s+/g, " ").slice(0, 40); break; }
+  }
+  /* Category: first confident keyword match, in the map's order. */
+  var lower = " " + String(text).toLowerCase().replace(/\s+/g, " ") + " ";
+  for (var k = 0; k < OCR_CAT_KEYWORDS.length; k++){
+    var hit = false;
+    for (var w = 0; w < OCR_CAT_KEYWORDS[k][1].length; w++){
+      if (ocrHasWord(lower, OCR_CAT_KEYWORDS[k][1][w])){ hit = true; break; }
+    }
+    if (hit){ out.cat = OCR_CAT_KEYWORDS[k][0]; break; }
+  }
+  return out;
+}
+function applyOcrResult(text){
+  var note = $("ocrMsg");
+  if (!text || !String(text).trim()){
+    showMsg(note, "Could not read any text from this photo — please fill in the details by hand.", "info");
+    return;
+  }
+  var r = parseOcrText(text);
+  var filled = [];
+  if (r.name && !$("fEn").value.trim()){ $("fEn").value = r.name; filled.push("name"); }
+  if (r.jp && !$("fJp").value.trim()){ $("fJp").value = r.jp; filled.push("Japanese name"); }
+  if (r.size && !$("fSize").value.trim()){ $("fSize").value = r.size; filled.push("size"); }
+  if (r.cat && !catTouched && state.categories.some(function(c){ return c.id === r.cat; })){ $("fCat").value = r.cat; filled.push("category"); }
+  if (filled.length){
+    showMsg(note, "Auto-filled from photo: " + filled.join(", ") + " — please check before saving. You still need to type the price.", "info");
+  } else {
+    showMsg(note, "Photo read, but nothing new to fill in — the fields were already filled, or no clear name/size was found.", "info");
+  }
+}
+function runOcr(dataUrl){
+  var note = $("ocrMsg");
+  if (!window.Tesseract){
+    showMsg(note, "Photo text reading is not available right now (the reading library did not load) — please fill in the details by hand.", "info");
+    return Promise.resolve(false);
+  }
+  showMsg(note, "Reading text from the photo…", "info");
+  var opts = (window.__OCR_CONFIG && typeof window.__OCR_CONFIG === "object") ? window.__OCR_CONFIG : {};
+  var worker = null;
+  return Tesseract.createWorker(["eng", "jpn"], 1, opts)
+    .then(function(w){ worker = w; return worker.recognize(dataUrl); })
+    .then(function(res){
+      applyOcrResult(res && res.data ? res.data.text : "");
+      return true;
+    })
+    .catch(function(){
+      showMsg(note, "Could not read text from this photo — please fill in the details by hand.", "info");
+      return false;
+    })
+    .finally(function(){ if (worker){ try { var tp = worker.terminate(); if (tp && tp.catch) tp.catch(function(){}); } catch (e) {} } });
+}
 
 /* ---------- events ---------- */
 $("saveTokenBtn").addEventListener("click", function(){
@@ -453,6 +597,7 @@ $("saveBtn").addEventListener("click", function(){ saveToGitHub().catch(function
 $("applyBtn").addEventListener("click", applyForm);
 $("cancelEditBtn").addEventListener("click", clearForm);
 $("adminSearch").addEventListener("input", renderList);
+$("fCat").addEventListener("change", function(){ catTouched = true; });
 
 /* ---------- staff quick-reply templates ---------- */
 var REPLY_TEMPLATES = [
@@ -724,6 +869,7 @@ $("ptSaveBtn").addEventListener("click", function(){ savePoints(); });
 
 /* expose for testing */
 window.__supershopAdmin = { getState: function(){ return state; }, buildPayload: buildPayload, saveToGitHub: saveToGitHub, loadFromGitHub: loadFromGitHub, templates: REPLY_TEMPLATES, bankInfo: BANK_INFO,
+  ocr: { parse: parseOcrText, run: runOcr, apply: applyOcrResult },
   points: { data: function(){ return pointsData; }, balances: pointBalances, load: loadPoints, save: savePoints, sha256Hex: sha256Hex, addOneMonth: addOneMonth, normalizePhone: normalizePhone, todayStr: todayStr, cancelEarn: cancelEarn, addAdjust: addAdjust } };
 
 /* ---------- init ---------- */

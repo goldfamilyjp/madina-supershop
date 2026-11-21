@@ -361,7 +361,7 @@ function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(
 function yen(n){ return "¥" + Number(n).toLocaleString("ja-JP"); }
 function catById(id){ for (var i=0;i<CATEGORIES.length;i++) if (CATEGORIES[i].id===id) return CATEGORIES[i]; return null; }
 function productById(id){ for (var i=0;i<PRODUCTS.length;i++) if (PRODUCTS[i].id===id) return PRODUCTS[i]; return null; }
-function visibleProducts(){ return PRODUCTS.filter(function(p){ return p.on !== false; }); }
+function visibleProducts(){ return PRODUCTS.filter(function(p){ return p.active !== false && p.on !== false; }); }
 function filteredProducts(){
   var q = searchQuery.trim().toLowerCase();
   return visibleProducts().filter(function(p){

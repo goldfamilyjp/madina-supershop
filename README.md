@@ -11,7 +11,8 @@ A simple online halal grocery shop for Madina Halal Restaurant & Foods (Gold Fam
 There is no server and no monthly fee. The product list lives in one file, `products.json`,
 inside the GitHub repository **goldfamilyjp/madina-supershop** (GitHub Pages hosts the site for free).
 
-- The shop front (`index.html`) simply fetches `products.json` and shows every product with `"on": true`.
+- The shop front (`index.html`) simply fetches `products.json` and shows every product whose
+  `active` field is absent or `true` (see “Show / hide a product” below).
 - The admin panel (`admin.html`) reads and writes that same file through the **GitHub Contents API**.
   To prove it is really Ali, GitHub asks for a **personal access token** (like a password).
 - The token is typed once into the admin page and kept **only in that browser's localStorage, on Ali's own device**.
@@ -178,6 +179,50 @@ shown — no other customer's data, no entry details. If there is no record (or 
 exist yet), it shows 「ポイント記録が見つかりませんでした / No points record found for this number」.
 Points can still only be **spent** via shop confirmation at order time.
 
+## Show / hide a product (`active`)
+
+Each product carries an **`active`** field in `products.json`:
+
+- **`active` absent or `true`** = the product is shown in the shop (all 9 seeded products work this way).
+- **`active: false`** = the product is **not rendered in the shop at all** — it is not a “sold out”
+  state, the product simply does not appear. It stays in the admin list, greyed out and marked
+  “Hidden (OFF)”, ready to be switched back on.
+
+**How the owner uses it:** every row of the admin product list has a **Show/Hide switch**, and the
+Add/Edit form has the same “Show in shop” switch. Flipping a switch only marks the list dirty, like
+every other edit — the existing “💾 Save to shop” publishes it. This is separate from stock control:
+a product can be visible but sold out (`stock: 0`), or hidden entirely (`active: false`).
+
+**Legacy note:** older product files used an `on` field for the same switch. The shop front still
+honours `on: false` (hides the product), and the admin folds `on` into `active` when it loads a
+file and saves only `active` from then on — no manual migration is needed.
+
+## Photo auto-fill (OCR) in the admin panel
+
+When the owner picks a product photo in the Add/Edit form, the panel reads the packet's printed
+text with **Tesseract.js** (loaded from the jsDelivr CDN; languages **English + Japanese**) and
+pre-fills the form, so the owner only has to type the **price**:
+
+- **Product name (English)** — the printed line with the most Latin letters (a lone brand line is
+  joined with the next line), title-cased, with any weight text removed.
+- **Japanese name** — the first mostly-Japanese printed line, if the field is empty.
+- **Size / weight** — patterns like `450g`, `5kg`, `500ml`, `1L`, `100g x 20`, `100 bags` go into
+  the Size field.
+- **Category** — a keyword map (basmati/rice → Rice & Grains, dal/lentil/chana → Dal & Lentils,
+  tea → Tea, fish → Fish, masala/spice/chilli → Spices, etc.), set only on a confident match.
+
+Safety rules: OCR fills **empty fields only** — it never overwrites anything the owner typed, and
+it never replaces the category of a product being edited (or one the owner picked by hand). After
+reading, a note lists exactly what was auto-filled (“Auto-filled from photo: name, size, category —
+please check before saving”). If no text can be read, a friendly note says so and the form stays
+fully manual; OCR never blocks saving, and if the CDN library cannot load, the photo still uploads
+as before.
+
+**Honest note:** OCR reads **printed packet text** — clear, flat, well-lit photos of the front of
+the packet work best. Handwriting, curved/foil packaging, glare and small print can be misread or
+missed, so the auto-filled fields must always be checked before saving. The reading happens in the
+browser on the same ~480 px resized photo that gets saved with the product.
+
 ## Stock control (products)
 
 Each product may carry an optional **`stock`** field in `products.json`:
@@ -261,5 +306,5 @@ a custom category typed in the admin displays exactly as entered.
 
 - The shop renders products in batches of 60 with a “Show more” button, with category chips and live search,
   so 1,000+ products stay fast.
-- Products with `"on": false` are hidden in the shop but stay in the admin list.
+- Products with `"active": false` are hidden in the shop but stay in the admin list (legacy `"on": false` is honoured too — see “Show / hide a product”).
 - If the token ever leaks, delete it in GitHub settings and make a new one — nothing else changes.
