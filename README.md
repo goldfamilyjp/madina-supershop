@@ -1,14 +1,17 @@
-# Madina Halal Supershop
+# MADINA HALAL SUPER
 
 A simple online halal grocery shop for Madina Halal Restaurant & Foods (Gold Family Co. Ltd).
+(The shop's own brand name is **MADINA HALAL SUPER** — EN/ID “MADINA HALAL SUPER”, JP 「マディナ ハラルスーパー」.
+The restaurant business name “Madina Halal Restaurant & Foods” is unchanged and still appears
+where it belongs — branch / pickup names, the logo, contact lines.)
 
 - **Shop front:** `index.html` — customers order here; the order is sent to the shop on WhatsApp.
 - **Admin panel:** `admin.html` — Ali adds / edits / deletes products here. Big buttons, English only.
 - **Product data:** `products.json` — the single list of products. The shop reads it; the admin saves it.
 
 **Admin panel layout:** the daily-use sections come first — ① Add product
-(with the ⚡ Quick Add card at the top), ② Products, ③ Reply templates, ④ Points, ⑤ Orders — and
-⑥ Setup (GitHub token) sits at the very bottom, because the token is a one-time setup.
+(with the ⚡ Quick Add card at the top), ② Products, ③ Reply templates, ④ Points, ⑤ Orders,
+⑥ News board — and ⑦ Setup (GitHub token) sits at the very bottom, because the token is a one-time setup.
 If no token is saved on the device, a slim notice at the top of the page points down to Setup.
 
 ## How saving works (GitHub is the database)
@@ -103,7 +106,7 @@ spreadsheet, so the shop has a permanent order book:
   WhatsApp order — if it fails, the order still completes normally.
 - The sheet is **private to the owner's Google account** — it is not shared with anyone.
   The **WhatsApp order remains the immediate alert**; the sheet is the saved record.
-- Staff open it from the admin panel's **⑥ Orders** section
+- Staff open it from the admin panel's **⑤ Orders** section
   (button → `https://docs.google.com/spreadsheets/d/1NYooZTu01gP6cmp5k8we60Uhz4KKhgU4993zGIgt5Hw/edit`).
 
 ## Address & phone check (checkout)
@@ -137,9 +140,28 @@ Everywhere else (ticket, confirmation email, order sheet) the address is one com
   which this free build does not use. Instead it combines the free postal-code database, the
   completeness checks above, and the map link so the customer (and staff) can eyeball the location.
 
+## Remember my details (checkout)
+
+Repeat customers do not re-type their details on every order:
+
+- When an order is confirmed, the shop saves the checkout details — name, phone, email,
+  fulfilment choice, pickup branch, the full courier address block and the payment-method
+  preference — to **`localStorage` on the customer's own device** (key `madina_super_details`).
+  Nothing else is stored; this checkout has no payment credentials of any kind.
+- On the next visit the form is **pre-filled** from that saved data (the points-balance check
+  also starts from the saved phone number). All the normal checks still run on the pre-filled
+  values — phone format, address completeness, warn-then-confirm — exactly as if typed fresh.
+- While pre-filled details are in use, the checkout shows a small trilingual note —
+  「前回の情報を保存しています / Your details are saved on this device / Data Anda tersimpan di
+  perangkat ini」 — with a **クリア / Clear / Hapus** button that wipes the stored data and
+  empties the form.
+- **Privacy:** the saved details never leave the device except through the normal order flow
+  itself (the WhatsApp message / order sheet the customer already sends today). There is no
+  account, no server copy, and clearing the browser's site data removes them.
+
 ## Staff reply templates (admin panel)
 
-The bottom of `admin.html` has a **④ Reply templates** section with three
+The bottom of `admin.html` has a **③ Reply templates** section with three
 copy-and-send Japanese templates for replying to customers on WhatsApp / LINE / email:
 (a) transfer payment (shows the `BANK_INFO` account details), (b) cash on delivery,
 (c) shop pickup. Staff fill in the 【お名前】 / 【合計】 / 【受取店舗】 blanks after copying.
@@ -155,7 +177,7 @@ Customers earn points and spend them on later orders:
 - **Maturity:** points become usable **1 month after the purchase date** (each earn entry has a
   `matures` date = purchase date + 1 month). Until then they are “pending”.
 - The ledger is a second data file, **`points.json`**, in the same repo, managed only from the
-  admin panel's **⑤ Points** section through the same GitHub token flow as products.
+  admin panel's **④ Points** section through the same GitHub token flow as products.
 
 **Privacy design (important):** the repo is **public**, so raw phone numbers are **never** stored.
 Each customer record is keyed by the **SHA-256 hex hash of the digits-only phone number**
@@ -169,13 +191,13 @@ public file; treat the file as a points ledger, not a customer database.)
 **Staff workflow:**
 
 1. Customer orders (WhatsApp). Shop confirms the order **and the payment** on WhatsApp first.
-2. Admin → ⑤ Points: enter the customer's phone number + the order amount → “Add points (1%)”.
+2. Admin → ④ Points: enter the customer's phone number + the order amount → “Add points (1%)”.
 3. When the customer asks to use points: enter the phone number → “Check balance” shows the
    **available** amount → enter the points → “Use points” (it refuses more than the available balance).
 4. Press **“💾 Save points”** after any change, or the change is lost.
 
 **Cancelling / fixing points (admin):** if an order is cancelled or points were added by mistake,
-staff can fix the ledger in the same ⑤ Points section:
+staff can fix the ledger in the same ④ Points section:
 
 - **Cancel an earn:** each earn entry in the customer's history has a “Cancel” button. It asks
   for confirmation, then marks the entry `"cancelled": true`. Cancelled entries are **excluded from
@@ -191,8 +213,9 @@ fills them in, the WhatsApp message, the ticket and the confirmation email carry
 「ポイント利用希望」 line. The site does **not** deduct points from the total — the shop confirms
 the real balance in the admin and applies the discount, exactly as the line says.
 
-**Customer balance check (shop front):** the 「ポイント残高確認 Check your points」 section on the shop
-page (also linked from the cart's points note) lets a customer type their phone number and see their
+**Customer balance check (shop front):** the balance check sits in a **gold card right under the
+hero**, labelled 「ポイント確認 / Check your points / Cek poin saya」, so customers find it without
+scrolling (it is also linked from the cart's points note). The customer types their phone number and sees their
 own **available** and **pending** totals. The page hashes the number in the browser (same SHA-256
 scheme as the ledger) and reads `points.json` from the same directory; only that number's totals are
 shown — no other customer's data, no entry details. If there is no record (or `points.json` does not
@@ -255,7 +278,7 @@ add a product:
 3. Press **“⚡ Add & Save — goes live now”**. That one press runs the normal Add-product logic
    and then the normal Save, so the product is live in the shop immediately — no separate
    “Save to shop” press needed. If the name or price is missing, the card shows the error and
-   nothing is saved; if no token is set up yet, it says to do the one-time ⑥ Setup first.
+   nothing is saved; if no token is set up yet, it says to do the one-time ⑦ Setup first.
 
 The card's fields write through to the main form below (the form stays the single source of
 truth), and the full form still works exactly as before for stock, Japanese / Indonesian
@@ -295,16 +318,18 @@ product's slug); the card shows the Indonesian name line only when present. The 
 has an optional “Indonesian name” field. Seeded categories use a trilingual lookup in `index.html`;
 a custom category typed in the admin displays exactly as entered.
 
-**Admin panel language:** the admin UI (`admin.html`) is **English only** (owner's instruction, 2026-11-21). Only the admin chrome changed — product data still holds Japanese / Indonesian names (that is data, shown on the shop front), and the three staff reply templates in ④ keep their Japanese message bodies, because those are messages sent to customers; their headings are English labels ("Template 1 — Bank transfer" etc.).
+**Admin panel language:** the admin UI (`admin.html`) is **English only** (owner's instruction, 2026-11-21). Only the admin chrome changed — product data still holds Japanese / Indonesian names (that is data, shown on the shop front), and the three staff reply templates in ③ keep their Japanese message bodies, because those are messages sent to customers; their headings are English labels ("Template 1 — Bank transfer" etc.).
 
 ## Customer help (shop front)
 
 - **WhatsApp chat button** (green, floating, stacked above the cart bar): opens a WhatsApp chat with
   the shop (090-6584-2039) with a prefilled JP+EN greeting. This is the real-person route.
-- **FAQ assistant** （自動案内）: a 「よくある質問 FAQ / Tanya Jawab」 button opens a panel of question
-  chips (delivery fee incl. the COD ¥1,800 rule, payment methods, points, shop hours/addresses,
-  halal, how to order, delivery time). Tapping a chip instantly shows the answer in JP+EN+ID —
-  rule-based, no external calls. It is honestly labelled an automatic guide, **not** a human live chat.
+- **FAQ assistant** （自動案内）: deliberately kept out of the way — the only trace on the page is a
+  **small round 💬 button (48 px)** fixed in the top-right corner. It never pops up by itself.
+  Tapping it opens a compact panel of question chips (delivery fee incl. the COD ¥1,800 rule,
+  payment methods, points, shop hours/addresses, halal, how to order, delivery time); tapping a chip
+  instantly shows the answer in JP+EN+ID — rule-based, no external calls. The panel closes with its
+  ✕ or by tapping outside it. It is honestly labelled an automatic guide, **not** a human live chat.
   A true open-ended AI chat would need an external API / backend, which this free build does not have.
 
 ## Promotion (shop front)
@@ -315,10 +340,74 @@ a custom category typed in the admin displays exactly as entered.
   (the logo also shows as a small round badge in the page header).
 - **Share buttons:** a シェア Share / Bagikan row near the top of the shop — LINE, WhatsApp and
   Facebook share links (live URL + a short JP+EN share text) plus a copy-link button.
-- **Hero:** the green/gold header carries the full shop name, a trilingual tagline and three offer
-  chips — 送料無料（¥10,000以上）/ Free delivery over ¥10,000 · ポイント1%還元 / Points 1% back ·
+- **Hero:** the green/gold header sits on the real shop photo (see “Hero banner photo” below) and
+  carries the shop name **MADINA HALAL SUPER** in gold-gradient display type (pure CSS — no font
+  downloads), a trilingual tagline and three offer chips —
+  送料無料（¥10,000以上）/ Free delivery over ¥10,000 · ポイント1%還元 / Points 1% back ·
   全品ハラール / All halal — kept compact so products stay near the top on mobile.
 - SEO basics: JP+EN(+ID) meta description and a descriptive `<title>`.
+
+## Hero banner photo
+
+- The shop hero (top header) sits on a real photo of the shop: **`shop-banner.jpg`** in the repo
+  root — the **Anjo shop exterior** (1170×560). The owner specifically asked for the Anjo shop only
+  in the online shop's banner (no Toyota photo there).
+- It is a normal file reference (`url("shop-banner.jpg")` in the header CSS), **not** inlined into
+  the HTML, so browsers cache it and it costs nothing on repeat visits. A dark Madina-green
+  gradient overlay sits between the photo and the text so the name, tagline and offer chips stay
+  clearly readable; the photo is centre-cropped (`background-size: cover`) so the shop front
+  stays in frame on narrow phone screens.
+- The social-share image (`og:image`) is unchanged — it still uses `logo.jpg`.
+
+## 📢 News board (owner announcements)
+
+The owner can post announcements — a rice special offer, a courier-delay warning, holiday hours —
+from the admin, and customers see them in two prominent places on the shop front.
+
+- **Data:** an optional `notices` array at the root of `products.json`:
+  `[{ "id", "date": "2026-11-21", "jp", "en", "idn", "active" }]`. The three message fields are
+  free text; any one language may be left empty, but at least one must be filled. The admin's
+  load/save flow carries `notices` (and any other unknown root fields) through untouched, so a
+  product-only save never loses the announcements.
+- **Posting (admin → ⑥ News board):** write the message in Japanese / English / Indonesian
+  (any of them), check the date (it defaults to today, JST), press “Add notice” (or Edit an
+  existing one and press “Update notice”), then “💾 Save to shop”. Each listed notice has a
+  Show/Hide switch, Edit and Delete — same patterns as the product list. Hidden notices stay in
+  the file but are never shown to customers.
+- **Top banner (shop front):** a gold bar at the very top of the page with a gently **pulsing 📢
+  badge**. It shows the visible notices **one at a time, rotating every ~5 seconds** with a
+  fade/slide; it pauses while the customer hovers or touches it and while the tab is hidden.
+  With only one visible notice it stays still (badge pulse only). With none, the bar is not
+  rendered at all.
+- **Board section:** directly under the hero, a “📢 お知らせ / News / Berita” section lists
+  **all** visible notices, newest date first, each with its date — at most 5. Hidden when empty.
+- **Language:** the shop shows all three languages together everywhere, so each notice renders in
+  the shop's primary language (Japanese) with the fallback chain Japanese → English → Indonesian
+  (first non-empty text wins) — a notice written only in English still shows, in English.
+- **Performance & accessibility:** notices ride inside `products.json` (no extra downloads, no
+  libraries, CSS-only animation). Customers who prefer reduced motion get **no rotation and no
+  pulsing** (`prefers-reduced-motion`).
+
+## Responsive design (phones, tablets, desktops)
+
+Both pages are built phone-first and checked at **360 / 390 px (phones), 768 px (tablet) and
+1280 px (desktop)** — the automated tests assert there is **no horizontal scrolling at any width**
+and that the key elements stay visible and usable.
+
+- **Product grid:** 2 columns on phones, 3 on tablets, 4+ on desktops (cards stretch to fill the
+  row), with comfortable gaps; long product names wrap instead of pushing the card wider.
+- **Tap targets:** the main controls are ~44 px or bigger — Add buttons, quantity steppers,
+  category chips, slideshow dots (the visible dot is small but the tap area is 26 px+, inside a
+  44 px-tall control row), cart bar button, and the admin's buttons and Show/Hide switches.
+- **No iOS zoom:** form inputs (checkout, admin, search) use a 16 px font on small screens, so
+  iOS Safari does not auto-zoom when a field is tapped.
+- **Sticky pieces:** the cart bar and the floating buttons never cover the content — the page
+  keeps bottom padding for the cart bar, the FAQ 💬 button sits in the top-right corner (clear of
+  the bottom cart bar), and the news banner, Popular slideshow, cart sheet, checkout sheet, FAQ
+  panel and points box all fit a 360 px screen.
+- **Admin on phones:** panels go single-column with tighter padding; product rows wrap so the
+  name, ⭐, Show/Hide switch, stock stepper, Edit and Delete stay tappable without overlap at
+  390 px; long point-history lines wrap inside their panel instead of stretching the page.
 
 ## ⭐ Popular slideshow (shop front)
 
@@ -341,7 +430,7 @@ a custom category typed in the admin displays exactly as entered.
 ## Setup (one time, done by Manager)
 
 1. Create the public GitHub repo **goldfamilyjp/madina-supershop**.
-2. Put `index.html`, `admin.html`, `products.json`, `logo.jpg` in the repo root; enable GitHub Pages (main branch, root).
+2. Put `index.html`, `admin.html`, `products.json`, `logo.jpg`, `shop-banner.jpg` in the repo root; enable GitHub Pages (main branch, root).
    (`points.json` does not need to be created by hand — the admin panel creates it on the first “Save points”.)
    Shop URL becomes `https://goldfamilyjp.github.io/madina-supershop/`,
    admin URL is the same + `admin.html`.

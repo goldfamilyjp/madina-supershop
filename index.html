@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Madina Halal Supershop — マディナ ハラール スーパーショップ</title>
+<title>MADINA HALAL SUPER — マディナ ハラルスーパー</title>
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
-<meta name="description" content="マディナ ハラール スーパーショップ — 100%ハラール食品のオンラインショップ。ハラール食品1,000点以上、¥10,000以上で送料無料、ポイント1%還元。Madina Halal Supershop — 100% halal groceries online: 1,000+ halal products, FREE delivery over ¥10,000, 1% points back. Toko halal online: 1.000+ produk halal, gratis ongkir di atas ¥10.000, poin kembali 1%.">
-<meta property="og:title" content="Madina Halal Supershop — マディナ ハラール スーパーショップ">
+<meta name="description" content="マディナ ハラルスーパー — 100%ハラール食品のオンラインショップ。ハラール食品1,000点以上、¥10,000以上で送料無料、ポイント1%還元。MADINA HALAL SUPER — 100% halal groceries online: 1,000+ halal products, FREE delivery over ¥10,000, 1% points back. Toko halal online: 1.000+ produk halal, gratis ongkir di atas ¥10.000, poin kembali 1%.">
+<meta property="og:title" content="MADINA HALAL SUPER — マディナ ハラルスーパー">
 <meta property="og:description" content="100%ハラール食品のオンラインショップ — ¥10,000以上で送料無料、ポイント1%還元。100% halal groceries online — FREE delivery over ¥10,000, 1% points back.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://goldfamilyjp.github.io/madina-supershop/">
 <meta property="og:image" content="https://goldfamilyjp.github.io/madina-supershop/logo.jpg">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Madina Halal Supershop — マディナ ハラール スーパーショップ">
+<meta name="twitter:title" content="MADINA HALAL SUPER — マディナ ハラルスーパー">
 <meta name="twitter:description" content="100%ハラール食品のオンラインショップ — ¥10,000以上で送料無料、ポイント1%還元。100% halal groceries online — FREE delivery over ¥10,000, 1% points back.">
 <meta name="twitter:image" content="https://goldfamilyjp.github.io/madina-supershop/logo.jpg">
 <style>
@@ -28,18 +28,50 @@
 body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif; background:var(--bg); color:var(--ink); padding-bottom:96px;}
 /* Trilingual rule (owner): JP / EN / ID always render at the SAME font size — never shrink the 2nd/3rd language. */
 .en,.idn{font-size:1em; font-weight:inherit; color:inherit;}
-header{background:var(--green); color:#fff; padding:18px 16px 14px; text-align:center; border-bottom:4px solid var(--gold);}
+header{background-color:var(--green); background-image:linear-gradient(rgba(7,48,31,.82), rgba(11,69,48,.90)), url("shop-banner.jpg"); background-size:cover; background-position:center; color:#fff; padding:18px 16px 14px; text-align:center; border-bottom:4px solid var(--gold);}
 header .hero-logo{width:72px; height:72px; object-fit:cover; border-radius:50%; border:2px solid var(--gold); background:#fff; margin-bottom:6px;}
-header .shop-name{font-size:1.55rem; font-weight:800; letter-spacing:.02em;}
-header .shop-name-jp{font-size:.95rem; color:var(--gold); margin-top:2px;}
+/* the shop name in gold-gradient display type (CSS only — no font downloads) */
+header .shop-name{
+  font-size:clamp(1.55rem, 8.5vw, 2.1rem); font-weight:900; letter-spacing:.05em; line-height:1.15;
+  background:linear-gradient(180deg,#f8e28d 0%, var(--gold) 48%, #b8912a 82%, #f3d97b 100%);
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));
+}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){
+  header .shop-name{color:var(--gold); -webkit-text-fill-color:currentColor; filter:none;}
+}
+header .shop-name-jp{font-size:1rem; color:#eaf5ec; margin-top:3px; font-weight:700; letter-spacing:.32em;}
 header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .ship-strip{background:var(--gold-soft); color:#4a3d08; text-align:center; font-size:.85rem; padding:9px 12px; border-bottom:1px solid var(--line);}
+/* 📢 news banner — gold bar at the very top; the badge gently pulses and the
+   owner's active notices rotate through it one at a time (fade + slide). */
+#newsBar{display:flex; align-items:center; gap:10px; background:linear-gradient(90deg,#f3d97b, var(--gold) 45%, #f3d97b); color:var(--green-dark); padding:10px 14px; border-bottom:2px solid var(--green); font-weight:700;}
+#newsBar[hidden]{display:none;}
+.nb-badge{font-size:1.35rem; flex:0 0 auto; line-height:1; animation:nbPulse 1.6s ease-in-out infinite;}
+@keyframes nbPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.22);}}
+.nb-track{display:grid; flex:1; min-width:0;}
+.nb-slide{grid-area:1/1; opacity:0; transform:translateY(6px); transition:opacity .5s ease, transform .5s ease; pointer-events:none; font-size:1rem; line-height:1.45; overflow-wrap:break-word;}
+.nb-slide.active{opacity:1; transform:translateY(0); pointer-events:auto;}
+.nb-date{display:inline-block; background:var(--green); color:#fff; border-radius:999px; padding:1px 9px; font-size:.8rem; font-weight:800; margin-right:8px; vertical-align:1px; white-space:nowrap;}
+/* 📢 news board — all active notices, newest first, under the hero */
+#newsBoard{margin:0 0 14px;}
+#newsBoard[hidden]{display:none;}
+.news-title{font-size:1.15rem; font-weight:800; color:var(--green); margin:4px 0 8px;}
+.news-item{background:#fff; border:1px solid var(--line); border-left:5px solid var(--gold); border-radius:10px; padding:10px 12px; margin-bottom:8px;}
+.news-item .news-date{font-size:.82rem; font-weight:800; color:var(--muted);}
+.news-item p{font-size:1rem; line-height:1.55; margin-top:2px; overflow-wrap:break-word;}
+@media (prefers-reduced-motion: reduce){
+  .nb-badge{animation:none;}
+  .nb-slide{transition:none;}
+  .ss-slide{transition:none;}
+}
 .wrap{max-width:1080px; margin:0 auto; padding:14px 12px;}
 .search-box{display:flex; gap:8px; margin-bottom:10px;}
 .search-box input{flex:1; font-size:1rem; padding:12px 14px; border:2px solid var(--line); border-radius:12px; background:#fff;}
 .search-box input:focus{outline:none; border-color:var(--green);}
 .chips{display:flex; gap:8px; overflow-x:auto; padding:4px 2px 10px; -webkit-overflow-scrolling:touch;}
-.chip{flex:0 0 auto; border:2px solid var(--green); background:#fff; color:var(--green); border-radius:999px; padding:8px 14px; font-size:.92rem; font-weight:700; cursor:pointer;}
+.chip{flex:0 0 auto; border:2px solid var(--green); background:#fff; color:var(--green); border-radius:999px; padding:8px 14px; font-size:.92rem; font-weight:700; cursor:pointer; min-height:44px; display:inline-flex; align-items:center;}
 .chip .cnt{font-size:.75rem; background:var(--gold-soft); border-radius:999px; padding:1px 7px; margin-left:6px; color:#4a3d08;}
 .chip.active{background:var(--green); color:#fff;}
 .chip.active .cnt{background:var(--gold); color:var(--green-dark);}
@@ -53,7 +85,7 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .ss-photo{flex:0 0 38%; max-width:230px; aspect-ratio:1/1; border-radius:10px; overflow:hidden; position:relative; background:#e3efe6; cursor:pointer;}
 .ss-photo img{width:100%; height:100%; object-fit:cover; display:block;}
 .ss-photo .ph-tile{width:100%; height:100%; background:linear-gradient(135deg,var(--green) 0%,#146344 100%); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:800;}
-.ss-photo .zoom-btn{position:absolute; left:8px; top:8px; width:40px; height:40px; border:none; border-radius:50%; background:rgba(7,48,31,.85); color:#fff; font-size:1.05rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2;}
+.ss-photo .zoom-btn{position:absolute; left:8px; top:8px; width:44px; height:44px; border:none; border-radius:50%; background:rgba(7,48,31,.85); color:#fff; font-size:1.05rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2;}
 .ss-info{flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;}
 .ss-info .jp{font-weight:700; font-size:1.05rem; line-height:1.3;}
 .ss-info .en-name,.ss-info .id-name{font-size:1rem; color:var(--muted); line-height:1.3;}
@@ -63,17 +95,21 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .ss-arrow:active{background:var(--green);}
 .ss-prev{left:6px;}
 .ss-next{right:6px;}
-.ss-dots{display:flex; gap:7px; justify-content:center; margin-top:9px;}
-.ss-dot{width:11px; height:11px; border-radius:50%; border:2px solid var(--green); background:#fff; padding:0; cursor:pointer;}
-.ss-dot.active{background:var(--green);}
-.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px;}
-@media(min-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));}}
+.ss-dots{display:flex; gap:2px; justify-content:center; margin-top:4px;}
+/* the visible dot stays 11px, but the button itself is a 26px tap target */
+.ss-dot{width:26px; height:26px; border-radius:50%; border:none; background:transparent; padding:0; cursor:pointer; position:relative;}
+.ss-dot::after{content:""; position:absolute; left:50%; top:50%; width:11px; height:11px; border-radius:50%; border:2px solid var(--green); background:#fff; transform:translate(-50%,-50%); box-sizing:border-box;}
+.ss-dot.active::after{background:var(--green);}
+/* product grid: 2 columns on phones, 3 on tablets, 4+ on desktop */
+.grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}
+@media(min-width:561px){.grid{grid-template-columns:repeat(3,1fr); gap:12px;}}
+@media(min-width:901px){.grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));}}
 .card{background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column;}
 .card .photo{aspect-ratio:4/3; background:#e3efe6; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;}
 .card .photo img{width:100%; height:100%; object-fit:cover;}
 .card .photo.two{cursor:pointer;}
 .card .photo .ph-badge{position:absolute; right:8px; bottom:8px; background:rgba(7,48,31,.85); color:#fff; font-size:.78rem; font-weight:700; border-radius:999px; padding:2px 9px; pointer-events:none;}
-.card .photo .zoom-btn{position:absolute; left:8px; top:8px; width:40px; height:40px; border:none; border-radius:50%; background:rgba(7,48,31,.85); color:#fff; font-size:1.05rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2;}
+.card .photo .zoom-btn{position:absolute; left:8px; top:8px; width:44px; height:44px; border:none; border-radius:50%; background:rgba(7,48,31,.85); color:#fff; font-size:1.05rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2;}
 .card .photo .zoom-btn:active{background:var(--green);}
 /* photo zoom lightbox */
 .lb-overlay{position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:120; display:none;}
@@ -89,21 +125,24 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .card .body{padding:10px 12px 12px; display:flex; flex-direction:column; gap:3px; flex:1;}
 .card .jp{font-weight:700; font-size:1rem; line-height:1.3;}
 .card .en-name,.card .id-name{font-size:1rem; color:var(--muted); line-height:1.3;}
+.card .jp,.card .en-name,.card .id-name,.ss-info .jp,.ss-info .en-name,.ss-info .id-name{overflow-wrap:break-word;}
 .card .size{font-size:.8rem; color:var(--muted);}
 .card .price{font-size:1.15rem; font-weight:800; color:var(--green); margin-top:auto; padding-top:6px;}
-.add-btn{margin-top:8px; background:var(--green); color:#fff; border:none; border-radius:10px; padding:11px; font-size:1rem; font-weight:700; cursor:pointer; width:100%;}
+.add-btn{margin-top:8px; background:var(--green); color:#fff; border:none; border-radius:10px; padding:13px 11px; font-size:1rem; font-weight:700; cursor:pointer; width:100%; min-height:44px;}
 .add-btn:active{background:var(--green-dark);}
 .stepper{margin-top:8px; display:flex; align-items:center; justify-content:space-between; background:var(--gold-soft); border-radius:10px; padding:4px;}
-.stepper button{width:44px; height:40px; font-size:1.3rem; border:none; background:var(--green); color:#fff; border-radius:8px; cursor:pointer;}
+.stepper button{width:44px; height:44px; font-size:1.3rem; border:none; background:var(--green); color:#fff; border-radius:8px; cursor:pointer;}
 .stepper .qty{font-size:1.1rem; font-weight:800;}
 .show-more{display:block; margin:18px auto 4px; background:#fff; border:2px solid var(--green); color:var(--green); font-size:1rem; font-weight:700; border-radius:12px; padding:12px 28px; cursor:pointer;}
 .count-line{text-align:center; color:var(--muted); font-size:.85rem; margin-top:8px;}
 .empty-note{text-align:center; color:var(--muted); padding:34px 10px; font-size:1rem;}
 /* cart bar */
 .cartbar{position:fixed; left:0; right:0; bottom:0; background:var(--green-dark); color:#fff; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; box-shadow:0 -3px 14px rgba(0,0,0,.25); z-index:40;}
+/* the hidden attribute must win over display:flex, or the empty bar shows */
+#cartbar[hidden]{display:none;}
 .cartbar .cb-info{font-size:.95rem;}
 .cartbar .cb-info strong{font-size:1.1rem;}
-.cartbar button{background:var(--gold); color:var(--green-dark); border:none; font-weight:800; font-size:1rem; border-radius:10px; padding:12px 20px; cursor:pointer;}
+.cartbar button{background:var(--gold); color:var(--green-dark); border:none; font-weight:800; font-size:1rem; border-radius:10px; padding:12px 20px; cursor:pointer; min-height:44px;}
 /* cart sheet */
 .overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:50; display:none;}
 .overlay.show{display:block;}
@@ -115,13 +154,13 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .ci-row{display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed var(--line); font-size:.95rem;}
 .ci-row .ci-name{flex:1; padding-right:8px;}
 .ci-stepper{display:flex; align-items:center; gap:8px;}
-.ci-stepper button{width:32px; height:32px; border:none; border-radius:8px; background:var(--green); color:#fff; font-size:1.05rem; cursor:pointer;}
+.ci-stepper button{width:40px; height:40px; border:none; border-radius:8px; background:var(--green); color:#fff; font-size:1.05rem; cursor:pointer;}
 .totals{margin:12px 0; font-size:.98rem;}
 .totals .t-row{display:flex; justify-content:space-between; padding:3px 0;}
 .totals .t-grand{font-size:1.2rem; font-weight:800; color:var(--green); border-top:2px solid var(--green); padding-top:8px; margin-top:6px;}
 .fee-note{background:var(--gold-soft); border-radius:10px; padding:9px 12px; font-size:.85rem; margin:8px 0;}
 .seg{display:flex; gap:8px; margin:10px 0;}
-.seg button{flex:1; padding:12px 6px; border:2px solid var(--line); background:#fff; border-radius:12px; font-size:.95rem; font-weight:700; cursor:pointer; line-height:1.35;}
+.seg button{flex:1; padding:12px 6px; border:2px solid var(--line); background:#fff; border-radius:12px; font-size:.95rem; font-weight:700; cursor:pointer; line-height:1.35; min-height:48px;}
 .seg button.selected{border-color:var(--green); background:#e3efe6; color:var(--green);}
 .seg button .en,.seg button .idn{display:block;}
 .soldout-badge{background:var(--red); color:#fff; font-weight:800; font-size:1rem; text-align:center; padding:8px 6px; line-height:1.35;}
@@ -134,11 +173,15 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .help-stack{position:fixed; right:12px; bottom:108px; z-index:45; display:flex; flex-direction:column; gap:8px; align-items:flex-end;}
 .help-btn{display:flex; align-items:center; gap:8px; min-height:48px; border-radius:999px; padding:10px 18px; font-size:1rem; font-weight:800; line-height:1.3; text-decoration:none; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.28);}
 .help-btn.wa{background:#25d366; color:#fff;}
-.help-btn.faq{background:var(--green); color:#fff; border:2px solid var(--gold);}
+/* FAQ assistant launcher: one small round button in the top-right corner.
+   z-index 45 keeps it under the cart sheet (60), the FAQ panel (90) and
+   the photo lightbox (120); the panel itself opens only on tap. */
+.faq-fab{position:fixed; top:84px; right:12px; width:48px; height:48px; border-radius:50%; border:2px solid var(--gold); background:var(--green); color:#fff; font-size:1.3rem; line-height:1; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.3); z-index:45; display:flex; align-items:center; justify-content:center; padding:0;}
+.faq-fab:active{background:var(--green-dark);}
 /* FAQ panel */
 .faq-overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:80; display:none;}
 .faq-overlay.show{display:block;}
-.faq-panel{position:fixed; left:0; right:0; bottom:0; max-height:88vh; overflow-y:auto; background:#fff; border-radius:18px 18px 0 0; z-index:90; padding:18px 16px 26px; display:none;}
+.faq-panel{position:fixed; left:0; right:0; bottom:0; max-height:76vh; overflow-y:auto; background:#fff; border-radius:18px 18px 0 0; z-index:90; padding:14px 14px 18px; display:none;}
 .faq-panel.show{display:block;}
 @media(min-width:760px){.faq-panel{left:50%; right:auto; transform:translateX(-50%); width:640px; border-radius:18px; bottom:16px;}}
 .faq-panel h2{font-size:1.2rem; color:var(--green);}
@@ -154,6 +197,10 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .pc-result{background:#e3efe6; border:1px solid var(--green); border-radius:12px; padding:14px; margin-top:12px; font-size:1rem; line-height:1.6; display:none;}
 .pc-result.show{display:block;}
 .pc-result .pc-bal{font-size:1.15rem; font-weight:800; color:var(--green);}
+/* "remember my details" note inside the checkout form */
+.saved-note{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; background:#eef6f0; border:1px solid var(--green); border-radius:10px; padding:8px 10px; margin-bottom:6px; font-size:.85rem;}
+#savedNote[hidden]{display:none;}
+.saved-clear{background:#fff; color:var(--green-dark); border:1.5px solid var(--green); border-radius:999px; padding:8px 14px; min-height:40px; font-weight:700; cursor:pointer; font-size:.85rem;}
 /* hero offer chips + share row (promotion) */
 .hero-chips{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px;}
 .hero-chip{background:rgba(255,255,255,.10); border:2px solid var(--gold); color:#fff; border-radius:999px; padding:8px 16px; font-size:1rem; font-weight:700; line-height:1.35; text-align:center;}
@@ -186,17 +233,37 @@ textarea{min-height:64px;}
 .email-note{text-align:center; background:#e3efe6; color:var(--green-dark); border:1px solid var(--green); border-radius:10px; padding:10px 12px; font-size:.9rem; font-weight:700; margin-top:12px;}
 .wa-fallback{display:block; text-align:center; margin-top:12px; background:#25d366; color:#fff; text-decoration:none; font-weight:800; padding:13px; border-radius:10px;}
 .howto{background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-top:16px; font-size:.9rem;}
+/* points balance check — gold card, promoted to the top of the shop */
+.points-card{background:#fffdf4; border:2px solid var(--gold); box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.points-card h3{font-size:1.05rem;}
 .howto h3{color:var(--green); margin-bottom:6px; font-size:1rem;}
 .howto li{margin:5px 0 5px 18px;}
 footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px 6px;}
+/* small phones: tighten the hero + slideshow so everything fits 360px */
+@media(max-width:560px){
+  header{padding:14px 10px 12px;}
+  header .hero-logo{width:60px; height:60px;}
+  .hero-chip{font-size:.95rem; padding:8px 12px;}
+  .ss-slide{gap:10px; padding:10px;}
+  .ss-photo{flex-basis:34%;}
+  .ss-info .price{font-size:1.15rem;}
+  .help-btn{font-size:.95rem; padding:10px 14px; max-width:92vw;}
+  #newsBar{padding:9px 10px;}
+}
 </style>
 </head>
 <body>
 
-<header>
+<!-- 📢 News banner — the owner's announcements rotate in this gold bar -->
+<div id="newsBar" hidden>
+  <span class="nb-badge" aria-hidden="true">📢</span>
+  <div class="nb-track" id="nbTrack"></div>
+</div>
+
+<header role="img" aria-label="Madina Halal — Anjo shop">
   <img class="hero-logo" src="logo.jpg" alt="Madina Halal Restaurant &amp; Foods">
-  <div class="shop-name">Madina Halal Supershop</div>
-  <div class="shop-name-jp">マディナ ハラール スーパーショップ</div>
+  <div class="shop-name">MADINA HALAL SUPER</div>
+  <div class="shop-name-jp">マディナ ハラルスーパー</div>
   <div class="tagline">100%ハラール食品のお店 — 100% Halal groceries — Bahan makanan 100% Halal (Anjo &amp; Toyota)</div>
   <div class="hero-chips">
     <span class="hero-chip">送料無料（¥10,000以上）<span class="en">Free delivery over ¥10,000</span><span class="idn">Gratis ongkir ¥10,000+</span></span>
@@ -207,6 +274,23 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
 <div class="ship-strip">宅配便：¥10,000以上は送料無料／未満は振込¥990・代引き¥1,800。店頭受取は無料 <span class="en">Courier: FREE over ¥10,000 — under: transfer ¥990 / COD ¥1,800. Pickup free.</span> <span class="idn">Pengiriman: GRATIS di atas ¥10,000 — di bawahnya: transfer ¥990 / COD ¥1,800. Ambil di toko gratis.</span></div>
 
 <div class="wrap">
+  <!-- 📢 News board — all current announcements, newest first -->
+  <section id="newsBoard" hidden>
+    <h2 class="news-title">📢 お知らせ <span class="en">News</span> <span class="idn">Berita</span></h2>
+    <div id="newsList"></div>
+  </section>
+
+  <!-- ===== Points balance check — promoted card right under the hero ===== -->
+  <div class="howto points-card" id="pointsCheck">
+    <h3>🪙 ポイント確認 <span class="en">Check your points</span> <span class="idn">Cek poin saya</span></h3>
+    <p>電話番号を入力すると、ポイント残高が見られます。<span class="en">Enter your phone number to see your points balance.</span> <span class="idn">Masukkan nomor telepon untuk melihat saldo poin Anda.</span></p>
+    <label class="flabel" for="pcPhone">電話番号 <span class="en">Phone number</span> <span class="idn">Nomor telepon</span></label>
+    <input type="tel" id="pcPhone" autocomplete="tel" placeholder="090-…">
+    <button type="button" class="confirm-btn" id="pcBtn">残高を確認する <span class="en">Check balance</span> <span class="idn">Cek saldo</span></button>
+    <div class="pc-result" id="pcResult"></div>
+    <p class="fee-note">ポイントは購入の1ヶ月後から使えます。ご利用は注文時に店舗が確認して割引します。<br>Points become usable 1 month after purchase. The shop confirms your balance and applies the discount when you order.<br>Poin bisa dipakai 1 bulan setelah pembelian. Toko akan mengonfirmasi saldo dan memberi diskon saat Anda memesan.</p>
+  </div>
+
   <div class="share-row">
     <span class="share-label">シェア <span class="en">Share</span> <span class="idn">Bagikan</span></span>
     <a class="share-btn line" id="shareLine" href="#" target="_blank" rel="noopener">LINE</a>
@@ -243,24 +327,15 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
     </ol>
   </div>
 
-  <!-- ===== Points balance check ===== -->
-  <div class="howto" id="pointsCheck">
-    <h3>ポイント残高確認 <span class="en">Check your points</span> <span class="idn">Cek saldo poin</span></h3>
-    <p>電話番号を入力すると、ポイント残高が見られます。<span class="en">Enter your phone number to see your points balance.</span> <span class="idn">Masukkan nomor telepon untuk melihat saldo poin Anda.</span></p>
-    <label class="flabel" for="pcPhone">電話番号 <span class="en">Phone number</span> <span class="idn">Nomor telepon</span></label>
-    <input type="tel" id="pcPhone" autocomplete="tel" placeholder="090-…">
-    <button type="button" class="confirm-btn" id="pcBtn">残高を確認する <span class="en">Check balance</span> <span class="idn">Cek saldo</span></button>
-    <div class="pc-result" id="pcResult"></div>
-    <p class="fee-note">ポイントは購入の1ヶ月後から使えます。ご利用は注文時に店舗が確認して割引します。<br>Points become usable 1 month after purchase. The shop confirms your balance and applies the discount when you order.<br>Poin bisa dipakai 1 bulan setelah pembelian. Toko akan mengonfirmasi saldo dan memberi diskon saat Anda memesan.</p>
-  </div>
-  <footer>Madina Halal Supershop — Gold Family Co. Ltd.<br>安城店 Anjo: 0566-98-9995 ・ 豊田店 Toyota: 0565-41-5616</footer>
+  <footer>MADINA HALAL SUPER — Gold Family Co. Ltd.<br>安城店 Anjo: 0566-98-9995 ・ 豊田店 Toyota: 0565-41-5616</footer>
 </div>
 
 <!-- help / chat buttons (fixed, above the cart bar) -->
 <div class="help-stack">
-  <button type="button" class="help-btn faq" id="faqOpenBtn">よくある質問 <span class="en">FAQ</span> <span class="idn">Tanya Jawab</span></button>
   <a class="help-btn wa" id="waChatBtn" href="#" target="_blank" rel="noopener">チャットで質問 <span class="en">Chat</span> <span class="idn">Chat</span></a>
 </div>
+<!-- FAQ assistant launcher — small round button, top-right; the panel opens only when tapped -->
+<button type="button" class="faq-fab" id="faqOpenBtn" aria-label="よくある質問 FAQ / Tanya Jawab">💬</button>
 <div id="stockToast" role="status"></div>
 
 <!-- FAQ assistant panel （自動案内 — automatic guide, not a human live chat) -->
@@ -304,6 +379,10 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
   </div>
 
   <form id="orderForm" novalidate>
+    <div class="saved-note" id="savedNote" hidden>
+      <span>前回の情報を保存しています <span class="en">Your details are saved on this device</span> <span class="idn">Data Anda tersimpan di perangkat ini</span></span>
+      <button type="button" class="saved-clear" id="savedClearBtn">クリア <span class="en">Clear</span> <span class="idn">Hapus</span></button>
+    </div>
     <label class="flabel" for="fName">お名前 <span class="en">Name</span> <span class="idn">Nama</span><span class="req">*</span></label>
     <input type="text" id="fName" autocomplete="name" placeholder="お名前 Name / Nama">
     <label class="flabel" for="fPhone">電話番号 <span class="en">Phone</span> <span class="idn">Telepon</span><span class="req">*</span></label>
@@ -409,6 +488,7 @@ var PAY_LABELS = {
 
 var CATEGORIES = [];
 var PRODUCTS = [];
+var NOTICES = [];
 var cart = {};
 var activeCat = "all";
 var searchQuery = "";
@@ -809,6 +889,108 @@ window.__supershopSlideshow = {
   visible: function(){ return !popShowEl.hidden; }
 };
 
+/* ---------- 📢 news banner + board ----------
+   Owner announcements from the "notices" array in products.json.
+   The gold bar at the very top shows the active notices one at a time,
+   rotating every ~5s with a fade/slide (paused on hover/touch and while
+   the tab is hidden; a single notice stays static). The board under the
+   hero lists all active notices, newest first, max 5. Each notice is
+   owner-written in up to three languages and renders in the shop's
+   current language — Japanese by default — falling back
+   current -> jp -> en -> idn to the first text the owner filled in.
+   Plain JS/CSS only, no libraries, no extra downloads (the notices ride
+   inside products.json). For prefers-reduced-motion there is no
+   rotation and no badge pulse. */
+var newsBarEl = document.getElementById("newsBar");
+var nbTrack = document.getElementById("nbTrack");
+var newsBoardEl = document.getElementById("newsBoard");
+var newsListEl = document.getElementById("newsList");
+var newsLang = "jp";    /* the shop's primary language */
+var nbList = [];        /* active notices, newest first */
+var nbIdx = 0;
+var nbDelay = 5000;
+var nbTimer = null;
+var nbHover = false;    /* mouse is over the banner */
+var nbDown = false;     /* a pointer is pressed on the banner */
+var reduceMotion = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+function noticeText(n, lang){
+  var order = [lang, "jp", "en", "idn"], seen = {};
+  for (var i = 0; i < order.length; i++){
+    var k = order[i];
+    if (seen[k]) continue;
+    seen[k] = true;
+    var t = n && n[k] != null ? String(n[k]).trim() : "";
+    if (t) return t;
+  }
+  return "";
+}
+function activeNotices(){
+  return NOTICES.map(function(n, i){ return { n: n, i: i }; })
+    .filter(function(x){ return x.n && x.n.active !== false && noticeText(x.n, "jp") !== ""; })
+    .sort(function(a, b){
+      var da = a.n.date || "", db = b.n.date || "";
+      if (da !== db) return da < db ? 1 : -1;   /* newest date first */
+      return b.i - a.i;                        /* same date: latest added first */
+    })
+    .map(function(x){ return x.n; });
+}
+function nbShow(i){
+  if (!nbList.length) return;
+  nbIdx = ((i % nbList.length) + nbList.length) % nbList.length;
+  nbTrack.querySelectorAll(".nb-slide").forEach(function(sl, j){ sl.classList.toggle("active", j === nbIdx); });
+}
+function nbStop(){ if (nbTimer){ clearInterval(nbTimer); nbTimer = null; } }
+function nbUpdate(){
+  if (nbList.length > 1 && !nbHover && !nbDown && !document.hidden && !reduceMotion){
+    if (!nbTimer) nbTimer = setInterval(function(){ nbShow(nbIdx + 1); }, nbDelay);
+  } else nbStop();
+}
+function renderNews(){
+  nbList = activeNotices();
+  nbStop();
+  if (!nbList.length){
+    newsBarEl.hidden = true;
+    newsBoardEl.hidden = true;
+    nbTrack.innerHTML = "";
+    newsListEl.innerHTML = "";
+    return;
+  }
+  nbTrack.innerHTML = nbList.map(function(n){
+    return '<div class="nb-slide"><span class="nb-date">' + esc(n.date || "") + '</span>' + esc(noticeText(n, newsLang)) + '</div>';
+  }).join("");
+  newsBarEl.hidden = false;
+  if (nbIdx >= nbList.length) nbIdx = 0;
+  nbShow(nbIdx);
+  newsListEl.innerHTML = nbList.slice(0, 5).map(function(n){
+    return '<div class="news-item"><span class="news-date">' + esc(n.date || "") + '</span><p>' + esc(noticeText(n, newsLang)) + '</p></div>';
+  }).join("");
+  newsBoardEl.hidden = false;
+  nbUpdate();
+}
+newsBarEl.addEventListener("pointerenter", function(){ nbHover = true; nbUpdate(); });
+newsBarEl.addEventListener("pointerleave", function(){ nbHover = false; nbDown = false; nbUpdate(); });
+newsBarEl.addEventListener("pointerdown", function(){ nbDown = true; nbUpdate(); });
+newsBarEl.addEventListener("pointerup", function(){ nbDown = false; nbUpdate(); });
+newsBarEl.addEventListener("pointercancel", function(){ nbDown = false; nbUpdate(); });
+document.addEventListener("visibilitychange", nbUpdate);
+function setNewsLang(lang){
+  if (lang !== "jp" && lang !== "en" && lang !== "idn") return;
+  newsLang = lang;
+  renderNews();
+}
+/* expose for testing */
+window.__supershopNews = {
+  count: function(){ return nbList.length; },
+  boardCount: function(){ return newsListEl.querySelectorAll(".news-item").length; },
+  index: function(){ return nbIdx; },
+  lang: function(){ return newsLang; },
+  setLang: setNewsLang,
+  setDelay: function(ms){ nbDelay = ms; nbStop(); nbUpdate(); },
+  visible: function(){ return !newsBarEl.hidden; },
+  boardVisible: function(){ return !newsBoardEl.hidden; }
+};
+
 showMoreBtn.addEventListener("click", function(){ shownCount += PAGE_SIZE; renderGrid(); });
 document.getElementById("searchInput").addEventListener("input", function(){ searchQuery = this.value; shownCount = PAGE_SIZE; renderGrid(); });
 
@@ -1004,6 +1186,55 @@ document.querySelectorAll("#fulfillSeg button").forEach(function(b){ b.addEventL
 document.querySelectorAll("#branchSeg button").forEach(function(b){ b.addEventListener("click", function(){ branch = this.getAttribute("data-branch"); syncFulfillmentUI(); }); });
 document.querySelectorAll("#paymentSeg button").forEach(function(b){ b.addEventListener("click", function(){ payment = this.getAttribute("data-pay"); syncFulfillmentUI(); }); });
 
+/* ---------- remember my details (this device only) ----------
+   After a successful order, the checkout details are kept in localStorage
+   ON THIS DEVICE ONLY and prefilled next time, so repeat customers only
+   review and tap Confirm. Nothing is sent anywhere by this feature — the
+   data leaves the device only through the normal order flow (WhatsApp /
+   order sheet), exactly as before. No payment credentials exist in this
+   flow, and none are stored. */
+var SAVED_KEY = "madina_super_details";
+function saveCheckoutDetails(){
+  try {
+    localStorage.setItem(SAVED_KEY, JSON.stringify({
+      name: fieldVal("fName"), phone: fieldVal("fPhone"), email: fieldVal("fEmail"),
+      fulfill: fulfill, branch: branch, payment: payment,
+      zip: fieldVal("fZip"), pref: fieldVal("fPref"), city: fieldVal("fCity"),
+      town: fieldVal("fTown"), street: fieldVal("fStreet"), building: fieldVal("fBuilding")
+    }));
+  } catch (e) { /* storage unavailable (private mode…) — remembering is optional */ }
+}
+function loadSavedDetails(){
+  try { var raw = localStorage.getItem(SAVED_KEY); return raw ? JSON.parse(raw) : null; }
+  catch (e) { return null; }
+}
+function applySavedDetails(){
+  var d = loadSavedDetails();
+  if (!d) return;
+  var set = function(id, v){ if (v) document.getElementById(id).value = v; };
+  set("fName", d.name); set("fPhone", d.phone); set("fEmail", d.email);
+  set("fZip", d.zip); set("fPref", d.pref); set("fCity", d.city);
+  set("fTown", d.town); set("fStreet", d.street); set("fBuilding", d.building);
+  if (d.fulfill === "delivery" || d.fulfill === "pickup") fulfill = d.fulfill;
+  if (d.branch === "Anjo" || d.branch === "Toyota") branch = d.branch;
+  if (d.payment === "yucho" || d.payment === "bank" || d.payment === "cod") payment = d.payment;
+  syncFulfillmentUI();
+  document.getElementById("savedNote").hidden = false;
+  /* bonus: the points-balance check starts from the same phone number */
+  var pc = document.getElementById("pcPhone");
+  if (d.phone && !pc.value) pc.value = d.phone;
+}
+function clearSavedDetails(){
+  try { localStorage.removeItem(SAVED_KEY); } catch (e) {}
+  ["fName","fPhone","fEmail","fZip","fPref","fCity","fTown","fStreet","fBuilding"].forEach(function(id){
+    document.getElementById(id).value = "";
+  });
+  fulfill = "delivery"; branch = "Anjo"; payment = "yucho";
+  syncFulfillmentUI();
+  document.getElementById("savedNote").hidden = true;
+}
+document.getElementById("savedClearBtn").addEventListener("click", clearSavedDetails);
+
 /* ---------- points request (optional; the shop confirms the balance) ---------- */
 function pointsRequest(){
   var phEl = document.getElementById("fPointsPhone");
@@ -1029,7 +1260,7 @@ function buildInvoiceText(name, phone, address, note, preview){
   var ids = sortedCartIds();
   var isDelivery = fulfill === "delivery";
   var lines = [];
-  lines.push("Madina Halal Supershop — Online Order");
+  lines.push("MADINA HALAL SUPER — Online Order");
   lines.push("日時 / Date: " + orderDateStr());
   lines.push(sep);
   lines.push("お名前 / Name: " + (name || (preview ? "（未入力）" : "")));
@@ -1084,7 +1315,7 @@ function buildAutoresponse(f){
   var st = subtotal(), fee = deliveryFee(), total = st + fee;
   var L = [];
   L.push("ご注文ありがとうございます！ Thank you for your order!");
-  L.push("Madina Halal Supershop — ご注文確認 / Order Confirmation");
+  L.push("MADINA HALAL SUPER — ご注文確認 / Order Confirmation");
   L.push("──────────");
   sortedCartIds().forEach(function(id, i){
     var p = productById(id); if (!p) return;
@@ -1121,7 +1352,7 @@ function sendConfirmationEmail(f){
   var payload = {
     "email": f.email,
     "_replyto": f.email,
-    "_subject": "【Madina Supershop】ご注文確認 / Order Confirmation",
+    "_subject": "【MADINA HALAL SUPER】ご注文確認 / Order Confirmation",
     "_template": "table",
     "_autoresponse": buildAutoresponse(f),
     "お名前 Name": f.name,
@@ -1151,7 +1382,7 @@ function sendConfirmationEmail(f){
 /* ---------- order auto-save (Google Form → owner's private Sheet) ----------
    EVERY order (not just ones with an email) is also POSTed to the shop's
    Google Form, which appends it to the owner's private spreadsheet — the
-   order book linked from the admin panel's 「⑥ 注文 Orders」 section.
+   order book linked from the admin panel's 「⑤ 注文 Orders」 section.
    mode:"no-cors" because Google returns no CORS headers (the response is
    opaque; success cannot be read back, and does not need to be).
    Fire-and-forget: a failure never blocks or delays the WhatsApp order. */
@@ -1244,6 +1475,8 @@ document.getElementById("orderForm").addEventListener("submit", function(e){
   window.open(url, "_blank");
   /* Auto-save the order to the shop's Google Sheet — fire-and-forget, never blocks. */
   sendOrderToSheet(f);
+  /* Remember the checkout details on this device for the next order. */
+  saveCheckoutDetails();
   /* Optional confirmation email — fire-and-forget, never blocks the order. */
   var emailNote = document.getElementById("emailSentNote");
   emailNote.hidden = true;
@@ -1359,7 +1592,7 @@ faqOverlay.addEventListener("click", closeFaq);
 
 /* ---------- share buttons (promotion) ---------- */
 var SITE_URL = "https://goldfamilyjp.github.io/madina-supershop/";
-var SHARE_TEXT = "マディナ ハラール スーパーショップ — 100%ハラール食品、¥10,000以上で送料無料！ Madina Halal Supershop — 100% halal groceries, FREE delivery over ¥10,000!";
+var SHARE_TEXT = "マディナ ハラルスーパー — 100%ハラール食品、¥10,000以上で送料無料！ MADINA HALAL SUPER — 100% halal groceries, FREE delivery over ¥10,000!";
 document.getElementById("shareLine").href = "https://social-plugins.line.me/lineit/share?url=" + encodeURIComponent(SITE_URL);
 document.getElementById("shareWa").href = "https://wa.me/?text=" + encodeURIComponent(SHARE_TEXT + " " + SITE_URL);
 document.getElementById("shareFb").href = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(SITE_URL);
@@ -1380,7 +1613,8 @@ fetch("products.json", { cache: "no-store" })
   .then(function(data){
     CATEGORIES = data.categories || [];
     PRODUCTS = data.products || [];
-    renderChips(); renderGrid(); renderSlideshow(); syncFulfillmentUI();
+    NOTICES = data.notices || [];
+    renderChips(); renderGrid(); renderSlideshow(); renderNews(); syncFulfillmentUI(); applySavedDetails();
   })
   .catch(function(err){
     gridEl.innerHTML = "";
