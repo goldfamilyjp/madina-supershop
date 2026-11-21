@@ -34,8 +34,17 @@ gtag('config', 'G-VRHLH0YXC6');
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif; background:var(--bg); color:var(--ink); padding-bottom:96px;}
-/* Trilingual rule (owner): JP / EN / ID always render at the SAME font size — never shrink the 2nd/3rd language. */
-.en,.idn{font-size:1em; font-weight:inherit; color:inherit;}
+/* Trilingual stack (owner 2026-11-22 — REPLACES the old equal-font-size rule):
+   every trilingual unit on the shop page renders as a VERTICAL stack —
+   English FIRST, bold, full size (the main line); Japanese below it at
+   .85em, normal weight; Indonesian below that at .85em, normal weight and
+   muted. Never side-by-side. (Order tickets / WhatsApp / email bodies are
+   records, not layout, and keep their single-line formats.) */
+.en{display:block; font-size:1em; font-weight:700; color:inherit;}
+.jp{display:block; font-size:.85em; font-weight:400; color:inherit;}
+.idn{display:block; font-size:.85em; font-weight:400; color:inherit; opacity:.75;}
+.chip-labels{display:block; text-align:left;}
+.ci-price{display:block; color:var(--muted); font-size:.9em; margin-top:2px;}
 /* hero: a solid Madina-green band (logo + two-line name + JP name + tagline);
    the full shop photo sits UNDER it as its own full-width strip (.hero-photo)
    at natural aspect — the whole shop front shows, never cropped. */
@@ -100,8 +109,9 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .ss-photo .ph-tile{width:100%; height:100%; background:linear-gradient(135deg,var(--green) 0%,#146344 100%); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:800;}
 .ss-photo .zoom-btn{position:absolute; left:8px; top:8px; width:44px; height:44px; border:none; border-radius:50%; background:rgba(7,48,31,.85); color:#fff; font-size:1.05rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2;}
 .ss-info{flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;}
-.ss-info .jp{font-weight:700; font-size:1.05rem; line-height:1.3;}
-.ss-info .en-name,.ss-info .id-name{font-size:1rem; color:var(--muted); line-height:1.3;}
+.ss-info .en-name{font-weight:800; font-size:1.05rem; color:var(--ink); line-height:1.3;}
+.ss-info .jp{font-size:.9rem; font-weight:400; line-height:1.3;}
+.ss-info .id-name{font-size:.9rem; color:var(--muted); line-height:1.3;}
 .ss-info .size{font-size:.85rem; color:var(--muted);}
 .ss-info .price{font-size:1.25rem; font-weight:800; color:var(--green); margin-top:auto; padding-top:6px;}
 .ss-arrow{position:absolute; top:50%; transform:translateY(-50%); width:44px; height:52px; border:none; border-radius:10px; background:rgba(7,48,31,.75); color:#fff; font-size:1.7rem; line-height:1; cursor:pointer; z-index:3; padding:0;}
@@ -136,8 +146,9 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .lb-count{position:absolute; left:50%; bottom:16px; transform:translateX(-50%); background:rgba(255,255,255,.16); color:#fff; font-size:.9rem; font-weight:700; border-radius:999px; padding:3px 12px; z-index:3; pointer-events:none;}
 .card .ph-tile{width:100%; height:100%; background:linear-gradient(135deg,var(--green) 0%,#146344 100%); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:800;}
 .card .body{padding:10px 12px 12px; display:flex; flex-direction:column; gap:3px; flex:1;}
-.card .jp{font-weight:700; font-size:1rem; line-height:1.3;}
-.card .en-name,.card .id-name{font-size:1rem; color:var(--muted); line-height:1.3;}
+.card .en-name{font-weight:800; font-size:1rem; color:var(--ink); line-height:1.3;}
+.card .jp{font-size:.85rem; font-weight:400; line-height:1.3;}
+.card .id-name{font-size:.85rem; color:var(--muted); line-height:1.3;}
 .card .jp,.card .en-name,.card .id-name,.ss-info .jp,.ss-info .en-name,.ss-info .id-name{overflow-wrap:break-word;}
 .card .size{font-size:.8rem; color:var(--muted);}
 .card .price{font-size:1.15rem; font-weight:800; color:var(--green); margin-top:auto; padding-top:6px;}
@@ -248,8 +259,8 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .share-btn.wa{background:#25d366;}
 .share-btn.fb{background:#1877f2;}
 .share-btn.copy{background:var(--green);}
-label.flabel{display:block; font-weight:700; font-size:.92rem; margin:12px 0 5px;}
-label.flabel .req{color:var(--red);}
+.flabel{display:block; font-weight:700; font-size:.92rem; margin:12px 0 5px;}
+.flabel .req{color:var(--red);}
 input[type=text],input[type=tel],input[type=email],input[type=number],textarea{width:100%; font-size:1rem; padding:11px 12px; border:2px solid var(--line); border-radius:10px; background:#fff;}
 textarea{min-height:64px;}
 .form-error{display:none; background:#fbeae8; color:var(--red); border-radius:10px; padding:10px 12px; font-size:.9rem; margin:10px 0;}
@@ -314,48 +325,48 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
   <img class="hero-logo" src="logo.jpg" alt="Madina Halal Restaurant &amp; Foods">
   <div class="shop-name">MADINA<br>HALAL SUPER</div>
   <div class="shop-name-jp">マディナ ハラルスーパー</div>
-  <div class="tagline">100%ハラール食品のお店 — 100% Halal groceries — Bahan makanan 100% Halal (Anjo &amp; Toyota)</div>
+  <div class="tagline"><span class="en">100% Halal groceries (Anjo &amp; Toyota)</span><span class="jp">100%ハラール食品のお店</span><span class="idn">Bahan makanan 100% Halal</span></div>
 </header>
 <!-- the FULL Anjo shop front — natural aspect, never cropped -->
 <img class="hero-photo" src="shop-banner-full.jpg" alt="マディナ ハラール レストラン＆フーズ 安城店 Madina Halal Restaurant &amp; Foods — Anjo shop">
 <div class="hero-chips">
-  <span class="hero-chip">送料無料（¥10,000以上）<span class="en">Free delivery over ¥10,000</span><span class="idn">Gratis ongkir ¥10,000+</span></span>
-  <span class="hero-chip">ポイント1%還元<span class="en">Points 1% back</span><span class="idn">Poin kembali 1%</span></span>
-  <span class="hero-chip">全品ハラール<span class="en">All halal</span><span class="idn">Semua halal</span></span>
+  <span class="hero-chip"><span class="en">Free delivery over ¥10,000</span><span class="jp">送料無料（¥10,000以上）</span><span class="idn">Gratis ongkir ¥10,000+</span></span>
+  <span class="hero-chip"><span class="en">Points 1% back</span><span class="jp">ポイント1%還元</span><span class="idn">Poin kembali 1%</span></span>
+  <span class="hero-chip"><span class="en">All halal</span><span class="jp">全品ハラール</span><span class="idn">Semua halal</span></span>
 </div>
-<div class="ship-strip">宅配便：¥10,000以上は送料無料／未満は振込¥990・代引き¥1,800。店頭受取は無料 <span class="en">Courier: FREE over ¥10,000 — under: transfer ¥990 / COD ¥1,800. Pickup free.</span> <span class="idn">Pengiriman: GRATIS di atas ¥10,000 — di bawahnya: transfer ¥990 / COD ¥1,800. Ambil di toko gratis.</span></div>
+<div class="ship-strip"><span class="en">Courier: FREE over ¥10,000 — under: transfer ¥990 / COD ¥1,800. Pickup free.</span><span class="jp">宅配便：¥10,000以上は送料無料／未満は振込¥990・代引き¥1,800。店頭受取は無料</span><span class="idn">Pengiriman: GRATIS di atas ¥10,000 — di bawahnya: transfer ¥990 / COD ¥1,800. Ambil di toko gratis.</span></div>
 
 <div class="wrap">
   <!-- 📢 News board — all current announcements, newest first -->
   <section id="newsBoard" hidden>
-    <h2 class="news-title">📢 お知らせ <span class="en">News</span> <span class="idn">Berita</span></h2>
+    <h2 class="news-title"><span class="en">News</span><span class="jp">📢 お知らせ</span><span class="idn">Berita</span></h2>
     <div id="newsList"></div>
   </section>
 
   <!-- ===== Points balance check — promoted card right under the hero ===== -->
   <div class="howto points-card" id="pointsCheck">
-    <h3>🪙 ポイント確認 <span class="en">Check your points</span> <span class="idn">Cek poin saya</span></h3>
-    <p>電話番号を入力すると、ポイント残高が見られます。<span class="en">Enter your phone number to see your points balance.</span> <span class="idn">Masukkan nomor telepon untuk melihat saldo poin Anda.</span></p>
-    <label class="flabel" for="pcPhone">電話番号 <span class="en">Phone number</span> <span class="idn">Nomor telepon</span></label>
+    <h3><span class="en">Check your points</span><span class="jp">🪙 ポイント確認</span><span class="idn">Cek poin saya</span></h3>
+    <p><span class="en">Enter your phone number to see your points balance.</span><span class="jp">電話番号を入力すると、ポイント残高が見られます。</span><span class="idn">Masukkan nomor telepon untuk melihat saldo poin Anda.</span></p>
+    <label class="flabel" for="pcPhone"><span class="en">Phone number</span><span class="jp">電話番号</span><span class="idn">Nomor telepon</span></label>
     <input type="tel" id="pcPhone" autocomplete="tel" placeholder="090-…">
-    <button type="button" class="confirm-btn" id="pcBtn">残高を確認する <span class="en">Check balance</span> <span class="idn">Cek saldo</span></button>
+    <button type="button" class="confirm-btn" id="pcBtn"><span class="en">Check balance</span><span class="jp">残高を確認する</span><span class="idn">Cek saldo</span></button>
     <div class="pc-result" id="pcResult"></div>
-    <p class="fee-note">ポイントは購入の1ヶ月後から使えます。ご利用は注文時に店舗が確認して割引します。<br>Points become usable 1 month after purchase. The shop confirms your balance and applies the discount when you order.<br>Poin bisa dipakai 1 bulan setelah pembelian. Toko akan mengonfirmasi saldo dan memberi diskon saat Anda memesan.</p>
+    <p class="fee-note"><span class="en">Points become usable 1 month after purchase. The shop confirms your balance and applies the discount when you order.</span><span class="jp">ポイントは購入の1ヶ月後から使えます。ご利用は注文時に店舗が確認して割引します。</span><span class="idn">Poin bisa dipakai 1 bulan setelah pembelian. Toko akan mengonfirmasi saldo dan memberi diskon saat Anda memesan.</span></p>
   </div>
 
   <div class="share-row">
-    <span class="share-label">シェア <span class="en">Share</span> <span class="idn">Bagikan</span></span>
+    <span class="share-label"><span class="en">Share</span><span class="jp">シェア</span><span class="idn">Bagikan</span></span>
     <a class="share-btn line" id="shareLine" href="#" target="_blank" rel="noopener">LINE</a>
     <a class="share-btn wa" id="shareWa" href="#" target="_blank" rel="noopener">WhatsApp</a>
     <a class="share-btn fb" id="shareFb" href="#" target="_blank" rel="noopener">Facebook</a>
-    <button type="button" class="share-btn copy" id="shareCopy">リンクをコピー <span class="en">Copy link</span> <span class="idn">Salin tautan</span></button>
+    <button type="button" class="share-btn copy" id="shareCopy"><span class="en">Copy link</span><span class="jp">リンクをコピー</span><span class="idn">Salin tautan</span></button>
   </div>
   <div class="search-box">
     <input type="text" id="searchInput" placeholder="商品を検索 Search / Cari produk…">
   </div>
   <!-- ⭐ Popular slideshow (only shown when at least one visible product is starred) -->
   <section id="popShow" hidden>
-    <h2 class="ss-title">⭐ 人気商品 <span class="en">Popular</span> <span class="idn">Populer</span></h2>
+    <h2 class="ss-title"><span class="en">Popular</span><span class="jp">⭐ 人気商品</span><span class="idn">Populer</span></h2>
     <div class="ss-box">
       <div class="ss-track" id="ssTrack"></div>
       <button type="button" class="ss-arrow ss-prev" id="ssPrev" aria-label="Previous">‹</button>
@@ -365,17 +376,17 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
   </section>
   <div class="chips" id="chips"></div>
   <div class="grid" id="grid"></div>
-  <p class="empty-note" id="emptyNote" hidden>商品が見つかりません。No products found. Produk tidak ditemukan.</p>
-  <button type="button" class="show-more" id="showMore" hidden>もっと見る Show more / Tampilkan lebih banyak</button>
+  <p class="empty-note" id="emptyNote" hidden><span class="en">No products found.</span><span class="jp">商品が見つかりません。</span><span class="idn">Produk tidak ditemukan.</span></p>
+  <button type="button" class="show-more" id="showMore" hidden><span class="en">Show more</span><span class="jp">もっと見る</span><span class="idn">Tampilkan lebih banyak</span></button>
   <p class="count-line" id="countLine"></p>
 
   <div class="howto">
-    <h3>ご注文方法 <span class="en">How to order</span> <span class="idn">Cara memesan</span></h3>
+    <h3><span class="en">How to order</span><span class="jp">ご注文方法</span><span class="idn">Cara memesan</span></h3>
     <ol>
-      <li>商品をカートに入れてください。<span class="en">Add products to the cart.</span> <span class="idn">Masukkan produk ke keranjang.</span></li>
-      <li>カートで名前・電話・受取方法を選び、宅配便の方は住所と支払い方法を入力してください。<span class="en">In the cart, enter name &amp; phone and choose delivery or pickup. Delivery customers add address &amp; payment.</span> <span class="idn">Di keranjang, isi nama &amp; telepon, pilih pengiriman atau ambil di toko. Untuk pengiriman, isi alamat &amp; cara bayar.</span></li>
-      <li>「注文を確定する」を押すとチケットが出て、WhatsAppが開きます。送信を押してください。<span class="en">Press “Confirm Order” — the ticket appears and WhatsApp opens. Tap Send in WhatsApp.</span> <span class="idn">Tekan “Konfirmasi Pesanan” — tiket muncul dan WhatsApp terbuka. Tekan Kirim di WhatsApp.</span></li>
-      <li>支払い：受取は店頭にて。宅配便は振込（確認後に発送・約3日）か代引き。送料は¥10,000以上無料、未満は振込¥990・代引き¥1,800。<span class="en">Payment: at the shop for pickup. Courier: transfer (ships after confirmation, ~3 days) or COD. Fee free at ¥10,000+, else transfer ¥990 / COD ¥1,800.</span> <span class="idn">Bayar: ambil di toko, bayar di toko. Pengiriman: transfer (dikirim setelah terkonfirmasi, ±3 hari) atau COD. Ongkir gratis ¥10,000+, di bawahnya transfer ¥990 / COD ¥1,800.</span></li>
+      <li><span class="en">Add products to the cart.</span><span class="jp">商品をカートに入れてください。</span><span class="idn">Masukkan produk ke keranjang.</span></li>
+      <li><span class="en">In the cart, enter name &amp; phone and choose delivery or pickup. Delivery customers add address &amp; payment.</span><span class="jp">カートで名前・電話・受取方法を選び、宅配便の方は住所と支払い方法を入力してください。</span><span class="idn">Di keranjang, isi nama &amp; telepon, pilih pengiriman atau ambil di toko. Untuk pengiriman, isi alamat &amp; cara bayar.</span></li>
+      <li><span class="en">Press “Confirm Order” — the ticket appears and WhatsApp opens. Tap Send in WhatsApp.</span><span class="jp">「注文を確定する」を押すとチケットが出て、WhatsAppが開きます。送信を押してください。</span><span class="idn">Tekan “Konfirmasi Pesanan” — tiket muncul dan WhatsApp terbuka. Tekan Kirim di WhatsApp.</span></li>
+      <li><span class="en">Payment: at the shop for pickup. Courier: transfer (ships after confirmation, ~3 days) or COD. Fee free at ¥10,000+, else transfer ¥990 / COD ¥1,800.</span><span class="jp">支払い：受取は店頭にて。宅配便は振込（確認後に発送・約3日）か代引き。送料は¥10,000以上無料、未満は振込¥990・代引き¥1,800。</span><span class="idn">Bayar: ambil di toko, bayar di toko. Pengiriman: transfer (dikirim setelah terkonfirmasi, ±3 hari) atau COD. Ongkir gratis ¥10,000+, di bawahnya transfer ¥990 / COD ¥1,800.</span></li>
     </ol>
   </div>
 
@@ -394,8 +405,8 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
 <div class="faq-overlay" id="faqOverlay"></div>
 <div class="faq-panel" id="faqPanel" aria-label="FAQ">
   <button type="button" class="close-x" id="faqCloseBtn" aria-label="Close">×</button>
-  <h2>よくある質問 <span class="en">FAQ</span> <span class="idn">Tanya Jawab</span></h2>
-  <p class="faq-auto">自動案内（よくある質問ガイド）です。スタッフへの質問は緑のチャットボタンからどうぞ。<br>Automatic FAQ guide — for a staff member, use the green Chat button.<br>Panduan otomatis — untuk bertanya ke staf, gunakan tombol Chat hijau.</p>
+  <h2><span class="en">FAQ</span><span class="jp">よくある質問</span><span class="idn">Tanya Jawab</span></h2>
+  <p class="faq-auto"><span class="en">Automatic FAQ guide — for a staff member, use the green Chat button.</span><span class="jp">自動案内（よくある質問ガイド）です。スタッフへの質問は緑のチャットボタンからどうぞ。</span><span class="idn">Panduan otomatis — untuk bertanya ke staf, gunakan tombol Chat hijau.</span></p>
   <div class="faq-chips" id="faqChips"></div>
   <div class="faq-answer" id="faqAnswer"></div>
 </div>
@@ -403,23 +414,23 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
 <!-- cart bar -->
 <div class="cartbar" id="cartbar" hidden>
   <div class="cb-info"><strong id="cbQty">0</strong> 点 items / barang ・ <strong id="cbTotal">¥0</strong></div>
-  <button type="button" id="openCartBtn">カートを見る View Cart / Keranjang</button>
+  <button type="button" id="openCartBtn"><span class="en">View Cart</span><span class="jp">カートを見る</span><span class="idn">Keranjang</span></button>
 </div>
 
 <!-- cart sheet -->
 <div class="overlay" id="overlay"></div>
 <aside class="sheet" id="cartSheet" aria-label="Cart">
   <button type="button" class="close-x" id="closeCartBtn" aria-label="Close">×</button>
-  <h2>カート <span class="en">Your Cart</span> <span class="idn">Keranjang</span></h2>
+  <h2><span class="en">Your Cart</span><span class="jp">カート</span><span class="idn">Keranjang</span></h2>
   <div id="cartItems"></div>
   <div class="totals" id="totals"></div>
   <p class="fee-note" id="feeLine"></p>
 
   <div class="coupon-box">
-    <label class="flabel" for="couponInput">クーポンコード <span class="en">Coupon code</span> <span class="idn">Kode kupon</span></label>
+    <label class="flabel" for="couponInput"><span class="en">Coupon code</span><span class="jp">クーポンコード</span><span class="idn">Kode kupon</span></label>
     <div class="coupon-row" id="couponRow">
       <input type="text" id="couponInput" placeholder="クーポンコード Coupon code / Kode kupon" autocomplete="off">
-      <button type="button" class="coupon-apply" id="couponApplyBtn">適用 <span class="en">Apply</span> <span class="idn">Pakai</span></button>
+      <button type="button" class="coupon-apply" id="couponApplyBtn"><span class="en">Apply</span><span class="jp">適用</span><span class="idn">Pakai</span></button>
     </div>
     <p class="coupon-msg" id="couponMsg" hidden></p>
     <div class="coupon-applied" id="couponApplied" hidden>
@@ -429,84 +440,84 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
     <p class="coupon-paused" id="couponPaused" hidden></p>
   </div>
 
-  <span class="flabel">受け取り方法 <span class="en">Delivery / Pickup</span> <span class="idn">Pengiriman / Ambil</span></span>
+  <span class="flabel"><span class="en">Delivery / Pickup</span><span class="jp">受け取り方法</span><span class="idn">Pengiriman / Ambil</span></span>
   <div class="seg" id="fulfillSeg">
-    <button type="button" data-fulfill="delivery" class="selected">宅配便<span class="en">Courier Delivery</span><span class="idn">Pengiriman</span></button>
-    <button type="button" data-fulfill="pickup">店頭受取<span class="en">Pickup at shop — free</span><span class="idn">Ambil di toko — gratis</span></button>
+    <button type="button" data-fulfill="delivery" class="selected"><span class="en">Courier Delivery</span><span class="jp">宅配便</span><span class="idn">Pengiriman</span></button>
+    <button type="button" data-fulfill="pickup"><span class="en">Pickup at shop — free</span><span class="jp">店頭受取</span><span class="idn">Ambil di toko — gratis</span></button>
   </div>
 
   <div id="branchField">
-  <span class="flabel">受け取り店舗 <span class="en">Pickup Branch</span> <span class="idn">Toko pengambilan</span></span>
+  <span class="flabel"><span class="en">Pickup Branch</span><span class="jp">受け取り店舗</span><span class="idn">Toko pengambilan</span></span>
   <div class="seg" id="branchSeg">
-    <button type="button" data-branch="Anjo" class="selected">安城店<span class="en">Anjo</span><span class="idn">Anjo</span></button>
-    <button type="button" data-branch="Toyota">豊田店<span class="en">Toyota</span><span class="idn">Toyota</span></button>
+    <button type="button" data-branch="Anjo" class="selected"><span class="en">Anjo</span><span class="jp">安城店</span><span class="idn">Anjo</span></button>
+    <button type="button" data-branch="Toyota"><span class="en">Toyota</span><span class="jp">豊田店</span><span class="idn">Toyota</span></button>
   </div>
-  <p class="fee-note" id="branchHint">選んだ店舗でお受け取りください。Pick up at the branch you choose. Ambil di toko yang dipilih.</p>
+  <p class="fee-note" id="branchHint"><span class="en">Pick up at the branch you choose.</span><span class="jp">選んだ店舗でお受け取りください。</span><span class="idn">Ambil di toko yang dipilih.</span></p>
   </div>
 
   <form id="orderForm" novalidate>
     <div class="saved-note" id="savedNote" hidden>
-      <span>前回の情報を保存しています <span class="en">Your details are saved on this device</span> <span class="idn">Data Anda tersimpan di perangkat ini</span></span>
-      <button type="button" class="saved-clear" id="savedClearBtn">クリア <span class="en">Clear</span> <span class="idn">Hapus</span></button>
+      <span><span class="en">Your details are saved on this device</span><span class="jp">前回の情報を保存しています</span><span class="idn">Data Anda tersimpan di perangkat ini</span></span>
+      <button type="button" class="saved-clear" id="savedClearBtn"><span class="en">Clear</span><span class="jp">クリア</span><span class="idn">Hapus</span></button>
     </div>
-    <label class="flabel" for="fPhone">電話番号 <span class="en">Phone</span> <span class="idn">Telepon</span><span class="req">*</span></label>
+    <label class="flabel" for="fPhone"><span class="en">Phone<span class="req">*</span></span><span class="jp">電話番号</span><span class="idn">Telepon</span></label>
     <input type="tel" id="fPhone" autocomplete="tel" placeholder="電話番号 Phone / Telepon">
-    <p class="phone-hint">前回ご注文の方は、番号を入れると住所などが自動で入ります<br><span class="en">If you ordered before, enter your number and your details will fill in automatically</span><br><span class="idn">Jika pernah memesan, masukkan nomor Anda dan data akan terisi otomatis</span></p>
-    <p class="lookup-msg" id="lookupMsg" hidden>お客様情報を見つけました <span class="en">Found your details</span> <span class="idn">Data Anda ditemukan</span></p>
+    <p class="phone-hint"><span class="en">If you ordered before, enter your number and your details will fill in automatically</span><span class="jp">前回ご注文の方は、番号を入れると住所などが自動で入ります</span><span class="idn">Jika pernah memesan, masukkan nomor Anda dan data akan terisi otomatis</span></p>
+    <p class="lookup-msg" id="lookupMsg" hidden><span class="en">Found your details</span><span class="jp">お客様情報を見つけました</span><span class="idn">Data Anda ditemukan</span></p>
     <div class="points-bal-card" id="checkoutPointsLine" hidden></div>
-    <label class="flabel" for="fPointsUse">使うポイント（任意）<span class="en"> Points to use (optional)</span> <span class="idn">Poin yang dipakai (opsional)</span></label>
+    <label class="flabel" for="fPointsUse"><span class="en">Points to use (optional)</span><span class="jp">使うポイント（任意）</span><span class="idn">Poin yang dipakai (opsional)</span></label>
     <input type="number" id="fPointsUse" min="0" step="1" inputmode="numeric" placeholder="例：200 e.g. 200">
-    <p class="addr-warn" id="pointsUseWarn" hidden>使うポイントが残高を超えています — 店舗で残高を確認します。このまま注文する場合は、もう一度「注文を確定する」を押してください。<br><span class="en">That is more points than your available balance — the shop will confirm. To order anyway, press Confirm Order once more.</span><br><span class="idn">Poin melebihi saldo tersedia — toko akan memeriksa. Untuk tetap memesan, tekan Konfirmasi Pesanan sekali lagi.</span></p>
-    <p class="addr-warn" id="phoneWarn" hidden>電話番号の形式が正しくないようです — 確認してください<br><span class="en">This phone number looks incorrect — please check it</span><br><span class="idn">Nomor telepon tampaknya tidak valid — silakan periksa kembali</span></p>
-    <label class="flabel" for="fName">お名前 <span class="en">Name</span> <span class="idn">Nama</span><span class="req">*</span></label>
+    <p class="addr-warn" id="pointsUseWarn" hidden><span class="en">That is more points than your available balance — the shop will confirm. To order anyway, press Confirm Order once more.</span><span class="jp">使うポイントが残高を超えています — 店舗で残高を確認します。このまま注文する場合は、もう一度「注文を確定する」を押してください。</span><span class="idn">Poin melebihi saldo tersedia — toko akan memeriksa. Untuk tetap memesan, tekan Konfirmasi Pesanan sekali lagi.</span></p>
+    <p class="addr-warn" id="phoneWarn" hidden><span class="en">This phone number looks incorrect — please check it</span><span class="jp">電話番号の形式が正しくないようです — 確認してください</span><span class="idn">Nomor telepon tampaknya tidak valid — silakan periksa kembali</span></p>
+    <label class="flabel" for="fName"><span class="en">Name<span class="req">*</span></span><span class="jp">お名前</span><span class="idn">Nama</span></label>
     <input type="text" id="fName" autocomplete="name" placeholder="お名前 Name / Nama">
-    <label class="flabel" for="fEmail">メールアドレス（任意・確認メール用）<span class="en"> Email for confirmation (optional)</span> <span class="idn">Email untuk konfirmasi (opsional)</span></label>
+    <label class="flabel" for="fEmail"><span class="en">Email for confirmation (optional)</span><span class="jp">メールアドレス（任意・確認メール用）</span><span class="idn">Email untuk konfirmasi (opsional)</span></label>
     <input type="email" id="fEmail" autocomplete="email" placeholder="メールアドレス Email (optional)">
     <div id="addressField">
-      <label class="flabel" for="fZip">郵便番号 <span class="en">Postal Code</span> <span class="idn">Kode pos</span><span class="req">*</span></label>
+      <label class="flabel" for="fZip"><span class="en">Postal Code<span class="req">*</span></span><span class="jp">郵便番号</span><span class="idn">Kode pos</span></label>
       <input type="text" id="fZip" inputmode="numeric" autocomplete="postal-code" placeholder="例：446-0071 / e.g. 446-0071">
-      <p class="zip-note" id="zipNote" hidden>郵便番号が見つかりません — 番号を確認してください<br><span class="en">Postal code not found — please check it</span><br><span class="idn">Kode pos tidak ditemukan — silakan periksa kembali</span></p>
-      <label class="flabel" for="fPref">都道府県 <span class="en">Prefecture</span> <span class="idn">Prefektur</span><span class="req">*</span></label>
+      <p class="zip-note" id="zipNote" hidden><span class="en">Postal code not found — please check it</span><span class="jp">郵便番号が見つかりません — 番号を確認してください</span><span class="idn">Kode pos tidak ditemukan — silakan periksa kembali</span></p>
+      <label class="flabel" for="fPref"><span class="en">Prefecture<span class="req">*</span></span><span class="jp">都道府県</span><span class="idn">Prefektur</span></label>
       <input type="text" id="fPref" autocomplete="address-level1" placeholder="都道府県 Prefecture / Prefektur">
-      <label class="flabel" for="fCity">市区町村 <span class="en">City / Ward</span> <span class="idn">Kota</span><span class="req">*</span></label>
+      <label class="flabel" for="fCity"><span class="en">City / Ward<span class="req">*</span></span><span class="jp">市区町村</span><span class="idn">Kota</span></label>
       <input type="text" id="fCity" autocomplete="address-level2" placeholder="市区町村 City / Kota">
-      <label class="flabel" for="fTown">町名 <span class="en">Town / District</span> <span class="idn">Kelurahan / Distrik</span><span class="req">*</span></label>
+      <label class="flabel" for="fTown"><span class="en">Town / District<span class="req">*</span></span><span class="jp">町名</span><span class="idn">Kelurahan / Distrik</span></label>
       <input type="text" id="fTown" placeholder="町名 Town / Distrik">
-      <label class="flabel" for="fStreet">番地 <span class="en">Street Number</span> <span class="idn">Nomor jalan</span><span class="req">*</span></label>
+      <label class="flabel" for="fStreet"><span class="en">Street Number<span class="req">*</span></span><span class="jp">番地</span><span class="idn">Nomor jalan</span></label>
       <input type="text" id="fStreet" autocomplete="address-line1" placeholder="番地 Street number / Nomor jalan">
-      <label class="flabel" for="fBuilding">建物名・部屋番号 <span class="en">Building / Room (optional)</span> <span class="idn">Gedung / Kamar (opsional)</span></label>
+      <label class="flabel" for="fBuilding"><span class="en">Building / Room (optional)</span><span class="jp">建物名・部屋番号</span><span class="idn">Gedung / Kamar (opsional)</span></label>
       <input type="text" id="fBuilding" autocomplete="address-line2" placeholder="建物名・部屋番号 Building / Room (optional)">
-      <p class="map-line"><a href="https://www.google.com/maps/search/?api=1&amp;query=" id="mapCheckLink" target="_blank" rel="noopener">📍 地図で確認 <span class="en">Check on map</span> <span class="idn">Lihat di peta</span></a></p>
-      <p class="addr-warn" id="addrWarn" hidden>住所が短すぎるようです。番地まで正しく入力されていますか？<br><span class="en">This address looks too short — please check it</span><br><span class="idn">Alamat tampaknya terlalu singkat — silakan periksa kembali</span></p>
+      <p class="map-line"><a href="https://www.google.com/maps/search/?api=1&amp;query=" id="mapCheckLink" target="_blank" rel="noopener"><span class="en">Check on map</span><span class="jp">📍 地図で確認</span><span class="idn">Lihat di peta</span></a></p>
+      <p class="addr-warn" id="addrWarn" hidden><span class="en">This address looks too short — please check it</span><span class="jp">住所が短すぎるようです。番地まで正しく入力されていますか？</span><span class="idn">Alamat tampaknya terlalu singkat — silakan periksa kembali</span></p>
     </div>
     <div id="paymentField">
-      <span class="flabel">お支払い方法 <span class="en">Payment</span> <span class="idn">Cara bayar</span></span>
+      <span class="flabel"><span class="en">Payment</span><span class="jp">お支払い方法</span><span class="idn">Cara bayar</span></span>
       <div class="seg" id="paymentSeg" style="flex-wrap:wrap;">
-        <button type="button" data-pay="yucho" class="selected">ゆうちょ銀行振込<span class="en">Japan Post Transfer</span><span class="idn">Transfer Japan Post</span></button>
-        <button type="button" data-pay="bank">銀行振込<span class="en">Bank Transfer</span><span class="idn">Transfer Bank</span></button>
-        <button type="button" data-pay="cod">代引き<span class="en">Cash on Delivery</span><span class="idn">Bayar di tempat (COD)</span></button>
+        <button type="button" data-pay="yucho" class="selected"><span class="en">Japan Post Transfer</span><span class="jp">ゆうちょ銀行振込</span><span class="idn">Transfer Japan Post</span></button>
+        <button type="button" data-pay="bank"><span class="en">Bank Transfer</span><span class="jp">銀行振込</span><span class="idn">Transfer Bank</span></button>
+        <button type="button" data-pay="cod"><span class="en">Cash on Delivery</span><span class="jp">代引き</span><span class="idn">Bayar di tempat (COD)</span></button>
       </div>
       <p class="fee-note" id="paymentNote"></p>
     </div>
-    <label class="flabel" for="fNote">メッセージ（任意）<span class="en"> Message (optional)</span> <span class="idn">Pesan (opsional)</span></label>
+    <label class="flabel" for="fNote"><span class="en">Message (optional)</span><span class="jp">メッセージ（任意）</span><span class="idn">Pesan (opsional)</span></label>
     <textarea id="fNote" placeholder="ご要望があればどうぞ Any requests / Pesan"></textarea>
-    <label class="flabel" for="fPointsPhone">ポイント用電話番号（任意）<span class="en"> Phone for points (optional)</span> <span class="idn">Nomor telepon poin (opsional)</span></label>
+    <label class="flabel" for="fPointsPhone"><span class="en">Phone for points (optional)</span><span class="jp">ポイント用電話番号（任意）</span><span class="idn">Nomor telepon poin (opsional)</span></label>
     <input type="tel" id="fPointsPhone" autocomplete="tel" placeholder="ポイント用電話番号 Phone for points">
-    <p class="addr-warn" id="pointsPhoneWarn" hidden>電話番号の形式が正しくないようです — 確認してください<br><span class="en">This phone number looks incorrect — please check it</span><br><span class="idn">Nomor telepon tampaknya tidak valid — silakan periksa kembali</span></p>
-    <p class="fee-note">ポイント：1pt = ¥1。購入の1ヶ月後から使えます。店舗で残高を確認して割引します。<br>Points: 1 pt = ¥1, usable 1 month after purchase. The shop confirms your balance and applies the discount.<br>Poin: 1 poin = ¥1, bisa dipakai 1 bulan setelah pembelian. Toko akan memeriksa saldo dan memberi diskon.<br><a href="#pointsCheck" id="pointsCheckLink">ポイント残高を確認する Check points balance / Cek saldo poin →</a></p>
+    <p class="addr-warn" id="pointsPhoneWarn" hidden><span class="en">This phone number looks incorrect — please check it</span><span class="jp">電話番号の形式が正しくないようです — 確認してください</span><span class="idn">Nomor telepon tampaknya tidak valid — silakan periksa kembali</span></p>
+    <p class="fee-note"><span class="en">Points: 1 pt = ¥1, usable 1 month after purchase. The shop confirms your balance and applies the discount.</span><span class="jp">ポイント：1pt = ¥1。購入の1ヶ月後から使えます。店舗で残高を確認して割引します。</span><span class="idn">Poin: 1 poin = ¥1, bisa dipakai 1 bulan setelah pembelian. Toko akan memeriksa saldo dan memberi diskon.</span><a href="#pointsCheck" id="pointsCheckLink"><span class="en">Check points balance →</span><span class="jp">ポイント残高を確認する</span><span class="idn">Cek saldo poin</span></a></p>
 
     <div class="form-error" id="formError"></div>
     <div class="invoice-preview" id="invoicePreview"></div>
-    <button type="submit" class="confirm-btn" id="confirmBtn">注文を確定する <span class="en">Confirm Order</span> <span class="idn">Konfirmasi Pesanan</span></button>
-    <p class="confirm-hint">1回押すとチケットが出て、WhatsAppが開きます。<br>One press: ticket shows, WhatsApp opens. Sekali tekan: tiket muncul, WhatsApp terbuka.</p>
-    <p class="pay-note">受取は店頭でお支払い。宅配便は振込（確認後に発送）か代引き。<br>Pickup: pay at the shop. Courier: transfer (ships after confirmation) or COD.<br>Ambil di toko: bayar di toko. Pengiriman: transfer (dikirim setelah terkonfirmasi) atau COD.</p>
+    <button type="submit" class="confirm-btn" id="confirmBtn"><span class="en">Confirm Order</span><span class="jp">注文を確定する</span><span class="idn">Konfirmasi Pesanan</span></button>
+    <p class="confirm-hint"><span class="en">One press: ticket shows, WhatsApp opens.</span><span class="jp">1回押すとチケットが出て、WhatsAppが開きます。</span><span class="idn">Sekali tekan: tiket muncul, WhatsApp terbuka.</span></p>
+    <p class="pay-note"><span class="en">Pickup: pay at the shop. Courier: transfer (ships after confirmation) or COD.</span><span class="jp">受取は店頭でお支払い。宅配便は振込（確認後に発送）か代引き。</span><span class="idn">Ambil di toko: bayar di toko. Pengiriman: transfer (dikirim setelah terkonfirmasi) atau COD.</span></p>
   </form>
 
   <div class="ticket-box" id="ticketBox" hidden>
-    <h3>ご注文ありがとうございます！<br><span class="en">Thank you — your order ticket</span><br><span class="idn">Terima kasih — tiket pesanan Anda</span></h3>
+    <h3><span class="en">Thank you — your order ticket</span><span class="jp">ご注文ありがとうございます！</span><span class="idn">Terima kasih — tiket pesanan Anda</span></h3>
     <pre id="ticketText"></pre>
-    <p class="email-note" id="emailSentNote" hidden>確認メールを送信しました<br><span class="en">Confirmation email sent</span><br><span class="idn">Email konfirmasi terkirim</span></p>
-    <a class="wa-fallback" id="waFallback" href="#" target="_blank" rel="noopener">WhatsAppが開かない場合はこちら — Open WhatsApp / Buka WhatsApp</a>
+    <p class="email-note" id="emailSentNote" hidden><span class="en">Confirmation email sent</span><span class="jp">確認メールを送信しました</span><span class="idn">Email konfirmasi terkirim</span></p>
+    <a class="wa-fallback" id="waFallback" href="#" target="_blank" rel="noopener"><span class="en">Open WhatsApp</span><span class="jp">WhatsAppが開かない場合はこちら</span><span class="idn">Buka WhatsApp</span></a>
   </div>
 </aside>
 
@@ -553,8 +564,8 @@ var CAT_TRILINGUAL = {
 };
 function catChipLabel(c){
   var t = CAT_TRILINGUAL[c.id];
-  if (t) return t.jp + " " + t.en + " / " + t.idn;
-  return (c.jp ? c.jp + " " : "") + c.en;
+  if (t) return stack3(esc(t.en), esc(t.jp), esc(t.idn));
+  return stack3(esc(c.en), esc(c.jp || ""), "");
 }
 /* Bank details shown on the ticket for transfer payments.
    TODO (owner): replace these placeholders with the confirmed account details. */
@@ -583,6 +594,16 @@ var payment = "yucho"; // delivery only: "yucho" | "bank" | "cod"
 
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 function yen(n){ return "¥" + Number(n).toLocaleString("ja-JP"); }
+/* Trilingual stack markup (owner 2026-11-22): EN main/bold first, JP below
+   smaller, IDN below muted — the .en/.jp/.idn CSS does the layout. Parts
+   must already be escaped when they carry data; empty parts are skipped. */
+function stack3(en, jp, idn){
+  var h = "";
+  if (en) h += '<span class="en">' + en + '</span>';
+  if (jp) h += '<span class="jp">' + jp + '</span>';
+  if (idn) h += '<span class="idn">' + idn + '</span>';
+  return h;
+}
 function catById(id){ for (var i=0;i<CATEGORIES.length;i++) if (CATEGORIES[i].id===id) return CATEGORIES[i]; return null; }
 function productById(id){ for (var i=0;i<PRODUCTS.length;i++) if (PRODUCTS[i].id===id) return PRODUCTS[i]; return null; }
 function visibleProducts(){ return PRODUCTS.filter(function(p){ return p.active !== false && p.on !== false; }); }
@@ -613,10 +634,10 @@ function renderChips(){
   var vis = visibleProducts();
   var counts = {};
   vis.forEach(function(p){ productCats(p).forEach(function(c){ counts[c] = (counts[c]||0)+1; }); });
-  var html = '<button type="button" class="chip' + (activeCat==="all" ? " active" : "") + '" data-cat="all">すべて All / Semua<span class="cnt">' + vis.length + '</span></button>';
+  var html = '<button type="button" class="chip' + (activeCat==="all" ? " active" : "") + '" data-cat="all"><span class="chip-labels">' + stack3("All", "すべて", "Semua") + '</span><span class="cnt">' + vis.length + '</span></button>';
   CATEGORIES.forEach(function(c){
     if (!counts[c.id]) return;
-    html += '<button type="button" class="chip' + (activeCat===c.id ? " active" : "") + '" data-cat="' + esc(c.id) + '">' + esc(catChipLabel(c)) + '<span class="cnt">' + counts[c.id] + '</span></button>';
+    html += '<button type="button" class="chip' + (activeCat===c.id ? " active" : "") + '" data-cat="' + esc(c.id) + '"><span class="chip-labels">' + catChipLabel(c) + '</span><span class="cnt">' + counts[c.id] + '</span></button>';
   });
   chipsEl.innerHTML = html;
   var btns = chipsEl.querySelectorAll(".chip");
@@ -645,21 +666,21 @@ function cardHTML(p){
     : '<div class="ph-tile">' + esc((p.en || p.jp || "?").trim().charAt(0).toUpperCase()) + '</div>';
   var action;
   if (soldOut){
-    action = '<button type="button" class="add-btn" data-add="' + esc(p.id) + '" disabled>売り切れ Sold out / Habis</button>';
+    action = '<button type="button" class="add-btn" data-add="' + esc(p.id) + '" disabled>' + stack3("Sold out", "売り切れ", "Habis") + '</button>';
   } else if (qty === 0){
-    action = '<button type="button" class="add-btn" data-add="' + esc(p.id) + '">カートに入れる Add / Tambah</button>';
+    action = '<button type="button" class="add-btn" data-add="' + esc(p.id) + '">' + stack3("Add", "カートに入れる", "Tambah") + '</button>';
   } else {
     var atCap = tracked && qty >= p.stock;
     action = '<div class="stepper"><button type="button" data-dec="' + esc(p.id) + '">−</button><span class="qty">' + qty + '</span><button type="button" data-inc="' + esc(p.id) + '"' + (atCap ? " disabled" : "") + '>＋</button></div>';
   }
   return '<article class="card" data-card="' + esc(p.id) + '">'
     + '<div class="photo' + (hasTwo ? ' two' : '') + '">' + photo + '</div>'
-    + (soldOut ? '<div class="soldout-badge">売り切れ Sold out / Habis</div>' : '')
-    + '<div class="body"><div class="jp">' + esc(p.jp || p.en) + '</div>'
-    + '<div class="en-name">' + esc(p.en) + '</div>'
+    + (soldOut ? '<div class="soldout-badge">' + stack3("Sold out", "売り切れ", "Habis") + '</div>' : '')
+    + '<div class="body"><div class="en-name">' + esc(p.en || p.jp || "") + '</div>'
+    + (p.jp && p.jp !== p.en ? '<div class="jp">' + esc(p.jp) + '</div>' : '')
     + (p.idn ? '<div class="id-name">' + esc(p.idn) + '</div>' : '')
     + (p.size ? '<div class="size">' + esc(p.size) + '</div>' : '')
-    + (fewLeft ? '<div class="few-note">残りわずか Only a few left / Sisa sedikit</div>' : '')
+    + (fewLeft ? '<div class="few-note">' + stack3("Only a few left", "残りわずか", "Sisa sedikit") + '</div>' : '')
     + '<div class="price">' + yen(p.price) + '</div>' + action + '</div></article>';
 }
 function renderGrid(){
@@ -668,7 +689,10 @@ function renderGrid(){
   gridEl.innerHTML = show.map(cardHTML).join("");
   emptyNote.hidden = list.length !== 0;
   showMoreBtn.hidden = list.length <= shownCount;
-  countLine.textContent = list.length ? ("全 " + list.length + " 商品中 " + show.length + " 件を表示 — Showing " + show.length + " of " + list.length + " products — Menampilkan " + show.length + " dari " + list.length + " produk") : "";
+  countLine.innerHTML = list.length ? stack3(
+    "Showing " + show.length + " of " + list.length + " products",
+    "全 " + list.length + " 商品中 " + show.length + " 件を表示",
+    "Menampilkan " + show.length + " dari " + list.length + " produk") : "";
   bindGridButtons();
   refreshSlideActions();
   renderCartBar();
@@ -941,8 +965,8 @@ function slideActionHTML(p){
   var qty = cart[p.id] || 0;
   var tracked = typeof p.stock === "number";
   var soldOut = tracked && p.stock <= 0;
-  if (soldOut) return '<button type="button" class="add-btn" data-sadd="' + esc(p.id) + '" disabled>売り切れ Sold out / Habis</button>';
-  if (qty === 0) return '<button type="button" class="add-btn" data-sadd="' + esc(p.id) + '">カートに入れる Add / Tambah</button>';
+  if (soldOut) return '<button type="button" class="add-btn" data-sadd="' + esc(p.id) + '" disabled>' + stack3("Sold out", "売り切れ", "Habis") + '</button>';
+  if (qty === 0) return '<button type="button" class="add-btn" data-sadd="' + esc(p.id) + '">' + stack3("Add", "カートに入れる", "Tambah") + '</button>';
   var atCap = tracked && qty >= p.stock;
   return '<div class="stepper"><button type="button" data-sdec="' + esc(p.id) + '">−</button><span class="qty">' + qty + '</span><button type="button" data-sinc="' + esc(p.id) + '"' + (atCap ? " disabled" : "") + '>＋</button></div>';
 }
@@ -961,12 +985,12 @@ function slideHTML(p){
   return '<div class="ss-slide" data-slide="' + esc(p.id) + '">'
     + '<div class="ss-photo" data-sphoto="' + esc(p.id) + '">' + photo + '</div>'
     + '<div class="ss-info">'
-    + (soldOut ? '<div class="soldout-badge">売り切れ Sold out / Habis</div>' : '')
-    + '<div class="jp">' + esc(p.jp || p.en) + '</div>'
-    + '<div class="en-name">' + esc(p.en) + '</div>'
+    + (soldOut ? '<div class="soldout-badge">' + stack3("Sold out", "売り切れ", "Habis") + '</div>' : '')
+    + '<div class="en-name">' + esc(p.en || p.jp || "") + '</div>'
+    + (p.jp && p.jp !== p.en ? '<div class="jp">' + esc(p.jp) + '</div>' : '')
     + (p.idn ? '<div class="id-name">' + esc(p.idn) + '</div>' : '')
     + (p.size ? '<div class="size">' + esc(p.size) + '</div>' : '')
-    + (fewLeft ? '<div class="few-note">残りわずか Only a few left / Sisa sedikit</div>' : '')
+    + (fewLeft ? '<div class="few-note">' + stack3("Only a few left", "残りわずか", "Sisa sedikit") + '</div>' : '')
     + '<div class="price">' + yen(p.price) + '</div>'
     + '<div class="ss-action">' + slideActionHTML(p) + '</div>'
     + '</div></div>';
@@ -1060,12 +1084,13 @@ window.__supershopSlideshow = {
    rotating every ~5s with a fade/slide (paused on hover/touch and while
    the tab is hidden; a single notice stays static). The board under the
    hero lists all active notices, newest first, max 5. Each notice is
-   owner-written in up to three languages and renders in the shop's
-   current language — Japanese by default — falling back
-   current -> jp -> en -> idn to the first text the owner filled in.
-   Plain JS/CSS only, no libraries, no extra downloads (the notices ride
-   inside products.json). For prefers-reduced-motion there is no
-   rotation and no badge pulse. */
+   owner-written in up to three languages and renders as the shop's
+   trilingual stack (owner 2026-11-22): English main/bold first, then
+   Japanese, then Indonesian — every language the owner filled in is
+   shown; a notice written in one language shows that text as the main
+   line. Plain JS/CSS only, no libraries, no extra downloads (the
+   notices ride inside products.json). For prefers-reduced-motion
+   there is no rotation and no badge pulse. */
 var newsBarEl = document.getElementById("newsBar");
 var nbTrack = document.getElementById("nbTrack");
 var newsBoardEl = document.getElementById("newsBoard");
@@ -1089,6 +1114,16 @@ function noticeText(n, lang){
     if (t) return t;
   }
   return "";
+}
+/* A notice's languages as the trilingual stack: EN main, JP, IDN —
+   skipping the ones the owner left empty; a single-language notice
+   renders its one text as the main (bold) line. */
+function noticeStack(n){
+  var parts = [["en", n && n.en], ["jp", n && n.jp], ["idn", n && n.idn]]
+    .filter(function(x){ return x[1] != null && String(x[1]).trim() !== ""; });
+  if (!parts.length) return "";
+  if (parts.length === 1) return '<span class="en">' + esc(parts[0][1]) + '</span>';
+  return parts.map(function(x){ return '<span class="' + x[0] + '">' + esc(x[1]) + '</span>'; }).join("");
 }
 function activeNotices(){
   return NOTICES.map(function(n, i){ return { n: n, i: i }; })
@@ -1122,13 +1157,13 @@ function renderNews(){
     return;
   }
   nbTrack.innerHTML = nbList.map(function(n){
-    return '<div class="nb-slide"><span class="nb-date">' + esc(n.date || "") + '</span>' + esc(noticeText(n, newsLang)) + '</div>';
+    return '<div class="nb-slide"><span class="nb-date">' + esc(n.date || "") + '</span>' + noticeStack(n) + '</div>';
   }).join("");
   newsBarEl.hidden = false;
   if (nbIdx >= nbList.length) nbIdx = 0;
   nbShow(nbIdx);
   newsListEl.innerHTML = nbList.slice(0, 5).map(function(n){
-    return '<div class="news-item"><span class="news-date">' + esc(n.date || "") + '</span><p>' + esc(noticeText(n, newsLang)) + '</p></div>';
+    return '<div class="news-item"><span class="news-date">' + esc(n.date || "") + '</span><p>' + noticeStack(n) + '</p></div>';
   }).join("");
   newsBoardEl.hidden = false;
   nbUpdate();
@@ -1163,7 +1198,7 @@ document.getElementById("searchInput").addEventListener("input", function(){ sea
 var stockToastTimer = null;
 function showStockToast(p){
   var el = document.getElementById("stockToast");
-  el.textContent = "在庫は " + p.stock + " 個までです — Only " + p.stock + " in stock / Stok hanya " + p.stock;
+  el.innerHTML = stack3("Only " + p.stock + " in stock", "在庫は " + p.stock + " 個までです", "Stok hanya " + p.stock);
   el.classList.add("show");
   if (stockToastTimer) clearTimeout(stockToastTimer);
   stockToastTimer = setTimeout(function(){ el.classList.remove("show"); }, 2400);
@@ -1254,7 +1289,7 @@ function renderCouponBox(){
       "🎟️ " + appliedCoupon.code + " — " + (appliedCoupon.kind === "pct" ? (Number(appliedCoupon.value) + "% OFF") : (yen(appliedCoupon.value) + " OFF"));
     if (couponPaused()){
       var min = Number(appliedCoupon.min) || 0;
-      pausedEl.innerHTML = "小計が " + yen(min) + " 未満のため、クーポンは一時停止中です。<br><span class=\"en\">Coupon paused — the subtotal is under " + yen(min) + ".</span><br><span class=\"idn\">Kupon dijeda — subtotal di bawah " + yen(min) + ".</span>";
+      pausedEl.innerHTML = stack3("Coupon paused — the subtotal is under " + yen(min) + ".", "小計が " + yen(min) + " 未満のため、クーポンは一時停止中です。", "Kupon dijeda — subtotal di bawah " + yen(min) + ".");
       pausedEl.hidden = false;
     } else pausedEl.hidden = true;
   } else {
@@ -1267,20 +1302,20 @@ function applyCoupon(){
   var raw = document.getElementById("couponInput").value;
   var c = findShopCoupon(raw);
   if (!String(raw).trim() || !c){
-    couponError("クーポンコードが正しくありません。<br><span class=\"en\">Invalid coupon code.</span><br><span class=\"idn\">Kode kupon tidak valid.</span>");
+    couponError(stack3("Invalid coupon code.", "クーポンコードが正しくありません。", "Kode kupon tidak valid."));
     return;
   }
   if (c.active === false){
-    couponError("このクーポンは現在使えません。<br><span class=\"en\">This coupon is not available.</span><br><span class=\"idn\">Kupon ini tidak tersedia.</span>");
+    couponError(stack3("This coupon is not available.", "このクーポンは現在使えません。", "Kupon ini tidak tersedia."));
     return;
   }
   if (c.expiry && c.expiry < todayJstStr()){
-    couponError("このクーポンは有効期限が切れています。<br><span class=\"en\">This coupon has expired.</span><br><span class=\"idn\">Kupon ini sudah kedaluwarsa.</span>");
+    couponError(stack3("This coupon has expired.", "このクーポンは有効期限が切れています。", "Kupon ini sudah kedaluwarsa."));
     return;
   }
   var min = Number(c.min) || 0;
   if (subtotal() < min){
-    couponError("このクーポンは小計 " + yen(min) + " 以上のご注文で使えます。<br><span class=\"en\">This coupon needs a subtotal of " + yen(min) + " or more.</span><br><span class=\"idn\">Kupon ini untuk subtotal " + yen(min) + " ke atas.</span>");
+    couponError(stack3("This coupon needs a subtotal of " + yen(min) + " or more.", "このクーポンは小計 " + yen(min) + " 以上のご注文で使えます。", "Kupon ini untuk subtotal " + yen(min) + " ke atas."));
     return;
   }
   appliedCoupon = c;
@@ -1308,11 +1343,14 @@ var invoicePreviewEl = document.getElementById("invoicePreview");
 function renderCart(){
   var ids = sortedCartIds();
   if (!ids.length){
-    cartItemsEl.innerHTML = '<p class="empty-note">カートは空です。Your cart is empty. Keranjang kosong.</p>';
+    cartItemsEl.innerHTML = '<p class="empty-note">' + stack3("Your cart is empty.", "カートは空です。", "Keranjang kosong.") + '</p>';
   } else {
     cartItemsEl.innerHTML = ids.map(function(id){
       var p = productById(id);
-      return '<div class="ci-row"><span class="ci-name">' + esc(p.jp || p.en) + ' ' + esc(p.en) + '<br><span class="en">' + yen(p.price) + (p.size ? " ・ " + esc(p.size) : "") + '</span></span>'
+      return '<div class="ci-row"><span class="ci-name"><span class="en">' + esc(p.en || p.jp || "") + '</span>'
+        + (p.jp && p.jp !== p.en ? '<span class="jp">' + esc(p.jp) + '</span>' : '')
+        + (p.idn ? '<span class="idn">' + esc(p.idn) + '</span>' : '')
+        + '<span class="ci-price">' + yen(p.price) + (p.size ? " ・ " + esc(p.size) : "") + '</span></span>'
         + '<span class="ci-stepper"><button type="button" data-cdec="' + esc(id) + '">−</button><strong>' + cart[id] + '</strong><button type="button" data-cinc="' + esc(id) + '">＋</button></span>'
         + '<strong style="min-width:76px; text-align:right;">' + yen(p.price*cart[id]) + '</strong></div>';
     }).join("");
@@ -1321,16 +1359,31 @@ function renderCart(){
   }
   var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount(), grand = st - disc + tax + fee;
   totalsEl.innerHTML =
-    '<div class="t-row"><span>小計 Subtotal</span><span>' + yen(st) + '</span></div>'
-    + (disc > 0 ? '<div class="t-row t-discount"><span>割引 / Discount / Diskon（' + esc(appliedCoupon.code) + '）</span><span>−' + yen(disc) + '</span></div>' : '')
-    + (tax > 0 ? '<div class="t-row"><span>' + taxLabel() + '</span><span>' + yen(tax) + '</span></div>' : '')
-    + '<div class="t-row"><span>送料 Courier fee / Ongkir</span><span>' + (fulfill==="pickup" ? "¥0（店頭受取 Pickup）" : (fee===0 && st>0 ? "¥0 — 無料 FREE" : yen(fee))) + '</span></div>'
-    + '<div class="t-row t-grand"><span>合計 Total</span><span>' + yen(grand) + '</span></div>';
-  if (fulfill === "pickup") feeLineEl.textContent = "店頭受取：送料 ¥0（無料） / Pickup: fee ¥0 — FREE / Ambil di toko: gratis ・ 合計 Total: " + yen(grand);
-  else if (st >= FREE_THRESHOLD) feeLineEl.textContent = "送料：¥0 — 無料 FREE（¥10,000以上） / Courier fee: ¥0 — FREE / Ongkir: GRATIS ・ 合計 Total: " + yen(grand);
-  else if (st > 0 && payment === "cod") feeLineEl.textContent = "送料（代引き）：¥1,800（¥10,000未満） / Courier fee (COD): ¥1,800 / Ongkir (COD): ¥1,800 ・ 合計 Total: " + yen(grand) + " — あと " + yen(FREE_THRESHOLD - st) + " で送料無料 / " + yen(FREE_THRESHOLD - st) + " more for FREE delivery";
-  else if (st > 0) feeLineEl.textContent = "送料：¥990（¥10,000未満） / Courier fee: ¥990 / Ongkir: ¥990 ・ 合計 Total: " + yen(grand) + " — あと " + yen(FREE_THRESHOLD - st) + " で送料無料 / " + yen(FREE_THRESHOLD - st) + " more for FREE delivery";
-  else feeLineEl.textContent = "宅配便：¥10,000以上は送料無料、未満は振込¥990・代引き¥1,800。店頭受取は無料。 / Courier: FREE at ¥10,000+, under — transfer ¥990 / COD ¥1,800. Pickup free. / Pengiriman: GRATIS ¥10,000+, di bawahnya transfer ¥990 / COD ¥1,800. Ambil di toko gratis.";
+    '<div class="t-row"><span>' + stack3("Subtotal", "小計", "") + '</span><span>' + yen(st) + '</span></div>'
+    + (disc > 0 ? '<div class="t-row t-discount"><span>' + stack3("Discount (" + esc(appliedCoupon.code) + ")", "割引（" + esc(appliedCoupon.code) + "）", "Diskon (" + esc(appliedCoupon.code) + ")") + '</span><span>−' + yen(disc) + '</span></div>' : '')
+    + (tax > 0 ? '<div class="t-row"><span>' + stack3("Tax (" + taxRateText() + "%)", "消費税（" + taxRateText() + "%）", "Pajak (" + taxRateText() + "%)") + '</span><span>' + yen(tax) + '</span></div>' : '')
+    + '<div class="t-row"><span>' + stack3("Courier fee", "送料", "Ongkir") + '</span><span>' + (fulfill==="pickup" ? "¥0（店頭受取 Pickup）" : (fee===0 && st>0 ? "¥0 — 無料 FREE" : yen(fee))) + '</span></div>'
+    + '<div class="t-row t-grand"><span>' + stack3("Total", "合計", "") + '</span><span>' + yen(grand) + '</span></div>';
+  if (fulfill === "pickup") feeLineEl.innerHTML = stack3(
+    "Pickup: courier fee ¥0 — FREE — Total: " + yen(grand),
+    "店頭受取：送料 ¥0（無料）・合計 " + yen(grand),
+    "Ambil di toko: ongkir gratis — Total: " + yen(grand));
+  else if (st >= FREE_THRESHOLD) feeLineEl.innerHTML = stack3(
+    "Courier fee: ¥0 — FREE (orders ¥10,000+) — Total: " + yen(grand),
+    "送料：¥0 — 無料（¥10,000以上）・合計 " + yen(grand),
+    "Ongkir: ¥0 — GRATIS (pesanan ¥10,000+) — Total: " + yen(grand));
+  else if (st > 0 && payment === "cod") feeLineEl.innerHTML = stack3(
+    "Courier fee (COD): ¥1,800 (under ¥10,000) — Total: " + yen(grand) + " — " + yen(FREE_THRESHOLD - st) + " more for FREE delivery",
+    "送料（代引き）：¥1,800（¥10,000未満）・合計 " + yen(grand) + " — あと " + yen(FREE_THRESHOLD - st) + " で送料無料",
+    "Ongkir (COD): ¥1,800 (di bawah ¥10,000) — Total: " + yen(grand) + " — kurang " + yen(FREE_THRESHOLD - st) + " lagi untuk GRATIS ongkir");
+  else if (st > 0) feeLineEl.innerHTML = stack3(
+    "Courier fee: ¥990 (under ¥10,000) — Total: " + yen(grand) + " — " + yen(FREE_THRESHOLD - st) + " more for FREE delivery",
+    "送料：¥990（¥10,000未満）・合計 " + yen(grand) + " — あと " + yen(FREE_THRESHOLD - st) + " で送料無料",
+    "Ongkir: ¥990 (di bawah ¥10,000) — Total: " + yen(grand) + " — kurang " + yen(FREE_THRESHOLD - st) + " lagi untuk GRATIS ongkir");
+  else feeLineEl.innerHTML = stack3(
+    "Courier: FREE at ¥10,000+, under — transfer ¥990 / COD ¥1,800. Pickup free.",
+    "宅配便：¥10,000以上は送料無料、未満は振込¥990・代引き¥1,800。店頭受取は無料。",
+    "Pengiriman: GRATIS ¥10,000+, di bawahnya transfer ¥990 / COD ¥1,800. Ambil di toko gratis.");
   renderCouponBox();
   invoicePreviewEl.textContent = buildInvoiceText(readForm().name, readForm().phone, readForm().address, readForm().note, true);
   renderCartBar();
@@ -1560,14 +1613,14 @@ function renderCheckoutPoints(){
   var el = document.getElementById("checkoutPointsLine");
   if (!el) return;
   if (checkoutPoints && checkoutPointsPhone === phoneDigitsForLookup()){
-    var h = '<div class="pbc-row"><span class="pbc-label">利用可能ポイント <span class="en">Available points</span> <span class="idn">Poin tersedia</span></span>'
+    var h = '<div class="pbc-row"><span class="pbc-label">' + stack3("Available points", "利用可能ポイント", "Poin tersedia") + '</span>'
       + '<span class="pbc-val">' + checkoutPoints.available + ' pt <span class="pbc-yen">(= ¥' + checkoutPoints.available + ')</span></span></div>';
     if (checkoutPoints.pending > 0){
-      h += '<div class="pbc-row"><span class="pbc-label">利用待ちポイント <span class="en">Pending points</span> <span class="idn">Poin menunggu</span></span>'
+      h += '<div class="pbc-row"><span class="pbc-label">' + stack3("Pending points", "利用待ちポイント", "Poin menunggu") + '</span>'
         + '<span class="pbc-val">' + checkoutPoints.pending + ' pt</span></div>';
       var mt = pointsMaturesText(checkoutPointsFrom);
       if (mt){
-        h += '<p class="pbc-note">このポイントは' + mt.jp + 'ごろから使えます<br><span class="en">These pending points are usable from ' + mt.en + '</span><br><span class="idn">Poin menunggu ini bisa dipakai mulai ' + mt.idn + '</span></p>';
+        h += '<p class="pbc-note">' + stack3("These pending points are usable from " + mt.en, "このポイントは" + mt.jp + "ごろから使えます", "Poin menunggu ini bisa dipakai mulai " + mt.idn) + '</p>';
       }
     }
     el.innerHTML = h;
@@ -1645,9 +1698,15 @@ function fulfillmentText(){
   return "店頭受取 Pickup — " + branchJp() + " " + branch;
 }
 function paymentNoteText(){
-  if (payment === "cod") return "代引き：商品到着時に配達員へ合計金額をお支払いください。送料は¥10,000未満 ¥1,800／¥10,000以上 無料。Cash on delivery — pay the courier the total on arrival. Courier fee: ¥1,800 under ¥10,000, FREE at ¥10,000+. Bayar ke kurir saat barang tiba. Ongkir COD: ¥1,800 di bawah ¥10,000, GRATIS ¥10,000+.";
+  if (payment === "cod") return stack3(
+    "Cash on delivery — pay the courier the total on arrival. Courier fee: ¥1,800 under ¥10,000, FREE at ¥10,000+.",
+    "代引き：商品到着時に配達員へ合計金額をお支払いください。送料は¥10,000未満 ¥1,800／¥10,000以上 無料。",
+    "Bayar ke kurir saat barang tiba. Ongkir COD: ¥1,800 di bawah ¥10,000, GRATIS ¥10,000+.");
   var info = payment === "yucho" ? BANK_INFO.yucho : BANK_INFO.bank;
-  return "振込先 / Transfer to: " + info + " — 振込確認後に発送します。到着まで約3日かかります。We ship after your transfer is confirmed; delivery takes about 3 days.";
+  return stack3(
+    "Transfer to: " + esc(info) + " — We ship after your transfer is confirmed; delivery takes about 3 days.",
+    "振込先：" + esc(info) + " — 振込確認後に発送します。到着まで約3日かかります。",
+    "");
 }
 function syncFulfillmentUI(){
   document.querySelectorAll("#fulfillSeg button").forEach(function(b){ b.classList.toggle("selected", b.getAttribute("data-fulfill")===fulfill); });
@@ -1657,7 +1716,7 @@ function syncFulfillmentUI(){
   document.getElementById("addressField").hidden = !isDelivery;
   document.getElementById("paymentField").hidden = !isDelivery;
   document.getElementById("branchField").hidden = isDelivery;
-  if (isDelivery) document.getElementById("paymentNote").textContent = paymentNoteText();
+  if (isDelivery) document.getElementById("paymentNote").innerHTML = paymentNoteText();
   renderCart();
 }
 document.querySelectorAll("#fulfillSeg button").forEach(function(b){ b.addEventListener("click", function(){ fulfill = this.getAttribute("data-fulfill"); syncFulfillmentUI(); }); });
@@ -1934,9 +1993,15 @@ overlay.addEventListener("click", closeCart);
    customer under their phone number, then answers { ok:true, orderNo }.
    The body is text/plain on purpose — a "simple request", so the browser
    sends no CORS preflight; Apps Script answers with CORS headers and the
-   JSON can be read back. Resolves with the order number; REJECTS on any
-   failure (network, timeout ~8s, bad response) so the caller can fall
-   back to the Google Form record. */
+   JSON can be read back. Resolves with the order number; REJECTS only
+   after TWO attempts (25s timeout each — Apps Script cold starts can be
+   slow, and a single 8s shot used to drop real orders to the no-number
+   fallback). Both attempts send the IDENTICAL body, including a
+   clientOrderId generated once per Confirm press, so if the first
+   attempt actually reached the sheet but its response was lost, the
+   duplicate row carries the same clientOrderId and can be spotted.
+   Only after both attempts fail does the caller fall back to the
+   Google Form record — an order is never lost. */
 function buildOrderPayload(f){
   var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount();
   var pr = pointsRequest();
@@ -1961,16 +2026,23 @@ function buildOrderPayload(f){
 }
 function postOrderToScript(f){
   var url = orderApiUrl();
-  return fetchWithTimeout(url, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(buildOrderPayload(f))
-  }, 8000)
-    .then(function(r){ return r.json(); })
-    .then(function(res){
-      if (!res || res.ok !== true || !res.orderNo) throw new Error("script did not confirm the order");
-      return String(res.orderNo);
-    });
+  var payload = buildOrderPayload(f);
+  /* One ID per Confirm press, shared by both attempts (see the note above). */
+  payload.clientOrderId = Date.now() + "-" + Math.random().toString(36).slice(2, 10);
+  var body = JSON.stringify(payload);
+  function attempt(){
+    return fetchWithTimeout(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: body
+    }, 25000)
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if (!res || res.ok !== true || !res.orderNo) throw new Error("script did not confirm the order");
+        return String(res.orderNo);
+      });
+  }
+  return attempt().catch(function(){ return attempt(); });
 }
 
 /* ---------- Confirm Order: ticket + WhatsApp in one press ---------- */
@@ -2012,13 +2084,13 @@ document.getElementById("orderForm").addEventListener("submit", function(e){
   var ids = sortedCartIds();
   var f = readForm();
   var isDelivery = fulfill === "delivery";
-  if (!ids.length){ showError("カートが空です。まず商品をカートに入れてください。<br>Your cart is empty — please add items first.<br>Keranjang kosong — tambahkan produk dulu."); return; }
-  if (!f.name){ showError("お名前をご入力ください。<br>Please enter your name.<br>Masukkan nama Anda."); return; }
-  if (!f.phone){ showError("電話番号をご入力ください。<br>Please enter your phone number.<br>Masukkan nomor telepon Anda."); return; }
+  if (!ids.length){ showError('<span class="en">Your cart is empty — please add items first.</span><span class="jp">カートが空です。まず商品をカートに入れてください。</span><span class="idn">Keranjang kosong — tambahkan produk dulu.</span>'); return; }
+  if (!f.name){ showError('<span class="en">Please enter your name.</span><span class="jp">お名前をご入力ください。</span><span class="idn">Masukkan nama Anda.</span>'); return; }
+  if (!f.phone){ showError('<span class="en">Please enter your phone number.</span><span class="jp">電話番号をご入力ください。</span><span class="idn">Masukkan nomor telepon Anda.</span>'); return; }
   if (isDelivery){
-    if (!zipDigits()){ showError("郵便番号をご入力ください。<br>Please enter your postal code.<br>Masukkan kode pos Anda."); return; }
-    if (!fieldVal("fPref") || !fieldVal("fCity") || !fieldVal("fTown")){ showError("都道府県・市区町村・町名をご入力ください。<br>Please enter your prefecture, city and town.<br>Masukkan prefektur, kota, dan kelurahan Anda."); return; }
-    if (!fieldVal("fStreet")){ showError("番地をご入力ください。<br>Please enter your street number.<br>Masukkan nomor jalan Anda."); return; }
+    if (!zipDigits()){ showError('<span class="en">Please enter your postal code.</span><span class="jp">郵便番号をご入力ください。</span><span class="idn">Masukkan kode pos Anda.</span>'); return; }
+    if (!fieldVal("fPref") || !fieldVal("fCity") || !fieldVal("fTown")){ showError('<span class="en">Please enter your prefecture, city and town.</span><span class="jp">都道府県・市区町村・町名をご入力ください。</span><span class="idn">Masukkan prefektur, kota, dan kelurahan Anda.</span>'); return; }
+    if (!fieldVal("fStreet")){ showError('<span class="en">Please enter your street number.</span><span class="jp">番地をご入力ください。</span><span class="idn">Masukkan nomor jalan Anda.</span>'); return; }
   }
   /* Soft checks — warn once, proceed on the second press. Never a dead end. */
   var softBlocked = false, firstWarn = null;
@@ -2045,16 +2117,19 @@ document.getElementById("orderForm").addEventListener("submit", function(e){
   if (orderSubmitting) return;   /* one press, one order */
   if (!orderApiUrl()){ finishOrder(f, "", false); return; }
   /* Customer-ID path: ask the script to record the order + assign its
-     number first (max ~8s). ANY failure falls back to the Form record —
-     the order itself never waits longer and is never lost. */
+     number first (two attempts, 25s each — see postOrderToScript). ANY
+     failure falls back to the Form record — the order is never lost.
+     While waiting, the button says so in all three languages. */
   orderSubmitting = true;
   var btn = document.getElementById("confirmBtn");
+  var btnLabel = btn.innerHTML;
   btn.disabled = true;
+  btn.textContent = "送信中… / Sending order… / Mengirim…";
   postOrderToScript(f).then(function(orderNo){
-    orderSubmitting = false; btn.disabled = false;
+    orderSubmitting = false; btn.disabled = false; btn.innerHTML = btnLabel;
     finishOrder(f, orderNo, true);
   }).catch(function(){
-    orderSubmitting = false; btn.disabled = false;
+    orderSubmitting = false; btn.disabled = false; btn.innerHTML = btnLabel;
     finishOrder(f, "", false);
   });
 });
@@ -2080,13 +2155,13 @@ function computePointBalances(rec){
   });
   return { available: av, pending: pe };
 }
-var PC_NOT_FOUND = "ポイント記録が見つかりませんでした<br>No points record found for this number<br>Data poin tidak ditemukan untuk nomor ini";
+var PC_NOT_FOUND = '<span class="en">No points record found for this number</span><span class="jp">ポイント記録が見つかりませんでした</span><span class="idn">Data poin tidak ditemukan untuk nomor ini</span>';
 document.getElementById("pcBtn").addEventListener("click", function(){
   var digits = document.getElementById("pcPhone").value.replace(/\D/g, "");
   var box = document.getElementById("pcResult");
   box.classList.add("show");
-  if (!digits){ box.innerHTML = "電話番号を入力してください。<br>Please enter your phone number.<br>Masukkan nomor telepon Anda."; return; }
-  box.textContent = "確認中… Checking… Memeriksa…";
+  if (!digits){ box.innerHTML = '<span class="en">Please enter your phone number.</span><span class="jp">電話番号を入力してください。</span><span class="idn">Masukkan nomor telepon Anda.</span>'; return; }
+  box.textContent = "Checking… 確認中… Memeriksa…";
   shopSha256Hex(digits).then(function(hash){
     return fetch("points.json", { cache: "no-store" }).then(function(r){
       if (!r.ok) throw new Error("points.json " + r.status);
@@ -2096,14 +2171,14 @@ document.getElementById("pcBtn").addEventListener("click", function(){
       if (!rec){ box.innerHTML = PC_NOT_FOUND; return; }
       var b = computePointBalances(rec);
       var h = '<div class="points-bal-card" style="margin:0;">'
-        + '<div class="pbc-row"><span class="pbc-label">利用可能ポイント <span class="en">Available points</span> <span class="idn">Poin tersedia</span></span>'
+        + '<div class="pbc-row"><span class="pbc-label">' + stack3("Available points", "利用可能ポイント", "Poin tersedia") + '</span>'
         + '<span class="pbc-val">' + b.available + ' pt <span class="pbc-yen">(= ¥' + b.available + ')</span></span></div>';
       if (b.pending > 0){
-        h += '<div class="pbc-row"><span class="pbc-label">利用待ちポイント <span class="en">Pending points</span> <span class="idn">Poin menunggu</span></span>'
+        h += '<div class="pbc-row"><span class="pbc-label">' + stack3("Pending points", "利用待ちポイント", "Poin menunggu") + '</span>'
           + '<span class="pbc-val">' + b.pending + ' pt</span></div>';
         var mt = pointsMaturesText(earliestPendingMatures(rec));
         if (mt){
-          h += '<p class="pbc-note">このポイントは' + mt.jp + 'ごろから使えます<br><span class="en">These pending points are usable from ' + mt.en + '</span><br><span class="idn">Poin menunggu ini bisa dipakai mulai ' + mt.idn + '</span></p>';
+          h += '<p class="pbc-note">' + stack3("These pending points are usable from " + mt.en, "このポイントは" + mt.jp + "ごろから使えます", "Poin menunggu ini bisa dipakai mulai " + mt.idn) + '</p>';
         }
       }
       h += '</div>';
@@ -2152,14 +2227,14 @@ var FAQ_ITEMS = [
 var faqChipsEl = document.getElementById("faqChips");
 var faqAnswerEl = document.getElementById("faqAnswer");
 faqChipsEl.innerHTML = FAQ_ITEMS.map(function(item, i){
-  return '<button type="button" class="faq-chip" data-faq="' + i + '">' + esc(item.q.jp) + ' <span class="en">' + esc(item.q.en) + '</span> <span class="idn">' + esc(item.q.idn) + '</span></button>';
+  return '<button type="button" class="faq-chip" data-faq="' + i + '">' + stack3(esc(item.q.en), esc(item.q.jp), esc(item.q.idn)) + '</button>';
 }).join("");
 faqChipsEl.querySelectorAll("[data-faq]").forEach(function(b){
   b.addEventListener("click", function(){
     var item = FAQ_ITEMS[Number(this.getAttribute("data-faq"))];
     faqChipsEl.querySelectorAll(".faq-chip").forEach(function(x){ x.classList.remove("active"); });
     this.classList.add("active");
-    faqAnswerEl.innerHTML = "<p>" + esc(item.a.jp) + "</p><p>" + esc(item.a.en) + "</p><p>" + esc(item.a.idn) + "</p>";
+    faqAnswerEl.innerHTML = '<p class="en">' + esc(item.a.en) + '</p><p class="jp">' + esc(item.a.jp) + '</p><p class="idn">' + esc(item.a.idn) + '</p>';
     faqAnswerEl.classList.add("show");
   });
 });
@@ -2179,7 +2254,7 @@ document.getElementById("shareWa").href = "https://wa.me/?text=" + encodeURIComp
 document.getElementById("shareFb").href = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(SITE_URL);
 document.getElementById("shareCopy").addEventListener("click", function(){
   var btn = this;
-  function done(){ var old = btn.textContent; btn.textContent = "コピーしました Copied ✓"; setTimeout(function(){ btn.textContent = old; }, 2200); }
+  function done(){ var old = btn.innerHTML; btn.textContent = "Copied ✓ コピーしました"; setTimeout(function(){ btn.innerHTML = old; }, 2200); }
   if (navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(SITE_URL).then(done).catch(function(){ done(); });
   } else { done(); }
