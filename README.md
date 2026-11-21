@@ -11,7 +11,7 @@ where it belongs — branch / pickup names, the logo, contact lines.)
 
 **Admin panel layout:** the daily-use sections come first — ① Add product
 (with the ⚡ Quick Add card at the top), ② Products, ③ Reply templates, ④ Points, ⑤ Orders,
-⑥ News board, ⑦ Coupons, vouchers & tax — and ⑧ Setup (GitHub token) sits at the very bottom, because the token is a one-time setup.
+⑥ Sales report, ⑦ News board, ⑧ Coupons, vouchers & tax — and ⑨ Setup (GitHub token) sits at the very bottom, because the token is a one-time setup.
 If no token is saved on the device, a slim notice at the top of the page points down to Setup.
 
 ## How saving works (GitHub is the database)
@@ -191,6 +191,39 @@ text instead of being auto-converted by Sheets into a date. If the script is eve
 re-deployed from the local file, that text-format fix must be re-applied and the
 contract re-checked. (Script changes need Deploy → Manage deployments → New version
 to go live; a plain save does not update the web app.)
+
+## 📊 Sales report (admin panel ⑥)
+
+The admin's **⑥ Sales report** panel shows how the shop is doing, worked out
+from the orders recorded in the spreadsheet's **“Orders”** tab (the records
+written by the customer-ID / order-number feature above):
+
+- **Today / This week / This month** — sales ¥, order count and average
+  order value for each period (plus yesterday's figures for reference).
+  Weeks start on Monday; all periods are Asia/Tokyo (JST) calendar periods.
+- **Growth** — this week vs last week and this month vs last month, as a
+  percentage with a ▲ / ▼ arrow (shown as “—” when the earlier period had
+  no sales to compare with).
+- **Top 5 products** — by quantity sold, parsed from the orders' item
+  lines, with the ¥ total for each.
+- **Customers** — how many different phone numbers have ordered, and how
+  many of them are repeat customers (2 or more orders).
+
+Pressing **“📊 Load sales report”** POSTs `{ "action": "stats" }` to the
+same Apps Script endpoint the admin already uses for the online photo
+reader (the `ORDERS_API_URL` constant), and the script answers with the
+figures as JSON. Loading the report is read-only — it never changes any
+record.
+
+**One-time setup (Manager):** the deployed Apps Script does not know the
+`stats` action until the code in **`apps-script-stats-snippet.txt`** (in
+this folder) is pasted into it — one route line inside `doPost`, next to
+the `order` / `lookup` routes, plus the `handleStats_()` functions at the
+end of the file — **and a New version is deployed** (Deploy → Manage
+deployments → edit → Version: New version → Deploy; a plain save does not
+update the live web app). Until that is done, the panel's Load button shows
+a “could not load” error; the rest of the admin is unaffected. An empty
+Orders sheet (no orders yet) reports all zeros.
 
 ## Address & phone check (checkout)
 
@@ -387,7 +420,7 @@ add a product:
 3. Press **“⚡ Add & Save — goes live now”**. That one press runs the normal Add-product logic
    and then the normal Save, so the product is live in the shop immediately — no separate
    “Save to shop” press needed. If the name or price is missing, the card shows the error and
-   nothing is saved; if no token is set up yet, it says to do the one-time ⑧ Setup first.
+   nothing is saved; if no token is set up yet, it says to do the one-time ⑨ Setup first.
 
 The card's fields write through to the main form below (the form stays the single source of
 truth), and the full form still works exactly as before for stock, Japanese / Indonesian
@@ -505,7 +538,7 @@ from the admin, and customers see them in two prominent places on the shop front
   free text; any one language may be left empty, but at least one must be filled. The admin's
   load/save flow carries `notices` (and any other unknown root fields) through untouched, so a
   product-only save never loses the announcements.
-- **Posting (admin → ⑥ News board):** write the message in Japanese / English / Indonesian
+- **Posting (admin → ⑦ News board):** write the message in Japanese / English / Indonesian
   (any of them), check the date (it defaults to today, JST), press “Add notice” (or Edit an
   existing one and press “Update notice”), then “💾 Save to shop”. Each listed notice has a
   Show/Hide switch, Edit and Delete — same patterns as the product list. Hidden notices stay in
@@ -535,7 +568,7 @@ discount comes off the order. A **gift voucher** is not a separate system — it
   `min` is the minimum **product subtotal** (0 = no minimum); `expiry` blank = never expires.
   Like notices, coupons ride through the admin's load/save flow untouched by other saves, so a
   product-only save never loses them.
-- **Creating codes (admin → ⑦ Coupons, vouchers & tax):** type the code (it is stored
+- **Creating codes (admin → ⑧ Coupons, vouchers & tax):** type the code (it is stored
   upper-cased), choose ¥ off or % off, the value, an optional minimum subtotal and an optional
   expiry date, press “Add coupon” (or Edit an existing one), then “💾 Save to shop”. Codes must
   be **unique** (case-insensitive), the value must be above 0, and a % coupon is capped at 90%.
@@ -565,7 +598,7 @@ Checkout adds consumption tax on top of the discounted product subtotal.
 - **Data:** an optional `taxRate` number (percent) at the root of `products.json`. **Absent =
   default 8.** Like coupons and notices, it is handled explicitly by the admin's data layer, so
   every save writes it back and no other save can drop it.
-- **Changing it (admin → ⑦ Coupons, vouchers & tax):** the “Consumption tax rate %” field at the
+- **Changing it (admin → ⑧ Coupons, vouchers & tax):** the “Consumption tax rate %” field at the
   top of the panel is prefilled with the current rate (0–30, decimals like 8.5 allowed). Type
   the new rate and press any “💾 Save to shop” — the value rides along with every save. **Set 0
   for no tax** (a saved 0 is kept as 0, not treated as absent).
