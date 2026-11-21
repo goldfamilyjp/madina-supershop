@@ -28,7 +28,7 @@
 body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif; background:var(--bg); color:var(--ink); padding-bottom:96px;}
 /* Trilingual rule (owner): JP / EN / ID always render at the SAME font size — never shrink the 2nd/3rd language. */
 .en,.idn{font-size:1em; font-weight:inherit; color:inherit;}
-header{background-color:var(--green); background-image:linear-gradient(rgba(7,48,31,.82), rgba(11,69,48,.90)), url("shop-banner.jpg"); background-size:cover; background-position:center; color:#fff; padding:18px 16px 14px; text-align:center; border-bottom:4px solid var(--gold);}
+header{background-color:var(--green); background-image:linear-gradient(rgba(7,48,31,.80), rgba(11,69,48,.42)), url("shop-banner.jpg"); background-size:cover; background-position:center; color:#fff; padding:24px 16px 20px; text-align:center; border-bottom:4px solid var(--gold); text-shadow:0 1px 6px rgba(0,0,0,.5);}
 header .hero-logo{width:72px; height:72px; object-fit:cover; border-radius:50%; border:2px solid var(--gold); background:#fff; margin-bottom:6px;}
 /* the shop name in gold-gradient display type (CSS only — no font downloads) */
 header .shop-name{
@@ -169,10 +169,11 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .stepper button:disabled{background:#9db3a0; cursor:default;}
 #stockToast{position:fixed; left:50%; transform:translateX(-50%); bottom:228px; background:var(--red); color:#fff; font-weight:700; font-size:.95rem; padding:11px 18px; border-radius:999px; z-index:75; display:none; box-shadow:0 4px 14px rgba(0,0,0,.3); text-align:center; max-width:92vw;}
 #stockToast.show{display:block;}
-/* help / chat buttons — stacked above the sticky cart bar, never overlapping it */
-.help-stack{position:fixed; right:12px; bottom:108px; z-index:45; display:flex; flex-direction:column; gap:8px; align-items:flex-end;}
+/* help / chat buttons — top-right corner, under the FAQ button (owner request:
+   chat option at the TOP of the page, not the bottom) */
+.help-stack{position:fixed; right:12px; top:140px; z-index:45; display:flex; flex-direction:column; gap:8px; align-items:flex-end;}
 .help-btn{display:flex; align-items:center; gap:8px; min-height:48px; border-radius:999px; padding:10px 18px; font-size:1rem; font-weight:800; line-height:1.3; text-decoration:none; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.28);}
-.help-btn.wa{background:#25d366; color:#fff;}
+.help-btn.wa{background:#25d366; color:#fff; width:48px; height:48px; min-height:48px; border-radius:50%; padding:0; justify-content:center; font-size:1.35rem;}
 /* FAQ assistant launcher: one small round button in the top-right corner.
    z-index 45 keeps it under the cart sheet (60), the FAQ panel (90) and
    the photo lightbox (120); the panel itself opens only on tap. */
@@ -332,7 +333,7 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
 
 <!-- help / chat buttons (fixed, above the cart bar) -->
 <div class="help-stack">
-  <a class="help-btn wa" id="waChatBtn" href="#" target="_blank" rel="noopener">チャットで質問 <span class="en">Chat</span> <span class="idn">Chat</span></a>
+  <a class="help-btn wa" id="waChatBtn" href="#" target="_blank" rel="noopener" aria-label="チャットで質問 Chat on WhatsApp" title="チャットで質問 / Chat">✆</a>
 </div>
 <!-- FAQ assistant launcher — small round button, top-right; the panel opens only when tapped -->
 <button type="button" class="faq-fab" id="faqOpenBtn" aria-label="よくある質問 FAQ / Tanya Jawab">💬</button>
