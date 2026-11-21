@@ -46,8 +46,10 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px;}
 @media(min-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));}}
 .card{background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column;}
-.card .photo{aspect-ratio:4/3; background:#e3efe6; display:flex; align-items:center; justify-content:center; overflow:hidden;}
+.card .photo{aspect-ratio:4/3; background:#e3efe6; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;}
 .card .photo img{width:100%; height:100%; object-fit:cover;}
+.card .photo.two{cursor:pointer;}
+.card .photo .ph-badge{position:absolute; right:8px; bottom:8px; background:rgba(7,48,31,.85); color:#fff; font-size:.78rem; font-weight:700; border-radius:999px; padding:2px 9px; pointer-events:none;}
 .card .ph-tile{width:100%; height:100%; background:linear-gradient(135deg,var(--green) 0%,#146344 100%); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:800;}
 .card .body{padding:10px 12px 12px; display:flex; flex-direction:column; gap:3px; flex:1;}
 .card .jp{font-weight:700; font-size:1rem; line-height:1.3;}
@@ -406,8 +408,12 @@ function cardHTML(p){
   var tracked = typeof p.stock === "number";
   var soldOut = tracked && p.stock <= 0;
   var fewLeft = tracked && p.stock >= 1 && p.stock <= 5;
-  var photo = p.photo
-    ? '<img src="' + esc(p.photo) + '" alt="' + esc(p.en) + '" loading="lazy">'
+  var mainPhoto = p.photo || p.photo2 || "";
+  var hasTwo = !!(p.photo && p.photo2);
+  var photo = mainPhoto
+    ? '<img src="' + esc(mainPhoto) + '" alt="' + esc(p.en) + '" loading="lazy"'
+      + (hasTwo ? ' data-front="' + esc(p.photo) + '" data-back="' + esc(p.photo2) + '"' : '') + '>'
+      + (hasTwo ? '<span class="ph-badge">1 / 2</span>' : '')
     : '<div class="ph-tile">' + esc((p.en || p.jp || "?").trim().charAt(0).toUpperCase()) + '</div>';
   var action;
   if (soldOut){
@@ -419,7 +425,7 @@ function cardHTML(p){
     action = '<div class="stepper"><button type="button" data-dec="' + esc(p.id) + '">−</button><span class="qty">' + qty + '</span><button type="button" data-inc="' + esc(p.id) + '"' + (atCap ? " disabled" : "") + '>＋</button></div>';
   }
   return '<article class="card" data-card="' + esc(p.id) + '">'
-    + '<div class="photo">' + photo + '</div>'
+    + '<div class="photo' + (hasTwo ? ' two' : '') + '">' + photo + '</div>'
     + (soldOut ? '<div class="soldout-badge">売り切れ Sold out / Habis</div>' : '')
     + '<div class="body"><div class="jp">' + esc(p.jp || p.en) + '</div>'
     + '<div class="en-name">' + esc(p.en) + '</div>'
@@ -439,6 +445,17 @@ function renderGrid(){
   renderCartBar();
 }
 function bindGridButtons(){
+  /* Two-photo products: tapping the photo switches front <-> back. */
+  gridEl.querySelectorAll(".photo.two").forEach(function(ph){
+    ph.addEventListener("click", function(){
+      var img = ph.querySelector("img"); if (!img) return;
+      var badge = ph.querySelector(".ph-badge");
+      var front = img.getAttribute("data-front"), back = img.getAttribute("data-back");
+      if (!front || !back) return;
+      if (img.getAttribute("src") === back){ img.setAttribute("src", front); if (badge) badge.textContent = "1 / 2"; }
+      else { img.setAttribute("src", back); if (badge) badge.textContent = "2 / 2"; }
+    });
+  });
   gridEl.querySelectorAll("[data-add]").forEach(function(b){ b.addEventListener("click", function(){ setQty(this.getAttribute("data-add"), 1); }); });
   gridEl.querySelectorAll("[data-inc]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-inc"); setQty(id, (cart[id]||0)+1); }); });
   gridEl.querySelectorAll("[data-dec]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-dec"); setQty(id, (cart[id]||0)-1); }); });

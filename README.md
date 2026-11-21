@@ -27,6 +27,13 @@ inside the GitHub repository **goldfamilyjp/madina-supershop** (GitHub Pages hos
 - Product photos can be a normal image URL, or a photo file chosen in the admin — the file is shrunk in the
   browser (max 480 px wide, JPEG) and stored inside `products.json` as a small data-URI, so no separate
   image hosting is needed. Keep photos small; very large `products.json` files load slowly.
+- **Two photos per product (front + back):** each product has the main `photo` field and an optional
+  `photo2` field (the back side — same URL / data-URI format). In the admin, Photo 2 has its own URL and
+  file inputs under Photo 1 in the Add/Edit form, and the ⚡ Quick Add card has a smaller
+  “＋ Add back photo (optional)” button; photo files go through the same resize pipeline (OCR reads
+  Photo 1 only). On the shop front, a product with both photos shows a small “1 / 2” badge on the photo —
+  the customer taps the photo to switch to the back (“2 / 2”) and taps again to return. Products with a
+  single photo (or none) look and behave exactly as before.
 
 ## Business rules
 

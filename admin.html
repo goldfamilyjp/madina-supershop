@@ -65,6 +65,7 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 .qa-card{border:2px solid var(--gold); background:var(--gold-soft); border-radius:14px; padding:14px; margin:12px 0 20px;}
 .qa-title{font-size:1.2rem; font-weight:800; color:var(--green-dark); margin-bottom:4px;}
 .qa-photo-btn{font-size:1.15rem; padding:18px;}
+.qa-photo2-btn{font-size:.95rem; padding:11px;}
 .qa-card input.qa-price{font-size:1.3rem; font-weight:700; padding:14px;}
 #tokenNotice{margin-bottom:16px;}
 </style>
@@ -91,6 +92,9 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
       <button type="button" class="big-btn qa-photo-btn" id="qPhotoBtn">📷 Take / pick a product photo</button>
       <img class="photo-preview" id="qPhotoPreview" alt="">
       <div class="msg" id="qOcrMsg"></div>
+      <input type="file" id="qPhoto2File" accept="image/*" hidden>
+      <button type="button" class="big-btn grey qa-photo2-btn" id="qPhoto2Btn">＋ Add back photo (optional)</button>
+      <img class="photo-preview" id="qPhoto2Preview" alt="">
       <label for="qEn">Product name (English) *</label>
       <input type="text" id="qEn" placeholder="Fills in from the photo — or type it">
       <label for="qPrice">Price ¥ (yen) *</label>
@@ -129,6 +133,12 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <img class="photo-preview" id="photoPreview" alt="">
     <div class="msg" id="ocrMsg"></div>
     <p class="hint">Tip: choose a clear photo of the packet — the product name, size and category are read from the photo and filled in automatically. Always check them; you only need to type the price yourself.</p>
+    <label for="fPhoto2Url">Photo 2 — back side URL (optional)</label>
+    <input type="url" id="fPhoto2Url" placeholder="https://…">
+    <label for="fPhoto2File">…or choose a back-side photo file</label>
+    <input type="file" id="fPhoto2File" accept="image/*">
+    <img class="photo-preview" id="photo2Preview" alt="">
+    <p class="hint">Optional second photo (e.g. the back of the packet). In the shop, customers tap the product photo to switch between the front and back photos.</p>
     <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">Show in shop
       <span class="switch"><input type="checkbox" id="fOn" checked><span class="sl"></span></span>
     </label>
@@ -387,9 +397,10 @@ function markDirty(){ dirty = true; $("dirtyNote").style.display = "block"; hide
 function clearForm(){
   editingId = null;
   catTouched = false;
-  ["fId","fEn","fJp","fIdn","fPrice","fSize","fStock","fNewCat","fPhotoUrl"].forEach(function(id){ $(id).value = ""; });
-  $("fPhotoFile").value = ""; $("fOn").checked = true;
+  ["fId","fEn","fJp","fIdn","fPrice","fSize","fStock","fNewCat","fPhotoUrl","fPhoto2Url"].forEach(function(id){ $(id).value = ""; });
+  $("fPhotoFile").value = ""; $("fPhoto2File").value = ""; $("fOn").checked = true;
   $("photoPreview").style.display = "none"; $("photoPreview").src = "";
+  $("photo2Preview").style.display = "none"; $("photo2Preview").src = "";
   $("formTitle").innerHTML = '① Add product';
   $("applyBtn").innerHTML = 'Add product';
   $("cancelEditBtn").hidden = true; hideMsg($("formMsg")); hideMsg($("ocrMsg"));
@@ -404,8 +415,10 @@ function startEdit(id){
   $("fStock").value = (typeof p.stock === "number") ? p.stock : "";
   renderCatOptions(); $("fCat").value = p.cat || "other";
   $("fNewCat").value = ""; $("fPhotoUrl").value = p.photo && p.photo.indexOf("data:") !== 0 ? p.photo : "";
+  $("fPhoto2Url").value = p.photo2 && p.photo2.indexOf("data:") !== 0 ? p.photo2 : "";
   $("fOn").checked = p.active !== false;
   if (p.photo){ $("photoPreview").src = p.photo; $("photoPreview").style.display = "block"; } else { $("photoPreview").style.display = "none"; }
+  if (p.photo2){ $("photo2Preview").src = p.photo2; $("photo2Preview").style.display = "block"; } else { $("photo2Preview").style.display = "none"; $("photo2Preview").src = ""; }
   $("formTitle").innerHTML = '① Edit product';
   $("applyBtn").innerHTML = 'Update product';
   $("cancelEditBtn").hidden = false; hideMsg($("formMsg"));
@@ -415,6 +428,11 @@ function currentPhotoValue(){
   var pv = $("photoPreview");
   if (pv.style.display !== "none" && pv.src && pv.src.indexOf("data:") === 0) return pv.src;
   return $("fPhotoUrl").value.trim();
+}
+function currentPhoto2Value(){
+  var pv = $("photo2Preview");
+  if (pv.style.display !== "none" && pv.src && pv.src.indexOf("data:") === 0) return pv.src;
+  return $("fPhoto2Url").value.trim();
 }
 function applyForm(){
   hideMsg($("formMsg"));
@@ -437,7 +455,7 @@ function applyForm(){
   }
   var data = {
     en: en, jp: $("fJp").value.trim(), idn: $("fIdn").value.trim(), price: Math.round(price),
-    size: $("fSize").value.trim(), stock: stockVal, cat: cat, photo: currentPhotoValue(), active: $("fOn").checked
+    size: $("fSize").value.trim(), stock: stockVal, cat: cat, photo: currentPhotoValue(), photo2: currentPhoto2Value(), active: $("fOn").checked
   };
   if (editingId){
     var p = findProduct(editingId);
@@ -459,8 +477,7 @@ function deleteProduct(id){
 }
 
 /* ---------- photo upload: resize to max 480px wide JPEG data-URI ---------- */
-$("fPhotoFile").addEventListener("change", function(){
-  var file = this.files && this.files[0]; if (!file) return;
+function resizePhotoFile(file, cb){
   var url = URL.createObjectURL(file);
   var img = new Image();
   img.onload = function(){
@@ -470,16 +487,33 @@ $("fPhotoFile").addEventListener("change", function(){
     canvas.height = Math.round(img.height * scale);
     canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
     URL.revokeObjectURL(url);
-    var dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+    cb(canvas.toDataURL("image/jpeg", 0.82));
+  };
+  img.src = url;
+}
+$("fPhotoFile").addEventListener("change", function(){
+  var file = this.files && this.files[0]; if (!file) return;
+  resizePhotoFile(file, function(dataUrl){
     $("photoPreview").src = dataUrl; $("photoPreview").style.display = "block";
     $("fPhotoUrl").value = "";
     runOcr(dataUrl);
-  };
-  img.src = url;
+  });
 });
 $("fPhotoUrl").addEventListener("input", function(){
   var v = this.value.trim();
   if (v){ $("photoPreview").src = v; $("photoPreview").style.display = "block"; }
+});
+/* Photo 2 (back side): same resize pipeline, but OCR never runs on it. */
+$("fPhoto2File").addEventListener("change", function(){
+  var file = this.files && this.files[0]; if (!file) return;
+  resizePhotoFile(file, function(dataUrl){
+    $("photo2Preview").src = dataUrl; $("photo2Preview").style.display = "block";
+    $("fPhoto2Url").value = "";
+  });
+});
+$("fPhoto2Url").addEventListener("input", function(){
+  var v = this.value.trim();
+  if (v){ $("photo2Preview").src = v; $("photo2Preview").style.display = "block"; }
 });
 
 /* ---------- photo text reading (OCR pre-fill) ----------
@@ -624,6 +658,8 @@ function syncQuickFromForm(){
   /* OCR fills the MAIN form fields — mirror what it filled into the card. */
   var pv = $("photoPreview"), qp = $("qPhotoPreview");
   if (pv.style.display !== "none" && pv.src){ qp.src = pv.src; qp.style.display = "block"; }
+  var pv2 = $("photo2Preview"), qp2 = $("qPhoto2Preview");
+  if (pv2.style.display !== "none" && pv2.src){ qp2.src = pv2.src; qp2.style.display = "block"; }
   var om = $("ocrMsg");
   if (om.textContent){ showMsg($("qOcrMsg"), om.textContent, om.className.indexOf("err") !== -1 ? "err" : "info"); }
   if (document.activeElement !== $("qEn") && $("fEn").value) $("qEn").value = $("fEn").value;
@@ -637,8 +673,9 @@ function startQuickSync(){
 function stopQuickSync(){ if (qSyncTimer){ clearInterval(qSyncTimer); qSyncTimer = null; } }
 function clearQuick(){
   ["qEn", "qPrice", "qNewCat"].forEach(function(id){ $(id).value = ""; });
-  $("qPhotoFile").value = "";
+  $("qPhotoFile").value = ""; $("qPhoto2File").value = "";
   $("qPhotoPreview").style.display = "none"; $("qPhotoPreview").src = "";
+  $("qPhoto2Preview").style.display = "none"; $("qPhoto2Preview").src = "";
   hideMsg($("qOcrMsg"));
 }
 function quickAddSave(){
@@ -646,12 +683,17 @@ function quickAddSave(){
   hideMsg(qMsg);
   var nm = $("qEn").value, pr = $("qPrice").value, ct = $("qCat").value, nc = $("qNewCat").value;
   var photo = currentPhotoValue();
+  var photo2 = currentPhoto2Value();
   if (editingId) clearForm(); /* Quick Add always adds a NEW product */
   $("fEn").value = nm; $("fPrice").value = pr; $("fNewCat").value = nc;
   if (ct){ $("fCat").value = ct; catTouched = true; }
   if (photo){
     if (photo.indexOf("data:") === 0){ $("photoPreview").src = photo; $("photoPreview").style.display = "block"; }
     else { $("fPhotoUrl").value = photo; }
+  }
+  if (photo2){
+    if (photo2.indexOf("data:") === 0){ $("photo2Preview").src = photo2; $("photo2Preview").style.display = "block"; }
+    else { $("fPhoto2Url").value = photo2; }
   }
   if (!nm.trim()){ showMsg(qMsg, "Please type the product name — or pick a clear photo of the packet so it fills in automatically.", "err"); return; }
   if (pr.trim() === "" || isNaN(Number(pr)) || Number(pr) < 0){ showMsg(qMsg, "Please type the price.", "err"); return; }
@@ -681,6 +723,17 @@ $("qPhotoFile").addEventListener("change", function(){
     $("fPhotoFile").files = dt.files;
   } catch (e) {}
   $("fPhotoFile").dispatchEvent(new Event("change"));
+  startQuickSync();
+});
+$("qPhoto2Btn").addEventListener("click", function(){ $("qPhoto2File").click(); });
+$("qPhoto2File").addEventListener("change", function(){
+  var file = this.files && this.files[0]; if (!file) return;
+  try {
+    var dt = new DataTransfer();
+    dt.items.add(file);
+    $("fPhoto2File").files = dt.files;
+  } catch (e) {}
+  $("fPhoto2File").dispatchEvent(new Event("change"));
   startQuickSync();
 });
 $("qEn").addEventListener("input", function(){ $("fEn").value = this.value; });
