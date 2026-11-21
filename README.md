@@ -9,10 +9,25 @@ where it belongs — branch / pickup names, the logo, contact lines.)
 - **Admin panel:** `admin.html` — Ali adds / edits / deletes products here. Big buttons, English only.
 - **Product data:** `products.json` — the single list of products. The shop reads it; the admin saves it.
 
-**Admin panel layout:** the daily-use sections come first — ① Add product
-(with the ⚡ Quick Add card at the top), ② Products, ③ Reply templates, ④ Points, ⑤ Orders,
-⑥ Sales report, ⑦ News board, ⑧ Coupons, vouchers & tax — and ⑨ Setup (GitHub token) sits at the very bottom, because the token is a one-time setup.
-If no token is saved on the device, a slim notice at the top of the page points down to Setup.
+**Admin panel layout — TABS:** the admin is organised as a sticky tab bar under the
+header; exactly one section shows at a time, so anyone in the office can run it without
+scrolling through everything. Tabs: **📦 Products** (the ⚡ Quick Add card + the Add/Edit
+form + the product list) · **🧾 Orders** · **👥 Customers** · **🪙 Points** · **📊 Sales** ·
+**📢 News** · **🎟 Coupons & Tax** · **💬 Templates** · **⚙️ Setup** (GitHub token, one-time).
+The last-open tab is remembered on the device (`localStorage` key `madina_admin_tab`,
+default Products). If no token is saved on the device, the Products tab shows a
+“setup needed” notice instead of the product panels (the Setup tab stays reachable, and
+the other tabs keep working — they never needed the token).
+
+**Add/Edit form (Products tab) — simplified:** the visible flow is just: two big photo
+boxes (**FRONT** / **BACK** — tap a box to pick that photo; picking two photos at once on
+FRONT makes the second one the BACK automatically) → English + Japanese names → Price and
+Size side by side → category chips → one big **Add & Save** button (applies the form AND
+saves to the shop in a single press). The rarely-used fields — Indonesian name, stock,
+photo URL fields, the new-category box, and the Show-in-shop / ⭐ Popular switches — live
+in a collapsed **“More options”** section; it opens automatically when editing a product
+that already has a value in one of those fields. The ⚡ Quick Add card uses the same two
+photo boxes.
 
 ## How saving works (GitHub is the database)
 
@@ -31,10 +46,10 @@ inside the GitHub repository **goldfamilyjp/madina-supershop** (GitHub Pages hos
   browser (max 480 px wide, JPEG) and stored inside `products.json` as a small data-URI, so no separate
   image hosting is needed. Keep photos small; very large `products.json` files load slowly.
 - **Two photos per product (front + back):** each product has the main `photo` field and an optional
-  `photo2` field (the back side — same URL / data-URI format). In the admin, Photo 2 has its own URL and
-  file inputs under Photo 1 in the Add/Edit form, and the ⚡ Quick Add card has a smaller
-  “＋ Add back photo (optional)” button; photo files go through the same resize pipeline (OCR reads
-  Photo 1 only). On the shop front, a product with both photos shows a small “1 / 2” badge on the photo —
+  `photo2` field (the back side — same URL / data-URI format). In the admin, the Add/Edit form
+  and the ⚡ Quick Add card each show two big photo boxes — **FRONT** and **BACK** — and tapping
+  a box picks that photo (the photo URL fields live in the form's “More options” section);
+  photo files go through the same resize pipeline (OCR reads Photo 1 only). On the shop front, a product with both photos shows a small “1 / 2” badge on the photo —
   the customer taps the photo — or swipes it sideways — to switch to the back (“2 / 2”) and taps or
   swipes again to return. (A vertical swipe still scrolls the page as usual.) Products with a
   single photo (or none) look and behave exactly as before.
@@ -111,7 +126,7 @@ spreadsheet, so the shop has a permanent order book:
   the Form remains the fallback whenever the script cannot be reached.
 - The sheet is **private to the owner's Google account** — it is not shared with anyone.
   The **WhatsApp order remains the immediate alert**; the sheet is the saved record.
-- Staff open it from the admin panel's **⑤ Orders** section
+- Staff open it from the admin panel's **🧾 Orders** tab
   (button → `https://docs.google.com/spreadsheets/d/1NYooZTu01gP6cmp5k8we60Uhz4KKhgU4993zGIgt5Hw/edit`).
 
 ## 📱 Customer ID (phone number) + order numbers
@@ -152,11 +167,14 @@ layer; this feature is the second, permanent layer.
   confirmation email and the device-local remember-me run the same either way.
 - **Points balance at checkout:** at the same moments (phone blur / 10–11 digits, debounced),
   the checkout also looks the number up in `points.json` — the exact mechanism of the
-  points check card (SHA-256 of the digits, `computePointBalances`) — and shows a trilingual
-  line under the phone field: 利用可能ポイント / *Available points* / *Poin tersedia*: **X pt**,
-  plus （利用待ち / *pending* / *menunggu*: **Y pt**）when points are still maturing. No record
-  or a failed fetch shows nothing. This works **with or without** the Apps Script feature,
-  since `points.json` already lives next to the page. The points-phone field is prefilled
+  points check card (SHA-256 of the digits, `computePointBalances`) — and shows a small
+  trilingual **points card** under the phone field: an *Available points* row with
+  **X pt (= ¥X)**, and when points are still maturing a *Pending points* row (**Y pt**)
+  plus the earliest date they become usable (the smallest `matures` date among the
+  pending earn entries — shown only when that date is actually stored, never guessed).
+  The **Points to use** input sits directly under the card, so balance → use reads as
+  one flow. No record or a failed fetch shows nothing. This works **with or without**
+  the Apps Script feature, since `points.json` already lives next to the page. The points-phone field is prefilled
   from the main phone field when empty, and asking to use **more points than the available
   balance** triggers the usual soft warning at Confirm — warned once, the customer may
   proceed; the shop still confirms the balance by hand before applying any discount.
@@ -194,9 +212,9 @@ re-deployed from the local file, that text-format fix must be re-applied and the
 contract re-checked. (Script changes need Deploy → Manage deployments → New version
 to go live; a plain save does not update the web app.)
 
-## 📊 Sales report (admin panel ⑥)
+## 📊 Sales report (admin 📊 Sales tab)
 
-The admin's **⑥ Sales report** panel shows how the shop is doing, worked out
+The admin's **📊 Sales** tab shows how the shop is doing, worked out
 from the orders recorded in the spreadsheet's **“Orders”** tab (the records
 written by the customer-ID / order-number feature above):
 
@@ -226,6 +244,43 @@ deployments → edit → Version: New version → Deploy; a plain save does not
 update the live web app). Until that is done, the panel's Load button shows
 a “could not load” error; the rest of the admin is unaffected. An empty
 Orders sheet (no orders yet) reports all zeros.
+
+## 👥 Customers (admin 👥 Customers tab)
+
+The admin's **👥 Customers** tab lists everyone who has ordered — **Name ·
+Phone · Orders · Total spent (¥) · Points · Last order** — sorted by total
+spent, biggest spender first, with a count line (“N customers”). The records
+come from the spreadsheet's **“Customers”** tab (written by the customer-ID /
+order-number feature). A **“📋 Open the full sheet”** button links to the
+same spreadsheet as the Orders tab.
+
+The **Points** column shows each customer's available points (“120 pt”),
+with pending points added compactly when any exist (“120 pt (+30
+pending)”); a customer with no points record shows “0 pt”. Points are read
+from the public `points.json` next to the admin page — the same file the
+shop front reads, so **no GitHub token is needed** — matched by SHA-256 of
+the phone digits and totalled with the ledger's own `pointBalances` rule
+(earns available 1 month after their date, adjusts at once). If
+`points.json` cannot be loaded, the customer list still renders with
+“0 pt” everywhere — points never block the list.
+
+Pressing **“👥 Load customers”** POSTs `{ "action": "customers" }` to the
+same Apps Script endpoint as the sales report, and the script answers:
+`{ ok: true, customers: [ { phone, name, orders, totalSpent, lastOrder } ] }`
+(numbers as numbers; `lastOrder` a display string). An empty Customers
+sheet answers an empty list and the tab says “No customers yet — they
+appear here after their first order.” Loading is read-only.
+
+**One-time setup (Manager):** the deployed Apps Script does not know the
+`customers` action until the code in **`apps-script-customers-snippet.txt`**
+(in this folder) is pasted into it — one route line inside `doPost`, next
+to the other routes, plus the `handleCustomers_()` functions at the end of
+the file — **and a New version is deployed** (a plain save does not update
+the live web app). The snippet finds the sheet's columns by header text
+(fuzzy: phone / name / order / total / last), so column order and exact
+wording do not matter. Until that is done, the tab's Load button shows
+“Customer list is not switched on yet”; the rest of the admin is
+unaffected.
 
 ## Address & phone check (checkout)
 
@@ -279,7 +334,7 @@ Repeat customers do not re-type their details on every order:
 
 ## Staff reply templates (admin panel)
 
-The bottom of `admin.html` has a **③ Reply templates** section with three
+The admin's **💬 Templates** tab has three
 copy-and-send Japanese templates for replying to customers on WhatsApp / LINE / email:
 (a) transfer payment (shows the `BANK_INFO` account details), (b) cash on delivery,
 (c) shop pickup. Staff fill in the 【お名前】 / 【合計】 / 【受取店舗】 blanks after copying.
@@ -295,7 +350,7 @@ Customers earn points and spend them on later orders:
 - **Maturity:** points become usable **1 month after the purchase date** (each earn entry has a
   `matures` date = purchase date + 1 month). Until then they are “pending”.
 - The ledger is a second data file, **`points.json`**, in the same repo, managed only from the
-  admin panel's **④ Points** section through the same GitHub token flow as products.
+  admin panel's **🪙 Points** tab through the same GitHub token flow as products.
 
 **Privacy design (important):** the repo is **public**, so raw phone numbers are **never** stored.
 Each customer record is keyed by the **SHA-256 hex hash of the digits-only phone number**
@@ -309,13 +364,13 @@ public file; treat the file as a points ledger, not a customer database.)
 **Staff workflow:**
 
 1. Customer orders (WhatsApp). Shop confirms the order **and the payment** on WhatsApp first.
-2. Admin → ④ Points: enter the customer's phone number + the order amount → “Add points (1%)”.
+2. Admin → 🪙 Points tab: enter the customer's phone number + the order amount → “Add points (1%)”.
 3. When the customer asks to use points: enter the phone number → “Check balance” shows the
    **available** amount → enter the points → “Use points” (it refuses more than the available balance).
 4. Press **“💾 Save points”** after any change, or the change is lost.
 
 **Cancelling / fixing points (admin):** if an order is cancelled or points were added by mistake,
-staff can fix the ledger in the same ④ Points section:
+staff can fix the ledger in the same 🪙 Points tab:
 
 - **Cancel an earn:** each earn entry in the customer's history has a “Cancel” button. It asks
   for confirmation, then marks the entry `"cancelled": true`. Cancelled entries are **excluded from
@@ -419,24 +474,26 @@ misread or missed, so the auto-filled fields must always be checked before savin
   clears every form field — names, price, size, category ticks, stock, both photo URL/file
   inputs and previews, the Popular/Show switches — and exits edit mode back to “add new”.
   If the form holds un-applied input it asks for confirmation first.
-- **↺ Reload from shop — discard unsaved changes** (② Products, next to “💾 Save to shop”):
+- **↺ Reload from shop — discard unsaved changes** (📦 Products tab, next to “💾 Save to shop”):
   re-downloads `products.json` and throws away every unsaved local change (with a confirmation
   when there are any), so a bad edit/save session can be abandoned cleanly. The small
   “↺ Reload” button in the search row does the same reload without clearing the form.
 
 ## Quick Add (admin panel)
 
-At the top of the ② Add product section there is a **⚡ Quick Add** card — the fastest way to
+At the top of the 📦 Products tab's Add product form there is a **⚡ Quick Add** card — the fastest way to
 add a product:
 
-1. Press **“📷 Take / pick a product photo”** and choose the packet photo. The photo goes
-   through the exact same pipeline as the main form (resize + OCR auto-fill — see above), so
-   the name, size and category fill in automatically; the status line is shown in the card too.
+1. Tap the **FRONT** photo box and choose the packet photo (the **BACK** box takes the
+   optional back-side photo; picking two photos at once on FRONT makes the second the BACK).
+   The photo goes through the exact same pipeline as the main form (resize + OCR auto-fill —
+   see above), so the name, size and category fill in automatically; the status line is shown
+   in the card too.
 2. Type the **price** (the one thing OCR never reads).
 3. Press **“⚡ Add & Save — goes live now”**. That one press runs the normal Add-product logic
    and then the normal Save, so the product is live in the shop immediately — no separate
    “Save to shop” press needed. If the name or price is missing, the card shows the error and
-   nothing is saved; if no token is set up yet, it says to do the one-time ⑨ Setup first.
+   nothing is saved; if no token is set up yet, it says to do the one-time ⚙️ Setup first.
 
 The card's fields write through to the main form below (the form stays the single source of
 truth), and the full form still works exactly as before for stock, Japanese / Indonesian
@@ -498,7 +555,7 @@ product's slug); the card shows the Indonesian name line only when present. The 
 has an optional “Indonesian name” field. Seeded categories use a trilingual lookup in `index.html`;
 a custom category typed in the admin displays exactly as entered.
 
-**Admin panel language:** the admin UI (`admin.html`) is **English only** (owner's instruction, 2026-11-21). Only the admin chrome changed — product data still holds Japanese / Indonesian names (that is data, shown on the shop front), and the three staff reply templates in ③ keep their Japanese message bodies, because those are messages sent to customers; their headings are English labels ("Template 1 — Bank transfer" etc.).
+**Admin panel language:** the admin UI (`admin.html`) is **English only** (owner's instruction, 2026-11-21). Only the admin chrome changed — product data still holds Japanese / Indonesian names (that is data, shown on the shop front), and the three staff reply templates in the 💬 Templates tab keep their Japanese message bodies, because those are messages sent to customers; their headings are English labels ("Template 1 — Bank transfer" etc.).
 
 ## Customer help (shop front)
 
@@ -554,7 +611,7 @@ from the admin, and customers see them in two prominent places on the shop front
   free text; any one language may be left empty, but at least one must be filled. The admin's
   load/save flow carries `notices` (and any other unknown root fields) through untouched, so a
   product-only save never loses the announcements.
-- **Posting (admin → ⑦ News board):** write the message in Japanese / English / Indonesian
+- **Posting (admin → 📢 News tab):** write the message in Japanese / English / Indonesian
   (any of them), check the date (it defaults to today, JST), press “Add notice” (or Edit an
   existing one and press “Update notice”), then “💾 Save to shop”. Each listed notice has a
   Show/Hide switch, Edit and Delete — same patterns as the product list. Hidden notices stay in
@@ -584,7 +641,7 @@ discount comes off the order. A **gift voucher** is not a separate system — it
   `min` is the minimum **product subtotal** (0 = no minimum); `expiry` blank = never expires.
   Like notices, coupons ride through the admin's load/save flow untouched by other saves, so a
   product-only save never loses them.
-- **Creating codes (admin → ⑧ Coupons, vouchers & tax):** type the code (it is stored
+- **Creating codes (admin → 🎟 Coupons & Tax tab):** type the code (it is stored
   upper-cased), choose ¥ off or % off, the value, an optional minimum subtotal and an optional
   expiry date, press “Add coupon” (or Edit an existing one), then “💾 Save to shop”. Codes must
   be **unique** (case-insensitive), the value must be above 0, and a % coupon is capped at 90%.
@@ -614,7 +671,7 @@ Checkout adds consumption tax on top of the discounted product subtotal.
 - **Data:** an optional `taxRate` number (percent) at the root of `products.json`. **Absent =
   default 8.** Like coupons and notices, it is handled explicitly by the admin's data layer, so
   every save writes it back and no other save can drop it.
-- **Changing it (admin → ⑧ Coupons, vouchers & tax):** the “Consumption tax rate %” field at the
+- **Changing it (admin → 🎟 Coupons & Tax tab):** the “Consumption tax rate %” field at the
   top of the panel is prefilled with the current rate (0–30, decimals like 8.5 allowed). Type
   the new rate and press any “💾 Save to shop” — the value rides along with every save. **Set 0
   for no tax** (a saved 0 is kept as 0, not treated as absent).
@@ -651,7 +708,7 @@ and that the key elements stay visible and usable.
 
 ## ⭐ Popular slideshow (shop front)
 
-- **How to star a product:** in the admin, tap the ⭐ button on a product row in ② Products, or use
+- **How to star a product:** in the admin, tap the ⭐ button on a product row in the 📦 Products tab, or use
   the “⭐ Popular — show in the top slideshow” switch in the Add/Edit form (the ⚡ Quick Add card has
   the same checkbox). This sets the product's `popular` field; Save publishes it like any other change.
 - **Where it shows:** directly under the shop's search bar, above the category chips, with the
