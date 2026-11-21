@@ -86,7 +86,8 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .ss-track{display:grid;}
 .ss-slide{grid-area:1/1; display:flex; gap:14px; background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px; opacity:0; transition:opacity .45s ease; pointer-events:none;}
 .ss-slide.active{opacity:1; pointer-events:auto; z-index:1;}
-.ss-photo{flex:0 0 38%; max-width:230px; aspect-ratio:1/1; border-radius:10px; overflow:hidden; position:relative; background:#e3efe6; cursor:pointer;}
+.ss-photo{flex:0 0 38%; max-width:230px; aspect-ratio:1/1; border-radius:10px; overflow:hidden; position:relative; background:#e3efe6; cursor:pointer; touch-action:pan-y;}
+.ss-photo .ph-badge{position:absolute; right:8px; bottom:8px; background:rgba(7,48,31,.85); color:#fff; font-size:.78rem; font-weight:700; border-radius:999px; padding:2px 9px; pointer-events:none;}
 .ss-photo img{width:100%; height:100%; object-fit:cover; display:block;}
 .ss-photo .ph-tile{width:100%; height:100%; background:linear-gradient(135deg,var(--green) 0%,#146344 100%); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:800;}
 .ss-photo .zoom-btn{position:absolute; left:8px; top:8px; width:44px; height:44px; border:none; border-radius:50%; background:rgba(7,48,31,.85); color:#fff; font-size:1.05rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2;}
@@ -111,7 +112,7 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .card{background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column;}
 .card .photo{aspect-ratio:4/3; background:#e3efe6; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;}
 .card .photo img{width:100%; height:100%; object-fit:cover;}
-.card .photo.two{cursor:pointer;}
+.card .photo.two{cursor:pointer; touch-action:pan-y;}
 .card .photo .ph-badge{position:absolute; right:8px; bottom:8px; background:rgba(7,48,31,.85); color:#fff; font-size:.78rem; font-weight:700; border-radius:999px; padding:2px 9px; pointer-events:none;}
 .card .photo .zoom-btn{position:absolute; left:8px; top:8px; width:44px; height:44px; border:none; border-radius:50%; background:rgba(7,48,31,.85); color:#fff; font-size:1.05rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2;}
 .card .photo .zoom-btn:active{background:var(--green);}
@@ -610,7 +611,7 @@ function cardHTML(p){
   var mainPhoto = p.photo || p.photo2 || "";
   var hasTwo = !!(p.photo && p.photo2);
   var photo = mainPhoto
-    ? '<img src="' + esc(mainPhoto) + '" alt="' + esc(p.en) + '" loading="lazy"'
+    ? '<img src="' + esc(mainPhoto) + '" alt="' + esc(p.en) + '" loading="lazy" draggable="false"'
       + (hasTwo ? ' data-front="' + esc(p.photo) + '" data-back="' + esc(p.photo2) + '"' : '') + '>'
       + (hasTwo ? '<span class="ph-badge">1 / 2</span>' : '')
       + '<button type="button" class="zoom-btn" data-zoom="' + esc(p.id) + '" aria-label="Zoom">🔍</button>'
@@ -645,17 +646,64 @@ function renderGrid(){
   refreshSlideActions();
   renderCartBar();
 }
+/* Switch a two-photo container (card .photo or slideshow .ss-photo)
+   between its front and back photo, keeping the "n / 2" badge in sync.
+   The img carries data-front / data-back; shared by tap and swipe. */
+function flipPhotoIn(container){
+  var img = container.querySelector("img"); if (!img) return;
+  var badge = container.querySelector(".ph-badge");
+  var front = img.getAttribute("data-front"), back = img.getAttribute("data-back");
+  if (!front || !back) return;
+  if (img.getAttribute("src") === back){ img.setAttribute("src", front); if (badge) badge.textContent = "1 / 2"; }
+  else { img.setAttribute("src", back); if (badge) badge.textContent = "2 / 2"; }
+}
+/* ---------- photo swipe (front <-> back) ----------
+   A horizontal swipe on a two-photo card/slide photo switches front/back,
+   like a tap does on the card. Pointer events only. The gesture is claimed
+   as horizontal once it moves ~10px with |dx| > |dy|; vertical drags are
+   left to page scrolling (CSS touch-action: pan-y on these photos means
+   the browser only ever takes over vertical gestures, and a pointercancel
+   simply resets the tracker). A real swipe (|dx| >= 30) also swallows the
+   click the browser fires on release, so it never toggles twice, opens
+   the lightbox, or triggers the 🔍 button. */
+var swipeLastEl = null, swipeLastAt = 0;
+document.addEventListener("click", function(e){
+  if (swipeLastEl && Date.now() - swipeLastAt < 700 && swipeLastEl.contains(e.target)){
+    e.stopPropagation();
+    e.preventDefault();
+    swipeLastEl = null;
+  }
+}, true);
+function attachPhotoSwipe(el, onSwipe){
+  var sx = 0, sy = 0, pid = null, decided = 0;   /* decided: 0 none, 1 horizontal, -1 vertical */
+  el.addEventListener("pointerdown", function(e){
+    if (pid !== null) return;
+    pid = e.pointerId; sx = e.clientX; sy = e.clientY; decided = 0;
+  });
+  el.addEventListener("pointermove", function(e){
+    if (e.pointerId !== pid || decided !== 0) return;
+    var dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+    decided = Math.abs(dx) > Math.abs(dy) ? 1 : -1;
+  });
+  function endGesture(e, cancelled){
+    if (e.pointerId !== pid) return;
+    var dx = e.clientX - sx, dy = e.clientY - sy;
+    pid = null;
+    if (cancelled) return;
+    if (decided === 1 && Math.abs(dx) >= 30 && Math.abs(dx) > Math.abs(dy)){
+      swipeLastEl = el; swipeLastAt = Date.now();
+      onSwipe(dx < 0 ? "next" : "prev");
+    }
+  }
+  el.addEventListener("pointerup", function(e){ endGesture(e, false); });
+  el.addEventListener("pointercancel", function(e){ endGesture(e, true); });
+}
 function bindGridButtons(){
-  /* Two-photo products: tapping the photo switches front <-> back. */
+  /* Two-photo products: tapping OR swiping the photo switches front <-> back. */
   gridEl.querySelectorAll(".photo.two").forEach(function(ph){
-    ph.addEventListener("click", function(){
-      var img = ph.querySelector("img"); if (!img) return;
-      var badge = ph.querySelector(".ph-badge");
-      var front = img.getAttribute("data-front"), back = img.getAttribute("data-back");
-      if (!front || !back) return;
-      if (img.getAttribute("src") === back){ img.setAttribute("src", front); if (badge) badge.textContent = "1 / 2"; }
-      else { img.setAttribute("src", back); if (badge) badge.textContent = "2 / 2"; }
-    });
+    ph.addEventListener("click", function(){ flipPhotoIn(ph); });
+    attachPhotoSwipe(ph, function(){ flipPhotoIn(ph); });
   });
   /* Zoom button: opens the photo lightbox (stopPropagation so a two-photo
      card does NOT also toggle front/back on the same tap). */
@@ -667,7 +715,8 @@ function bindGridButtons(){
 /* ---------- photo zoom lightbox ----------
    Dependency-free: CSS transform on the image. Pinch with two pointers
    zooms/pans; a double-tap (or double-click) toggles fit <-> 2x zoomed at
-   the tapped point; when zoomed, one pointer drags to pan; the mouse wheel
+   the tapped point; when zoomed, one pointer drags to pan; at fit zoom a
+   horizontal swipe switches between the front/back photos; the mouse wheel
    zooms on desktop. Body scroll is locked while the overlay is open. */
 var lbOverlay = document.getElementById("lbOverlay");
 var lbStage = document.getElementById("lbStage");
@@ -680,6 +729,7 @@ var lbScale = 1, lbTx = 0, lbTy = 0;
 var lbPointers = {};        /* pointerId -> {x, y} */
 var lbPinchDist = 0;
 var lbDragMoved = false;
+var lbSwipeX = 0, lbSwipeY = 0, lbSwipeFit = false;   /* start of the current single-pointer gesture; lbSwipeFit = it began at fit zoom (scale 1), so a horizontal swipe may navigate */
 var lbLastTap = 0, lbLastTapX = 0, lbLastTapY = 0;
 var lbSavedBodyOverflow = "", lbSavedHtmlOverflow = "";
 
@@ -760,6 +810,8 @@ lbStage.addEventListener("pointerdown", function(e){
   lbPointers[e.pointerId] = { x: e.clientX, y: e.clientY };
   lbDragMoved = false;
   var ids = Object.keys(lbPointers);
+  if (ids.length === 1){ lbSwipeX = e.clientX; lbSwipeY = e.clientY; lbSwipeFit = (lbScale === 1); }
+  else lbSwipeFit = false;   /* a second pointer means pinch, never a swipe */
   if (ids.length === 2){
     var a = lbPointers[ids[0]], b = lbPointers[ids[1]];
     lbPinchDist = Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
@@ -788,6 +840,19 @@ function lbPointerUp(e){
   var wasDrag = lbDragMoved;
   delete lbPointers[e.pointerId];
   if (!Object.keys(lbPointers).length) lbPinchDist = 0;
+  /* Fit-zoom horizontal swipe navigates front/back (same wrap as the
+     ‹ › buttons). Zoomed drags pan instead — lbSwipeFit is false for
+     them, so they never reach this branch. */
+  if (wasSingle && lbSwipeFit && lbPhotos.length > 1){
+    var sdx = e.clientX - lbSwipeX, sdy = e.clientY - lbSwipeY;
+    if (Math.abs(sdx) >= 40 && Math.abs(sdx) > Math.abs(sdy)){
+      lbSetPhoto(sdx < 0 ? lbIdx + 1 : lbIdx - 1);
+      lbDragMoved = true;   /* swallow the click that follows the swipe */
+      lbSwipeFit = false;
+      return;
+    }
+  }
+  lbSwipeFit = false;
   if (wasSingle && !wasDrag){
     var now = Date.now();
     if (now - lbLastTap < 350 && Math.abs(e.clientX - lbLastTapX) < 48 && Math.abs(e.clientY - lbLastTapY) < 48){
@@ -799,7 +864,7 @@ function lbPointerUp(e){
   }
 }
 lbStage.addEventListener("pointerup", lbPointerUp);
-lbStage.addEventListener("pointercancel", function(e){ delete lbPointers[e.pointerId]; if (!Object.keys(lbPointers).length) lbPinchDist = 0; });
+lbStage.addEventListener("pointercancel", function(e){ delete lbPointers[e.pointerId]; lbSwipeFit = false; if (!Object.keys(lbPointers).length) lbPinchDist = 0; });
 lbStage.addEventListener("wheel", function(e){
   e.preventDefault();
   lbZoomAt(e.clientX, e.clientY, lbScale * (e.deltaY < 0 ? 1.15 : 1 / 1.15));
@@ -859,8 +924,11 @@ function slideHTML(p){
   var soldOut = tracked && p.stock <= 0;
   var fewLeft = tracked && p.stock >= 1 && p.stock <= 5;
   var mainPhoto = p.photo || p.photo2 || "";
+  var hasTwo = !!(p.photo && p.photo2);
   var photo = mainPhoto
-    ? '<img src="' + esc(mainPhoto) + '" alt="' + esc(p.en) + '" loading="lazy">'
+    ? '<img src="' + esc(mainPhoto) + '" alt="' + esc(p.en) + '" loading="lazy" draggable="false"'
+      + (hasTwo ? ' data-front="' + esc(p.photo) + '" data-back="' + esc(p.photo2) + '"' : '') + '>'
+      + (hasTwo ? '<span class="ph-badge">1 / 2</span>' : '')
       + '<button type="button" class="zoom-btn" data-szoom="' + esc(p.id) + '" aria-label="Zoom">🔍</button>'
     : '<div class="ph-tile">' + esc((p.en || p.jp || "?").trim().charAt(0).toUpperCase()) + '</div>';
   return '<div class="ss-slide" data-slide="' + esc(p.id) + '">'
@@ -932,6 +1000,11 @@ function renderSlideshow(){
   bindSlideActions(ssTrack);
   ssTrack.querySelectorAll("[data-sphoto]").forEach(function(ph){
     ph.addEventListener("click", function(){ openSlideLightbox(this.getAttribute("data-sphoto")); });
+    /* Two-photo slide: a horizontal swipe switches front <-> back (the
+       tap still opens the lightbox; the swipe's click is swallowed by
+       attachPhotoSwipe, and the slideshow's own advance/dots are untouched). */
+    var sp = productById(ph.getAttribute("data-sphoto"));
+    if (sp && sp.photo && sp.photo2) attachPhotoSwipe(ph, function(){ flipPhotoIn(ph); });
   });
   ssDotsEl.querySelectorAll("[data-sdot]").forEach(function(d){ d.addEventListener("click", function(){ ssGo(Number(this.getAttribute("data-sdot"))); }); });
   ssShow(ssIdx);
