@@ -6,6 +6,11 @@ A simple online halal grocery shop for Madina Halal Restaurant & Foods (Gold Fam
 - **Admin panel:** `admin.html` — Ali adds / edits / deletes products here. Big buttons, English only.
 - **Product data:** `products.json` — the single list of products. The shop reads it; the admin saves it.
 
+**Admin panel layout:** the daily-use sections come first — ① Products, ② Add product
+(with the ⚡ Quick Add card at the top), ③ Reply templates, ④ Points, ⑤ Orders — and
+⑥ Setup (GitHub token) sits at the very bottom, because the token is a one-time setup.
+If no token is saved on the device, a slim notice at the top of the page points down to Setup.
+
 ## How saving works (GitHub is the database)
 
 There is no server and no monthly fee. The product list lives in one file, `products.json`,
@@ -222,6 +227,30 @@ as before.
 the packet work best. Handwriting, curved/foil packaging, glare and small print can be misread or
 missed, so the auto-filled fields must always be checked before saving. The reading happens in the
 browser on the same ~480 px resized photo that gets saved with the product.
+
+## Quick Add (admin panel)
+
+At the top of the ② Add product section there is a **⚡ Quick Add** card — the fastest way to
+add a product:
+
+1. Press **“📷 Take / pick a product photo”** and choose the packet photo. The photo goes
+   through the exact same pipeline as the main form (resize + OCR auto-fill — see above), so
+   the name, size and category fill in automatically; the status line is shown in the card too.
+2. Type the **price** (the one thing OCR never reads).
+3. Press **“⚡ Add & Save — goes live now”**. That one press runs the normal Add-product logic
+   and then the normal Save, so the product is live in the shop immediately — no separate
+   “Save to shop” press needed. If the name or price is missing, the card shows the error and
+   nothing is saved; if no token is set up yet, it says to do the one-time ⑥ Setup first.
+
+The card's fields write through to the main form below (the form stays the single source of
+truth), and the full form still works exactly as before for stock, Japanese / Indonesian
+names, photo URLs and editing existing products.
+
+**New categories:** type the new category's name in the **“New category name (only if you
+need a new one)”** box — in the Quick Add card or in the main form — and it is created when
+the product is added/saved. It then appears in the category dropdowns and as a filter chip
+on the shop front automatically (the shop builds its chips from the `categories` array in
+`products.json`). Leave the box empty to use an existing category.
 
 ## Stock control (products)
 

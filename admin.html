@@ -62,6 +62,11 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 .copy-btn:active{opacity:.85;}
 .pt-bal{font-size:1.05rem; font-weight:800; color:var(--green); margin-top:6px; line-height:1.6;}
 .pt-entry{font-size:.85rem; color:var(--muted); padding:4px 0; border-bottom:1px dashed var(--line);}
+.qa-card{border:2px solid var(--gold); background:var(--gold-soft); border-radius:14px; padding:14px; margin:12px 0 20px;}
+.qa-title{font-size:1.2rem; font-weight:800; color:var(--green-dark); margin-bottom:4px;}
+.qa-photo-btn{font-size:1.15rem; padding:18px;}
+.qa-card input.qa-price{font-size:1.3rem; font-weight:700; padding:14px;}
+#tokenNotice{margin-bottom:16px;}
 </style>
 </head>
 <body>
@@ -72,20 +77,11 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 
 <div class="wrap">
 
-  <!-- ===== Setup / token ===== -->
-  <section class="panel" id="setupPanel">
-    <h2>① Setup — GitHub Token</h2>
-    <p class="hint">A GitHub token (a password-like string) is needed once so this page can save products. Paste it below — it is stored <strong>only on this device</strong> (in this browser), never in any file.</p>
-    <label for="tokenInput">Paste token</label>
-    <input type="password" id="tokenInput" placeholder="github_pat_…" autocomplete="off">
-    <button type="button" class="big-btn" id="saveTokenBtn">Save token &amp; load products</button>
-    <button type="button" class="big-btn grey" id="forgetTokenBtn">Forget token on this device</button>
-    <div class="msg" id="setupMsg"></div>
-  </section>
+  <div class="msg info" id="tokenNotice">Setup needed: paste your GitHub token — the Setup section is at the bottom of this page ↓</div>
 
   <!-- ===== Main ===== -->
   <section class="panel" id="mainPanel" hidden>
-    <h2>② Products <span id="prodCount" class="en"></span></h2>
+    <h2>① Products <span id="prodCount" class="en"></span></h2>
     <div class="search-row">
       <input type="text" id="adminSearch" placeholder="Search products…">
       <button type="button" class="mini edit" id="reloadBtn" style="font-size:1rem;">Reload</button>
@@ -100,7 +96,29 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 
   <!-- ===== Add / Edit form ===== -->
   <section class="panel" id="formPanel" hidden>
-    <h2 id="formTitle">③ Add product</h2>
+    <h2 id="formTitle">② Add product</h2>
+    <p class="hint">Quick way: pick a photo — name, size and category fill in automatically. Type the price, then press Add &amp; Save. To make a new category, type its name in the New category box.</p>
+
+    <!-- ===== Quick Add (photo + price, one button) ===== -->
+    <div class="qa-card" id="quickAddCard">
+      <div class="qa-title">⚡ Quick Add</div>
+      <input type="file" id="qPhotoFile" accept="image/*" hidden>
+      <button type="button" class="big-btn qa-photo-btn" id="qPhotoBtn">📷 Take / pick a product photo</button>
+      <img class="photo-preview" id="qPhotoPreview" alt="">
+      <div class="msg" id="qOcrMsg"></div>
+      <label for="qEn">Product name (English) *</label>
+      <input type="text" id="qEn" placeholder="Fills in from the photo — or type it">
+      <label for="qPrice">Price ¥ (yen) *</label>
+      <input type="number" id="qPrice" class="qa-price" min="0" step="1" inputmode="numeric" placeholder="e.g. 490">
+      <label for="qCat">Category</label>
+      <select id="qCat"></select>
+      <label for="qNewCat">New category name (only if you need a new one)</label>
+      <input type="text" id="qNewCat" placeholder="Only if the category is not in the list above">
+      <div class="msg" id="qMsg"></div>
+      <button type="button" class="big-btn gold" id="qAddSaveBtn">⚡ Add &amp; Save — goes live now</button>
+      <p class="hint">This adds the product and saves it to the shop in one press. The full form below still works for stock, Japanese / Indonesian names and editing.</p>
+    </div>
+
     <input type="hidden" id="fId">
     <label for="fEn">Product name (English) *</label>
     <input type="text" id="fEn" placeholder="e.g. Chana Dal">
@@ -117,7 +135,7 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <p class="hint">Stock is NOT cut automatically at order time — adjust it when an order is confirmed, so cancelled or unpaid orders never corrupt the stock count.</p>
     <label for="fCat">Category</label>
     <select id="fCat"></select>
-    <label for="fNewCat">New category name (only if making one)</label>
+    <label for="fNewCat">New category name (only if you need a new one)</label>
     <input type="text" id="fNewCat" placeholder="e.g. Frozen">
     <label for="fPhotoUrl">Photo URL</label>
     <input type="url" id="fPhotoUrl" placeholder="https://…">
@@ -137,14 +155,14 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 
   <!-- ===== Staff quick-reply templates ===== -->
   <section class="panel" id="templatePanel">
-    <h2>④ Reply templates</h2>
+    <h2>③ Reply templates</h2>
     <p class="hint">Copy a template, fill in the bracketed blanks (customer name, total, pickup branch), and send it to the customer (WhatsApp / LINE / email). The messages themselves are in Japanese, ready to send.</p>
     <div id="templateList"></div>
   </section>
 
   <!-- ===== Points ===== -->
   <section class="panel" id="pointsPanel">
-    <h2>⑤ Points</h2>
+    <h2>④ Points</h2>
     <p class="hint">Customers earn <strong>1%</strong> back in points (1 pt = ¥1). Points become usable <strong>1 month after</strong> the purchase.<br>
     Add / use points only <strong>after</strong> the order and payment are confirmed on WhatsApp.<br>
     Phone numbers are stored only as hashes — the raw number is never saved.</p>
@@ -171,11 +189,22 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 
   <!-- ===== Orders (auto-saved to the owner's Google Sheet) ===== -->
   <section class="panel" id="ordersPanel">
-    <h2>⑥ Orders</h2>
+    <h2>⑤ Orders</h2>
     <p class="hint">Every customer order is <strong>automatically saved</strong> to the owner's Google Sheet (items, total, name, phone, fulfilment, payment, address). Open the order list with the button below.<br>
     The sheet is <strong>private</strong> to the owner's Google account (goldfamilyjp@yahoo.com) — customers and other people cannot see it.<br>
     The <strong>WhatsApp order remains the immediate alert</strong> — the sheet is the saved record for checking later.</p>
     <a class="big-btn gold" style="text-align:center; text-decoration:none;" href="https://docs.google.com/spreadsheets/d/1NYooZTu01gP6cmp5k8we60Uhz4KKhgU4993zGIgt5Hw/edit" target="_blank" rel="noopener">📋 Open orders sheet</a>
+  </section>
+
+  <!-- ===== Setup / token ===== -->
+  <section class="panel" id="setupPanel">
+    <h2>⑥ Setup — GitHub Token</h2>
+    <p class="hint">A GitHub token (a password-like string) is needed once so this page can save products. Paste it below — it is stored <strong>only on this device</strong> (in this browser), never in any file.</p>
+    <label for="tokenInput">Paste token</label>
+    <input type="password" id="tokenInput" placeholder="github_pat_…" autocomplete="off">
+    <button type="button" class="big-btn" id="saveTokenBtn">Save token &amp; load products</button>
+    <button type="button" class="big-btn grey" id="forgetTokenBtn">Forget token on this device</button>
+    <div class="msg" id="setupMsg"></div>
   </section>
 
 </div>
@@ -277,7 +306,7 @@ function buildPayload(){
   return { categories: state.categories, products: state.products };
 }
 function saveToGitHub(){
-  if (!token()){ showMsg($("saveMsg"), "No token — set it up above first.", "err"); return Promise.reject(new Error("no token")); }
+  if (!token()){ showMsg($("saveMsg"), "No token — set it up in ⑥ Setup (bottom of this page) first.", "err"); return Promise.reject(new Error("no token")); }
   var body = {
     message: "Update products via Madina Supershop admin panel",
     content: b64encodeUtf8(JSON.stringify(buildPayload(), null, 2))
@@ -310,8 +339,10 @@ function updateLastSavedNote(){
 
 /* ---------- rendering ---------- */
 function renderCatOptions(){
-  var sel = $("fCat");
-  sel.innerHTML = state.categories.map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.en) + "</option>"; }).join("");
+  var html = state.categories.map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.en) + "</option>"; }).join("");
+  $("fCat").innerHTML = html;
+  var q = $("qCat");
+  if (q){ var cur = q.value; q.innerHTML = html; if (cur) q.value = cur; }
 }
 function renderList(){
   var q = $("adminSearch").value.trim().toLowerCase();
@@ -359,7 +390,7 @@ function clearForm(){
   ["fId","fEn","fJp","fIdn","fPrice","fSize","fStock","fNewCat","fPhotoUrl"].forEach(function(id){ $(id).value = ""; });
   $("fPhotoFile").value = ""; $("fOn").checked = true;
   $("photoPreview").style.display = "none"; $("photoPreview").src = "";
-  $("formTitle").innerHTML = '③ Add product';
+  $("formTitle").innerHTML = '② Add product';
   $("applyBtn").innerHTML = 'Add product';
   $("cancelEditBtn").hidden = true; hideMsg($("formMsg")); hideMsg($("ocrMsg"));
 }
@@ -375,7 +406,7 @@ function startEdit(id){
   $("fNewCat").value = ""; $("fPhotoUrl").value = p.photo && p.photo.indexOf("data:") !== 0 ? p.photo : "";
   $("fOn").checked = p.active !== false;
   if (p.photo){ $("photoPreview").src = p.photo; $("photoPreview").style.display = "block"; } else { $("photoPreview").style.display = "none"; }
-  $("formTitle").innerHTML = '③ Edit product';
+  $("formTitle").innerHTML = '② Edit product';
   $("applyBtn").innerHTML = 'Update product';
   $("cancelEditBtn").hidden = false; hideMsg($("formMsg"));
   $("formPanel").scrollIntoView({ block: "start" });
@@ -580,17 +611,103 @@ function runOcr(dataUrl){
     .finally(function(){ if (worker){ try { var tp = worker.terminate(); if (tp && tp.catch) tp.catch(function(){}); } catch (e) {} } });
 }
 
+/* ---------- Quick Add ----------
+   A simple card at the top of the Add-product section: pick a photo,
+   type the price, press one button. It does NOT duplicate any logic —
+   the photo is handed to the existing fPhotoFile pipeline (resize +
+   OCR auto-fill of the main form), the card's fields write through to
+   the main form fields, and "Add & Save" runs the existing applyForm()
+   followed by the existing saveToGitHub(). The main form stays the
+   single source of truth. */
+var qSyncTimer = null;
+function syncQuickFromForm(){
+  /* OCR fills the MAIN form fields — mirror what it filled into the card. */
+  var pv = $("photoPreview"), qp = $("qPhotoPreview");
+  if (pv.style.display !== "none" && pv.src){ qp.src = pv.src; qp.style.display = "block"; }
+  var om = $("ocrMsg");
+  if (om.textContent){ showMsg($("qOcrMsg"), om.textContent, om.className.indexOf("err") !== -1 ? "err" : "info"); }
+  if (document.activeElement !== $("qEn") && $("fEn").value) $("qEn").value = $("fEn").value;
+  if ($("fCat").value) $("qCat").value = $("fCat").value;
+}
+function startQuickSync(){
+  stopQuickSync();
+  qSyncTimer = setInterval(syncQuickFromForm, 400);
+  setTimeout(stopQuickSync, 120000);
+}
+function stopQuickSync(){ if (qSyncTimer){ clearInterval(qSyncTimer); qSyncTimer = null; } }
+function clearQuick(){
+  ["qEn", "qPrice", "qNewCat"].forEach(function(id){ $(id).value = ""; });
+  $("qPhotoFile").value = "";
+  $("qPhotoPreview").style.display = "none"; $("qPhotoPreview").src = "";
+  hideMsg($("qOcrMsg"));
+}
+function quickAddSave(){
+  var qMsg = $("qMsg");
+  hideMsg(qMsg);
+  var nm = $("qEn").value, pr = $("qPrice").value, ct = $("qCat").value, nc = $("qNewCat").value;
+  var photo = currentPhotoValue();
+  if (editingId) clearForm(); /* Quick Add always adds a NEW product */
+  $("fEn").value = nm; $("fPrice").value = pr; $("fNewCat").value = nc;
+  if (ct){ $("fCat").value = ct; catTouched = true; }
+  if (photo){
+    if (photo.indexOf("data:") === 0){ $("photoPreview").src = photo; $("photoPreview").style.display = "block"; }
+    else { $("fPhotoUrl").value = photo; }
+  }
+  if (!nm.trim()){ showMsg(qMsg, "Please type the product name — or pick a clear photo of the packet so it fills in automatically.", "err"); return; }
+  if (pr.trim() === "" || isNaN(Number(pr)) || Number(pr) < 0){ showMsg(qMsg, "Please type the price.", "err"); return; }
+  if (!token()){ showMsg(qMsg, "No token yet — do the one-time Setup in ⑥ at the bottom of this page first, then try again.", "err"); return; }
+  var before = state.products.length;
+  applyForm();
+  if (state.products.length === before){
+    showMsg(qMsg, $("formMsg").textContent || "Could not add the product — please check the form below.", "err");
+    return;
+  }
+  stopQuickSync();
+  showMsg(qMsg, "Saving…", "info");
+  var btn = $("qAddSaveBtn"); btn.disabled = true;
+  saveToGitHub().then(function(){
+    showMsg(qMsg, "✅ Added and saved — it's live in the shop now.", "ok");
+    clearQuick();
+  }).catch(function(err){
+    showMsg(qMsg, "The product was added to the list, but saving failed (" + err.message + "). Press “💾 Save to shop” in ① Products to try again.", "err");
+  }).finally(function(){ btn.disabled = false; });
+}
+$("qPhotoBtn").addEventListener("click", function(){ $("qPhotoFile").click(); });
+$("qPhotoFile").addEventListener("change", function(){
+  var file = this.files && this.files[0]; if (!file) return;
+  try {
+    var dt = new DataTransfer();
+    dt.items.add(file);
+    $("fPhotoFile").files = dt.files;
+  } catch (e) {}
+  $("fPhotoFile").dispatchEvent(new Event("change"));
+  startQuickSync();
+});
+$("qEn").addEventListener("input", function(){ $("fEn").value = this.value; });
+$("qPrice").addEventListener("input", function(){ $("fPrice").value = this.value; });
+$("qNewCat").addEventListener("input", function(){ $("fNewCat").value = this.value; });
+$("qCat").addEventListener("change", function(){ $("fCat").value = this.value; catTouched = true; });
+$("qAddSaveBtn").addEventListener("click", quickAddSave);
+
+/* ---------- token notice (top of page, only when no token is saved) ---------- */
+function updateTokenNotice(){
+  if (token()){ hideMsg($("tokenNotice")); }
+  else { showMsg($("tokenNotice"), "Setup needed: paste your GitHub token — the Setup section is at the bottom of this page ↓", "info"); }
+}
+
 /* ---------- events ---------- */
 $("saveTokenBtn").addEventListener("click", function(){
   var t = $("tokenInput").value.trim();
   if (!t){ showMsg($("setupMsg"), "Please paste the token.", "err"); return; }
   localStorage.setItem(TOKEN_KEY, t);
   $("tokenInput").value = "";
+  updateTokenNotice();
   loadFromGitHub();
   loadPoints();
 });
 $("forgetTokenBtn").addEventListener("click", function(){
   localStorage.removeItem(TOKEN_KEY);
+  updateTokenNotice();
   showMsg($("setupMsg"), "Token removed from this device.", "info");
 });
 $("reloadBtn").addEventListener("click", function(){
@@ -717,7 +834,7 @@ function pointBalances(rec){
 }
 function markPointsDirty(){ pointsDirty = true; $("pointsDirty").style.display = "block"; hideMsg($("pointsMsg")); }
 function loadPoints(){
-  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ① first.", "err"); return Promise.resolve(false); }
+  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ⑥ Setup first.", "err"); return Promise.resolve(false); }
   return fetch(POINTS_API, { headers: apiHeaders() })
     .then(function(r){
       if (r.status === 404){ pointsSha = null; pointsData = { customers: [] }; return true; }
@@ -736,7 +853,7 @@ function loadPoints(){
     });
 }
 function savePoints(){
-  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ① first.", "err"); return Promise.resolve(false); }
+  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ⑥ Setup first.", "err"); return Promise.resolve(false); }
   var body = {
     message: "Update points via Madina Supershop admin panel",
     content: b64encodeUtf8(JSON.stringify(pointsData, null, 2))
@@ -873,10 +990,12 @@ $("ptSaveBtn").addEventListener("click", function(){ savePoints(); });
 
 /* expose for testing */
 window.__supershopAdmin = { getState: function(){ return state; }, buildPayload: buildPayload, saveToGitHub: saveToGitHub, loadFromGitHub: loadFromGitHub, templates: REPLY_TEMPLATES, bankInfo: BANK_INFO,
+  quick: { addSave: quickAddSave, sync: syncQuickFromForm, updateTokenNotice: updateTokenNotice },
   ocr: { parse: parseOcrText, run: runOcr, apply: applyOcrResult },
   points: { data: function(){ return pointsData; }, balances: pointBalances, load: loadPoints, save: savePoints, sha256Hex: sha256Hex, addOneMonth: addOneMonth, normalizePhone: normalizePhone, todayStr: todayStr, cancelEarn: cancelEarn, addAdjust: addAdjust } };
 
 /* ---------- init ---------- */
+updateTokenNotice();
 if (token()){
   showMsg($("setupMsg"), "Token found on this device — loading…", "info");
   loadFromGitHub();
