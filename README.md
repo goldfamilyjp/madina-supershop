@@ -758,3 +758,10 @@ and that the key elements stay visible and usable.
   so 1,000+ products stay fast.
 - Products with `"active": false` are hidden in the shop but stay in the admin list (legacy `"on": false` is honoured too — see “Show / hide a product”).
 - If the token ever leaks, delete it in GitHub settings and make a new one — nothing else changes.
+
+## 📈 Visitor stats (Google Analytics 4)
+
+- GA4 property created 2026-11-22 via Firebase (the direct Analytics wizard was broken for this account — its country/timezone dropdowns never loaded; the Firebase project-creation flow created the property from its side).
+- Firebase project: `madina-halal-super` (Spark, free). GA4 Property ID: 565406123. Web stream: "Madina Halal Super Web".
+- **Measurement ID: G-VRHLH0YXC6** — the gtag snippet sits in the shop's index.html <head>. Counting starts 2026-11-22; no earlier visitor data exists.
+- View stats: Admin 📊 Sales tab → "Visitor stats (Google Analytics)" link, or analytics.google.com (property 565406123).
