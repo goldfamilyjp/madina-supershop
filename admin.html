@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Madina Halal Supershop — Admin 管理画面</title>
+<title>Madina Halal Supershop — Admin Panel</title>
 <style>
 :root{ --green:#0b4530; --green-dark:#07301f; --gold:#e3c04a; --gold-soft:#f6ecd2; --bg:#f2f7f2; --ink:#1d2a1d; --muted:#5c6b5c; --line:#dde6dc; --red:#b3261e; }
 *{box-sizing:border-box; margin:0; padding:0;}
@@ -62,123 +62,113 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 <body>
 <header>
   <div class="t">Madina Halal Supershop</div>
-  <div class="s">管理画面 Admin Panel</div>
+  <div class="s">Admin Panel</div>
 </header>
 
 <div class="wrap">
 
   <!-- ===== Setup / token ===== -->
   <section class="panel" id="setupPanel">
-    <h2>① 設定 Setup — GitHub トークン</h2>
-    <p class="hint">商品を保存するには、GitHub のトークン（パスワードのような文字列）が1回だけ必要です。<br>
-    A GitHub token is needed once so this page can save products. Paste it below — it is stored <strong>only on this device</strong> (in this browser), never in any file.</p>
-    <label for="tokenInput">トークンを貼り付け <span class="en">Paste token</span></label>
+    <h2>① Setup — GitHub Token</h2>
+    <p class="hint">A GitHub token (a password-like string) is needed once so this page can save products. Paste it below — it is stored <strong>only on this device</strong> (in this browser), never in any file.</p>
+    <label for="tokenInput">Paste token</label>
     <input type="password" id="tokenInput" placeholder="github_pat_…" autocomplete="off">
-    <button type="button" class="big-btn" id="saveTokenBtn">トークンを保存して読み込む <span style="font-size:.8em;">Save token &amp; load products</span></button>
-    <button type="button" class="big-btn grey" id="forgetTokenBtn">トークンを消す <span style="font-size:.8em;">Forget token on this device</span></button>
+    <button type="button" class="big-btn" id="saveTokenBtn">Save token &amp; load products</button>
+    <button type="button" class="big-btn grey" id="forgetTokenBtn">Forget token on this device</button>
     <div class="msg" id="setupMsg"></div>
   </section>
 
   <!-- ===== Main ===== -->
   <section class="panel" id="mainPanel" hidden>
-    <h2>② 商品リスト <span class="en">Products</span> <span id="prodCount" class="en"></span></h2>
+    <h2>② Products <span id="prodCount" class="en"></span></h2>
     <div class="search-row">
-      <input type="text" id="adminSearch" placeholder="商品を検索 Search products…">
-      <button type="button" class="mini edit" id="reloadBtn" style="font-size:1rem;">再読込 Reload</button>
+      <input type="text" id="adminSearch" placeholder="Search products…">
+      <button type="button" class="mini edit" id="reloadBtn" style="font-size:1rem;">Reload</button>
     </div>
     <div id="productList"></div>
-    <p class="hint">在庫は各商品の −1 / +1 ボタンでも調整できます。注文が確定したら在庫を調整してください（在庫は自動では減りません）。<br>
-    Stock can also be adjusted with the −1 / +1 buttons on each product. Adjust stock when an order is confirmed — it is never cut automatically.</p>
-    <p class="dirty-note" id="dirtyNote">● まだ保存されていません — Unsaved changes. 下の「保存する」を押してください。</p>
-    <button type="button" class="big-btn gold" id="saveBtn">💾 保存する Save to shop</button>
-    <p class="hint" id="lastSaved">前回の保存: — <span class="en">Last saved: —</span></p>
+    <p class="hint">Stock can also be adjusted with the −1 / +1 buttons on each product. Adjust stock when an order is confirmed — it is never cut automatically.</p>
+    <p class="dirty-note" id="dirtyNote">● Unsaved changes — press "Save to shop" below.</p>
+    <button type="button" class="big-btn gold" id="saveBtn">💾 Save to shop</button>
+    <p class="hint" id="lastSaved">Last saved: —</p>
     <div class="msg" id="saveMsg"></div>
   </section>
 
   <!-- ===== Add / Edit form ===== -->
   <section class="panel" id="formPanel" hidden>
-    <h2 id="formTitle">③ 商品を追加 <span class="en">Add product</span></h2>
+    <h2 id="formTitle">③ Add product</h2>
     <input type="hidden" id="fId">
-    <label for="fEn">商品名（英語）<span class="en">Product name (English) *</span></label>
+    <label for="fEn">Product name (English) *</label>
     <input type="text" id="fEn" placeholder="e.g. Chana Dal">
-    <label for="fJp">商品名（日本語）<span class="en">Product name (Japanese)</span></label>
-    <input type="text" id="fJp" placeholder="例：チャナダール">
-    <label for="fIdn">商品名（インドネシア語・任意）<span class="en">Product name (Indonesian, optional)</span></label>
+    <label for="fJp">Japanese name</label>
+    <input type="text" id="fJp" placeholder="Product name in Japanese">
+    <label for="fIdn">Indonesian name (optional)</label>
     <input type="text" id="fIdn" placeholder="e.g. Beras Basmati Mehran">
-    <label for="fPrice">価格 ¥ <span class="en">Price (yen) *</span></label>
+    <label for="fPrice">Price ¥ (yen) *</label>
     <input type="number" id="fPrice" min="0" step="1" inputmode="numeric" placeholder="e.g. 490">
-    <label for="fSize">内容量 <span class="en">Size / weight</span></label>
+    <label for="fSize">Size / weight</label>
     <input type="text" id="fSize" placeholder="e.g. 1kg / 450g / 100 bags">
-    <label for="fStock">在庫数 <span class="en">Stock — blank = no stock tracking</span></label>
-    <input type="number" id="fStock" min="0" step="1" inputmode="numeric" placeholder="空欄 = 在庫管理なし Blank = not tracked">
-    <p class="hint">在庫は注文時に自動では減りません。注文が確定したら在庫を調整してください（キャンセル・未払いの注文で在庫が狂わないようにするため）。<br>
-    Stock is NOT cut automatically at order time — adjust it when an order is confirmed, so cancelled or unpaid orders never corrupt the stock count.</p>
-    <label for="fCat">カテゴリー <span class="en">Category</span></label>
+    <label for="fStock">Stock — blank = no stock tracking</label>
+    <input type="number" id="fStock" min="0" step="1" inputmode="numeric" placeholder="Blank = not tracked">
+    <p class="hint">Stock is NOT cut automatically at order time — adjust it when an order is confirmed, so cancelled or unpaid orders never corrupt the stock count.</p>
+    <label for="fCat">Category</label>
     <select id="fCat"></select>
-    <label for="fNewCat">新しいカテゴリー（作る場合だけ）<span class="en">New category name (only if making one)</span></label>
+    <label for="fNewCat">New category name (only if making one)</label>
     <input type="text" id="fNewCat" placeholder="e.g. Frozen">
-    <label for="fPhotoUrl">写真のURL <span class="en">Photo URL</span></label>
+    <label for="fPhotoUrl">Photo URL</label>
     <input type="url" id="fPhotoUrl" placeholder="https://…">
-    <label for="fPhotoFile">または写真を選ぶ <span class="en">…or choose a photo file</span></label>
+    <label for="fPhotoFile">…or choose a photo file</label>
     <input type="file" id="fPhotoFile" accept="image/*">
     <img class="photo-preview" id="photoPreview" alt="">
-    <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">表示する <span class="en">Show in shop</span>
+    <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">Show in shop
       <span class="switch"><input type="checkbox" id="fOn" checked><span class="sl"></span></span>
     </label>
     <div class="msg" id="formMsg"></div>
-    <button type="button" class="big-btn" id="applyBtn">この商品を追加 / 変更する <span style="font-size:.8em;">Add / Update product</span></button>
-    <button type="button" class="big-btn grey" id="cancelEditBtn" hidden>編集をやめる <span style="font-size:.8em;">Cancel edit</span></button>
-    <p class="hint">追加・変更したあとは、上の「💾 保存する Save to shop」を押すとお店に反映されます。<br>After adding or changing, press “💾 Save to shop” above to publish.</p>
+    <button type="button" class="big-btn" id="applyBtn">Add / Update product</button>
+    <button type="button" class="big-btn grey" id="cancelEditBtn" hidden>Cancel edit</button>
+    <p class="hint">After adding or changing, press "💾 Save to shop" above to publish.</p>
   </section>
 
   <!-- ===== Staff quick-reply templates ===== -->
   <section class="panel" id="templatePanel">
-    <h2>④ 返信テンプレート <span class="en">Reply templates</span></h2>
-    <p class="hint">お客様への返信にコピーして使ってください。【お名前】【合計】【受取店舗】の部分を書き換えてから送ってください。<br>
-    Copy a template, fill in the 【 】 blanks, and send it to the customer (WhatsApp / LINE / email).</p>
+    <h2>④ Reply templates</h2>
+    <p class="hint">Copy a template, fill in the bracketed blanks (customer name, total, pickup branch), and send it to the customer (WhatsApp / LINE / email). The messages themselves are in Japanese, ready to send.</p>
     <div id="templateList"></div>
   </section>
 
   <!-- ===== Points ===== -->
   <section class="panel" id="pointsPanel">
-    <h2>⑤ ポイント <span class="en">Points</span></h2>
-    <p class="hint">お客様は購入金額の<strong>1%</strong>のポイントが貯まります（1ポイント = ¥1）。ポイントは<strong>購入から1ヶ月後</strong>に使えるようになります。<br>
-    Customers earn <strong>1%</strong> back in points (1 pt = ¥1). Points become usable <strong>1 month after</strong> the purchase.<br>
-    ※ ポイントの追加・利用は、<strong>WhatsAppで注文とお支払いを確認してから</strong>行ってください。<br>
+    <h2>⑤ Points</h2>
+    <p class="hint">Customers earn <strong>1%</strong> back in points (1 pt = ¥1). Points become usable <strong>1 month after</strong> the purchase.<br>
     Add / use points only <strong>after</strong> the order and payment are confirmed on WhatsApp.<br>
-    電話番号はハッシュ化して保存されます。番号そのものは保存されません。Phone numbers are stored only as hashes — never as raw numbers.</p>
-    <label for="ptPhone">電話番号 <span class="en">Customer phone number</span></label>
+    Phone numbers are stored only as hashes — the raw number is never saved.</p>
+    <label for="ptPhone">Customer phone number</label>
     <input type="tel" id="ptPhone" placeholder="090-…" autocomplete="off">
-    <button type="button" class="big-btn grey" id="ptLookupBtn">残高を見る <span style="font-size:.8em;">Check balance</span></button>
+    <button type="button" class="big-btn grey" id="ptLookupBtn">Check balance</button>
     <div id="pointsResult"></div>
-    <label for="ptAmount">注文金額 ¥ <span class="en">Order amount (yen) — adds 1% as points</span></label>
+    <label for="ptAmount">Order amount ¥ (yen) — adds 1% as points</label>
     <input type="number" id="ptAmount" min="0" step="1" inputmode="numeric" placeholder="e.g. 7580">
-    <button type="button" class="big-btn" id="ptAddBtn">ポイントを追加 <span style="font-size:.8em;">Add points (1%)</span></button>
-    <label for="ptUse">使うポイント <span class="en">Points to use</span></label>
+    <button type="button" class="big-btn" id="ptAddBtn">Add points (1%)</button>
+    <label for="ptUse">Points to use</label>
     <input type="number" id="ptUse" min="0" step="1" inputmode="numeric" placeholder="e.g. 200">
-    <button type="button" class="big-btn" id="ptUseBtn">ポイントを使う <span style="font-size:.8em;">Use points</span></button>
-    <label for="ptAdjust">ポイント調整（±）<span class="en">Manual adjustment — signed points (+ or −)</span></label>
-    <input type="number" id="ptAdjust" step="1" inputmode="numeric" placeholder="例：50 または -30 e.g. 50 or -30">
-    <label for="ptAdjustNote">調整の理由 <span class="en">Reason for adjustment (required)</span></label>
-    <input type="text" id="ptAdjustNote" placeholder="例：注文キャンセル e.g. order cancelled">
-    <button type="button" class="big-btn grey" id="ptAdjustBtn">ポイントを調整する <span style="font-size:.8em;">Adjust points</span></button>
-    <p class="hint">注文キャンセルや間違いのときは、上の「調整」でポイントを直すか、履歴の「取消」ボタンで付与を取り消してください。<br>
-    If an order is cancelled or a mistake happens, fix the points with the adjustment above (a reason is required), or cancel an earn entry from the history below the balance.</p>
-    <p class="dirty-note" id="pointsDirty">● ポイントはまだ保存されていません — Points not saved yet. 下のボタンを押してください。</p>
-    <button type="button" class="big-btn gold" id="ptSaveBtn">💾 ポイントを保存する <span style="font-size:.8em;">Save points</span></button>
+    <button type="button" class="big-btn" id="ptUseBtn">Use points</button>
+    <label for="ptAdjust">Manual adjustment — signed points (+ or −)</label>
+    <input type="number" id="ptAdjust" step="1" inputmode="numeric" placeholder="e.g. 50 or -30">
+    <label for="ptAdjustNote">Reason for adjustment (required)</label>
+    <input type="text" id="ptAdjustNote" placeholder="e.g. order cancelled">
+    <button type="button" class="big-btn grey" id="ptAdjustBtn">Adjust points</button>
+    <p class="hint">If an order is cancelled or a mistake happens, fix the points with the adjustment above (a reason is required), or cancel an earn entry from the history below the balance.</p>
+    <p class="dirty-note" id="pointsDirty">● Points not saved yet — press the button below.</p>
+    <button type="button" class="big-btn gold" id="ptSaveBtn">💾 Save points</button>
     <div class="msg" id="pointsMsg"></div>
   </section>
 
   <!-- ===== Orders (auto-saved to the owner's Google Sheet) ===== -->
   <section class="panel" id="ordersPanel">
-    <h2>⑥ 注文 <span class="en">Orders</span></h2>
-    <p class="hint">お客様の注文はすべて、オーナーのGoogleスプレッドシートに<strong>自動で保存</strong>されます（注文明細・合計・お名前・電話番号・受取方法・支払方法・住所）。下のボタンで注文の一覧を開けます。<br>
-    Every customer order is <strong>automatically saved</strong> to the owner's Google Sheet (items, total, name, phone, fulfilment, payment, address). Open the order list with the button below.<br>
-    ※ このシートはオーナーのGoogleアカウント（goldfamilyjp@yahoo.com）だけが見られる<strong>非公開</strong>のものです。<br>
+    <h2>⑥ Orders</h2>
+    <p class="hint">Every customer order is <strong>automatically saved</strong> to the owner's Google Sheet (items, total, name, phone, fulfilment, payment, address). Open the order list with the button below.<br>
     The sheet is <strong>private</strong> to the owner's Google account (goldfamilyjp@yahoo.com) — customers and other people cannot see it.<br>
-    ※ すぐの連絡は今まで通り<strong>WhatsAppの注文</strong>です。シートは注文の記録・確認用です。<br>
     The <strong>WhatsApp order remains the immediate alert</strong> — the sheet is the saved record for checking later.</p>
-    <a class="big-btn gold" style="text-align:center; text-decoration:none;" href="https://docs.google.com/spreadsheets/d/1NYooZTu01gP6cmp5k8we60Uhz4KKhgU4993zGIgt5Hw/edit" target="_blank" rel="noopener">📋 注文シートを開く <span style="font-size:.8em;">Open orders sheet</span></a>
+    <a class="big-btn gold" style="text-align:center; text-decoration:none;" href="https://docs.google.com/spreadsheets/d/1NYooZTu01gP6cmp5k8we60Uhz4KKhgU4993zGIgt5Hw/edit" target="_blank" rel="noopener">📋 Open orders sheet</a>
   </section>
 
 </div>
@@ -231,7 +221,7 @@ function slugify(s){
 }
 function catLabel(id){
   var c = state.categories.filter(function(x){ return x.id === id; })[0];
-  return c ? (c.jp + " " + c.en) : id;
+  return c ? c.en : id;
 }
 
 /* ---------- GitHub API layer ---------- */
@@ -243,7 +233,7 @@ function apiHeaders(){
   };
 }
 function loadFromGitHub(){
-  if (!token()){ showMsg($("setupMsg"), "トークンがありません。上の欄に貼ってください。No token yet — paste it above.", "err"); return Promise.reject(new Error("no token")); }
+  if (!token()){ showMsg($("setupMsg"), "No token yet — paste it above.", "err"); return Promise.reject(new Error("no token")); }
   return fetch(API, { headers: apiHeaders() })
     .then(function(r){
       if (r.status === 404) { fileSha = null; state = { categories: DEFAULT_CATEGORIES.slice(), products: [] }; return "new"; }
@@ -260,18 +250,18 @@ function loadFromGitHub(){
       $("mainPanel").hidden = false; $("formPanel").hidden = false;
       renderAll(); updateLastSavedNote();
       showMsg($("setupMsg"), how === "new"
-        ? "products.json はまだリポジトリにありません。商品を追加して「保存する」を押すと作られます。products.json not in the repo yet — add products and press Save to create it."
-        : "読み込みました。Loaded " + state.products.length + " products.", "ok");
+        ? "products.json is not in the repo yet — add products and press Save to create it."
+        : "Loaded " + state.products.length + " products.", "ok");
     })
     .catch(function(err){
-      showMsg($("setupMsg"), "読み込みに失敗しました（" + err.message + "）。トークンとネット接続を確認してください。Load failed — check the token and connection.", "err");
+      showMsg($("setupMsg"), "Load failed (" + err.message + ") — check the token and connection.", "err");
     });
 }
 function buildPayload(){
   return { categories: state.categories, products: state.products };
 }
 function saveToGitHub(){
-  if (!token()){ showMsg($("saveMsg"), "トークンがありません。No token — set it up above first.", "err"); return Promise.reject(new Error("no token")); }
+  if (!token()){ showMsg($("saveMsg"), "No token — set it up above first.", "err"); return Promise.reject(new Error("no token")); }
   var body = {
     message: "Update products via Madina Supershop admin panel",
     content: b64encodeUtf8(JSON.stringify(buildPayload(), null, 2))
@@ -286,26 +276,26 @@ function saveToGitHub(){
     .then(function(j){
       if (j && j.content && j.content.sha) fileSha = j.content.sha;
       dirty = false; $("dirtyNote").style.display = "none";
-      var when = new Date().toLocaleString("ja-JP");
+      var when = new Date().toLocaleString("en-US");
       localStorage.setItem(SAVED_KEY, when);
       updateLastSavedNote();
-      showMsg($("saveMsg"), "✅ 保存しました！お店に反映されます（1〜2分かかります）。Saved! The shop updates in 1–2 minutes.", "ok");
+      showMsg($("saveMsg"), "✅ Saved! The shop updates in 1–2 minutes.", "ok");
     })
     .catch(function(err){
-      showMsg($("saveMsg"), "保存に失敗しました（" + err.message + "）。もう一度お試しください。Save failed — please try again.", "err");
+      showMsg($("saveMsg"), "Save failed (" + err.message + ") — please try again.", "err");
       throw err;
     })
     .finally(function(){ btn.disabled = false; });
 }
 function updateLastSavedNote(){
   var when = localStorage.getItem(SAVED_KEY);
-  $("lastSaved").innerHTML = "前回の保存: " + (when ? esc(when) : "—") + ' <span class="en">Last saved: ' + (when ? esc(when) : "—") + "</span>";
+  $("lastSaved").innerHTML = "Last saved: " + (when ? esc(when) : "—");
 }
 
 /* ---------- rendering ---------- */
 function renderCatOptions(){
   var sel = $("fCat");
-  sel.innerHTML = state.categories.map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.jp) + " " + esc(c.en) + "</option>"; }).join("");
+  sel.innerHTML = state.categories.map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.en) + "</option>"; }).join("");
 }
 function renderList(){
   var q = $("adminSearch").value.trim().toLowerCase();
@@ -313,22 +303,22 @@ function renderList(){
     if (!q) return true;
     return (p.en + " " + (p.jp || "") + " " + (p.size || "")).toLowerCase().indexOf(q) !== -1;
   });
-  $("prodCount").textContent = "（全 " + state.products.length + " 件 / " + state.products.length + " products）";
-  if (!list.length){ $("productList").innerHTML = '<p class="hint">商品がありません。No products.</p>'; return; }
+  $("prodCount").textContent = "(" + state.products.length + " products)";
+  if (!list.length){ $("productList").innerHTML = '<p class="hint">No products.</p>'; return; }
   $("productList").innerHTML = list.map(function(p){
     var thumb = p.photo ? '<img class="thumb" src="' + esc(p.photo) + '" alt="">' : '<div class="ph">' + esc((p.en || "?").charAt(0).toUpperCase()) + "</div>";
     var stockHtml = (typeof p.stock === "number")
-      ? '<div class="d">在庫 Stock: <strong>' + p.stock + '</strong> '
+      ? '<div class="d">Stock: <strong>' + p.stock + '</strong> '
         + '<button type="button" class="mini edit" data-stock-dec="' + esc(p.id) + '">−1</button> '
         + '<button type="button" class="mini edit" data-stock-inc="' + esc(p.id) + '">+1</button></div>'
-      : '<div class="d">在庫管理なし No stock tracking</div>';
+      : '<div class="d">No stock tracking</div>';
     return '<div class="prow' + (p.on === false ? " off-row" : "") + '" data-row="' + esc(p.id) + '">' + thumb
       + '<div class="info"><div class="n">' + esc(p.jp || p.en) + ' <span class="en">' + esc(p.en) + '</span></div>'
-      + '<div class="d">' + yen(p.price) + (p.size ? " ・ " + esc(p.size) : "") + " ・ " + esc(catLabel(p.cat)) + (p.on === false ? " ・ 非表示 OFF" : "") + "</div>"
+      + '<div class="d">' + yen(p.price) + (p.size ? " ・ " + esc(p.size) : "") + " ・ " + esc(catLabel(p.cat)) + (p.on === false ? " ・ Hidden (OFF)" : "") + "</div>"
       + stockHtml + "</div>"
-      + '<label class="switch" title="表示 ON/OFF"><input type="checkbox" data-toggle="' + esc(p.id) + '"' + (p.on === false ? "" : " checked") + '><span class="sl"></span></label>'
-      + '<button type="button" class="mini edit" data-edit="' + esc(p.id) + '">編集 Edit</button>'
-      + '<button type="button" class="mini del" data-del="' + esc(p.id) + '">削除 Delete</button></div>';
+      + '<label class="switch" title="Show ON/OFF"><input type="checkbox" data-toggle="' + esc(p.id) + '"' + (p.on === false ? "" : " checked") + '><span class="sl"></span></label>'
+      + '<button type="button" class="mini edit" data-edit="' + esc(p.id) + '">Edit</button>'
+      + '<button type="button" class="mini del" data-del="' + esc(p.id) + '">Delete</button></div>';
   }).join("");
   $("productList").querySelectorAll("[data-edit]").forEach(function(b){ b.addEventListener("click", function(){ startEdit(this.getAttribute("data-edit")); }); });
   $("productList").querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click", function(){ deleteProduct(this.getAttribute("data-del")); }); });
@@ -352,8 +342,8 @@ function clearForm(){
   ["fId","fEn","fJp","fIdn","fPrice","fSize","fStock","fNewCat","fPhotoUrl"].forEach(function(id){ $(id).value = ""; });
   $("fPhotoFile").value = ""; $("fOn").checked = true;
   $("photoPreview").style.display = "none"; $("photoPreview").src = "";
-  $("formTitle").innerHTML = '③ 商品を追加 <span class="en">Add product</span>';
-  $("applyBtn").innerHTML = 'この商品を追加する <span style="font-size:.8em;">Add product</span>';
+  $("formTitle").innerHTML = '③ Add product';
+  $("applyBtn").innerHTML = 'Add product';
   $("cancelEditBtn").hidden = true; hideMsg($("formMsg"));
 }
 function startEdit(id){
@@ -367,8 +357,8 @@ function startEdit(id){
   $("fNewCat").value = ""; $("fPhotoUrl").value = p.photo && p.photo.indexOf("data:") !== 0 ? p.photo : "";
   $("fOn").checked = p.on !== false;
   if (p.photo){ $("photoPreview").src = p.photo; $("photoPreview").style.display = "block"; } else { $("photoPreview").style.display = "none"; }
-  $("formTitle").innerHTML = '③ 商品を編集 <span class="en">Edit product</span>';
-  $("applyBtn").innerHTML = '変更する <span style="font-size:.8em;">Update product</span>';
+  $("formTitle").innerHTML = '③ Edit product';
+  $("applyBtn").innerHTML = 'Update product';
   $("cancelEditBtn").hidden = false; hideMsg($("formMsg"));
   $("formPanel").scrollIntoView({ block: "start" });
 }
@@ -382,8 +372,8 @@ function applyForm(){
   var en = $("fEn").value.trim();
   var priceRaw = $("fPrice").value.trim();
   var price = Number(priceRaw);
-  if (!en){ showMsg($("formMsg"), "商品名（英語）を入力してください。Please enter the product name (English).", "err"); return; }
-  if (priceRaw === "" || isNaN(price) || price < 0){ showMsg($("formMsg"), "価格を正しく入力してください。Please enter a valid price.", "err"); return; }
+  if (!en){ showMsg($("formMsg"), "Please enter the product name (English).", "err"); return; }
+  if (priceRaw === "" || isNaN(price) || price < 0){ showMsg($("formMsg"), "Please enter a valid price.", "err"); return; }
   var cat = $("fCat").value || "other";
   var newCat = $("fNewCat").value.trim();
   if (newCat){
@@ -394,7 +384,7 @@ function applyForm(){
   var stockVal = null;
   if (stockRaw !== ""){
     stockVal = Math.floor(Number(stockRaw));
-    if (isNaN(stockVal) || stockVal < 0){ showMsg($("formMsg"), "在庫数を正しく入力してください（0以上の数字、または空欄）。Please enter a valid stock (0 or more, or blank).", "err"); return; }
+    if (isNaN(stockVal) || stockVal < 0){ showMsg($("formMsg"), "Please enter a valid stock (0 or more, or blank).", "err"); return; }
   }
   var data = {
     en: en, jp: $("fJp").value.trim(), idn: $("fIdn").value.trim(), price: Math.round(price),
@@ -403,17 +393,17 @@ function applyForm(){
   if (editingId){
     var p = findProduct(editingId);
     if (p){ Object.assign(p, data); }
-    showMsg($("formMsg"), "変更しました。「保存する」を押してください。Updated — now press Save.", "ok");
+    showMsg($("formMsg"), "Updated — now press Save.", "ok");
   } else {
     data.id = slugify(en);
     state.products.push(data);
-    showMsg($("formMsg"), "追加しました。「保存する」を押してください。Added — now press Save.", "ok");
+    showMsg($("formMsg"), "Added — now press Save.", "ok");
   }
   markDirty(); renderAll(); clearForm();
 }
 function deleteProduct(id){
   var p = findProduct(id); if (!p) return;
-  if (!window.confirm("「" + (p.jp || p.en) + "」を削除しますか？ Delete “" + p.en + "”?")) return;
+  if (!window.confirm("Delete “" + p.en + "”?")) return;
   state.products = state.products.filter(function(x){ return x.id !== id; });
   if (editingId === id) clearForm();
   markDirty(); renderAll();
@@ -445,7 +435,7 @@ $("fPhotoUrl").addEventListener("input", function(){
 /* ---------- events ---------- */
 $("saveTokenBtn").addEventListener("click", function(){
   var t = $("tokenInput").value.trim();
-  if (!t){ showMsg($("setupMsg"), "トークンを貼ってください。Please paste the token.", "err"); return; }
+  if (!t){ showMsg($("setupMsg"), "Please paste the token.", "err"); return; }
   localStorage.setItem(TOKEN_KEY, t);
   $("tokenInput").value = "";
   loadFromGitHub();
@@ -453,10 +443,10 @@ $("saveTokenBtn").addEventListener("click", function(){
 });
 $("forgetTokenBtn").addEventListener("click", function(){
   localStorage.removeItem(TOKEN_KEY);
-  showMsg($("setupMsg"), "この端末のトークンを消しました。Token removed from this device.", "info");
+  showMsg($("setupMsg"), "Token removed from this device.", "info");
 });
 $("reloadBtn").addEventListener("click", function(){
-  if (dirty && !window.confirm("保存していない変更があります。再読込すると消えます。よろしいですか？ Unsaved changes will be lost. Reload anyway?")) return;
+  if (dirty && !window.confirm("Unsaved changes will be lost. Reload anyway?")) return;
   loadFromGitHub();
 });
 $("saveBtn").addEventListener("click", function(){ saveToGitHub().catch(function(){}); });
@@ -468,7 +458,7 @@ $("adminSearch").addEventListener("input", renderList);
 var REPLY_TEMPLATES = [
   {
     id: "transfer",
-    title: "振込のご案内 Transfer payment",
+    title: "Template 1 — Bank transfer (Japanese message, tap to copy)",
     en: "For bank / Japan Post transfer orders — we ship after the payment arrives (about 3 days).",
     text:
       "【お名前】様、ご注文ありがとうございます。\n" +
@@ -481,7 +471,7 @@ var REPLY_TEMPLATES = [
   },
   {
     id: "cod",
-    title: "代引きのご案内 Cash on delivery",
+    title: "Template 2 — Cash on delivery (Japanese message, tap to copy)",
     en: "For cash-on-delivery orders — the customer pays the courier on arrival.",
     text:
       "【お名前】様、ご注文ありがとうございます。\n" +
@@ -491,7 +481,7 @@ var REPLY_TEMPLATES = [
   },
   {
     id: "pickup",
-    title: "店頭受取のご案内 Shop pickup",
+    title: "Template 3 — Shop pickup (Japanese message, tap to copy)",
     en: "For pickup orders — the customer pays and picks up at the branch.",
     text:
       "【お名前】様、ご注文ありがとうございます。\n" +
@@ -513,7 +503,7 @@ function copyTemplate(idx, btn){
   var text = REPLY_TEMPLATES[idx].text;
   function done(){
     var old = btn.textContent;
-    btn.textContent = "コピーしました Copied ✓";
+    btn.textContent = "Copied ✓";
     setTimeout(function(){ btn.textContent = old; }, 2200);
   }
   if (navigator.clipboard && navigator.clipboard.writeText){
@@ -527,7 +517,7 @@ function renderTemplates(){
     return '<div class="tpl-block" data-tpl="' + t.id + '"><h3>' + esc(t.title) + "</h3>"
       + '<pre class="tpl-text">' + esc(t.text) + "</pre>"
       + '<p class="en-line">' + esc(t.en) + "</p>"
-      + '<button type="button" class="copy-btn" data-copy="' + i + '">コピーする Copy</button></div>';
+      + '<button type="button" class="copy-btn" data-copy="' + i + '">Copy</button></div>';
   }).join("");
   $("templateList").querySelectorAll("[data-copy]").forEach(function(b){
     b.addEventListener("click", function(){ copyTemplate(Number(this.getAttribute("data-copy")), this); });
@@ -578,7 +568,7 @@ function pointBalances(rec){
 }
 function markPointsDirty(){ pointsDirty = true; $("pointsDirty").style.display = "block"; hideMsg($("pointsMsg")); }
 function loadPoints(){
-  if (!token()){ showMsg($("pointsMsg"), "トークンがありません。上の①で設定してください。No token — set it up in ① first.", "err"); return Promise.resolve(false); }
+  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ① first.", "err"); return Promise.resolve(false); }
   return fetch(POINTS_API, { headers: apiHeaders() })
     .then(function(r){
       if (r.status === 404){ pointsSha = null; pointsData = { customers: [] }; return true; }
@@ -592,12 +582,12 @@ function loadPoints(){
     })
     .then(function(){ pointsLoaded = true; pointsDirty = false; $("pointsDirty").style.display = "none"; return true; })
     .catch(function(err){
-      showMsg($("pointsMsg"), "ポイントの読み込みに失敗しました（" + err.message + "）。Load of points failed.", "err");
+      showMsg($("pointsMsg"), "Loading points failed (" + err.message + ").", "err");
       return false;
     });
 }
 function savePoints(){
-  if (!token()){ showMsg($("pointsMsg"), "トークンがありません。No token — set it up in ① first.", "err"); return Promise.resolve(false); }
+  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ① first.", "err"); return Promise.resolve(false); }
   var body = {
     message: "Update points via Madina Supershop admin panel",
     content: b64encodeUtf8(JSON.stringify(pointsData, null, 2))
@@ -612,37 +602,37 @@ function savePoints(){
     .then(function(j){
       if (j && j.content && j.content.sha) pointsSha = j.content.sha;
       pointsLoaded = true; pointsDirty = false; $("pointsDirty").style.display = "none";
-      showMsg($("pointsMsg"), "✅ ポイントを保存しました。Points saved.", "ok");
+      showMsg($("pointsMsg"), "✅ Points saved.", "ok");
       return true;
     })
     .catch(function(err){
-      showMsg($("pointsMsg"), "ポイントの保存に失敗しました（" + err.message + "）。Save failed — please try again.", "err");
+      showMsg($("pointsMsg"), "Saving points failed (" + err.message + ") — please try again.", "err");
       return false;
     })
     .finally(function(){ btn.disabled = false; });
 }
 function withCustomer(fn){
   var digits = normalizePhone($("ptPhone").value);
-  if (!digits){ showMsg($("pointsMsg"), "電話番号を入力してください。Please enter the customer's phone number.", "err"); return; }
+  if (!digits){ showMsg($("pointsMsg"), "Please enter the customer's phone number.", "err"); return; }
   hideMsg($("pointsMsg"));
   var ready = pointsLoaded ? Promise.resolve(true) : loadPoints();
   ready.then(function(ok){
     if (!ok) return;
     return sha256Hex(digits).then(function(hash){ fn(hash, digits); });
-  }).catch(function(err){ showMsg($("pointsMsg"), "エラー（" + err.message + "）", "err"); });
+  }).catch(function(err){ showMsg($("pointsMsg"), "Error (" + err.message + ")", "err"); });
 }
 var lastPointsDigits = "";
 function entryText(e){
-  if (e.type === "earn") return "+" + e.points + " pt — " + e.date + " 購入 / earned" + (e.matures ? "（" + e.matures + " から利用可 / usable from " + e.matures + "）" : "");
-  if (e.type === "redeem") return "−" + e.points + " pt — " + e.date + " 利用 / used";
-  if (e.type === "adjust") return (e.points >= 0 ? "+" : "−") + Math.abs(e.points) + " pt — " + e.date + " 調整 / adjustment";
+  if (e.type === "earn") return "+" + e.points + " pt — " + e.date + " earned" + (e.matures ? " (usable from " + e.matures + ")" : "");
+  if (e.type === "redeem") return "−" + e.points + " pt — " + e.date + " used";
+  if (e.type === "adjust") return (e.points >= 0 ? "+" : "−") + Math.abs(e.points) + " pt — " + e.date + " adjustment";
   return e.points + " pt — " + e.date;
 }
 function renderPointsResult(rec, digits){
   lastPointsDigits = digits;
   var el = $("pointsResult");
   if (!rec){
-    el.innerHTML = '<p class="hint">この番号（' + esc(digits) + '）のポイント記録はまだありません。No points record for this number yet.</p>';
+    el.innerHTML = '<p class="hint">No points record for this number (' + esc(digits) + ') yet.</p>';
     return;
   }
   var b = pointBalances(rec);
@@ -650,13 +640,13 @@ function renderPointsResult(rec, digits){
   var rows = indexed.map(function(x){
     var e = x.e;
     var btn = (e.type === "earn" && !e.cancelled)
-      ? ' <button type="button" class="mini del" data-cancel-earn="' + x.i + '">取消 Cancel</button>' : "";
-    var cflag = e.cancelled ? ' <strong style="color:var(--red);">取消済 Cancelled</strong>' : "";
+      ? ' <button type="button" class="mini del" data-cancel-earn="' + x.i + '">Cancel</button>' : "";
+    var cflag = e.cancelled ? ' <strong style="color:var(--red);">Cancelled</strong>' : "";
     return '<div class="pt-entry">' + esc(entryText(e)) + (e.note ? " ・ " + esc(e.note) : "") + cflag + btn + "</div>";
   }).join("");
   var warn = b.available < 0
-    ? '<p class="hint" style="color:var(--red); font-weight:700;">⚠ 利用可能ポイントがマイナスです（' + b.available + ' pt）。取消の影響です — 必要なら調整で直してください。Warning: available points are negative (' + b.available + ' pt) after a cancellation.</p>' : "";
-  el.innerHTML = '<p class="pt-bal">利用可能 Available: ' + b.available + ' pt<br>利用待ち Pending（1ヶ月後）: ' + b.pending + " pt</p>" + warn + rows;
+    ? '<p class="hint" style="color:var(--red); font-weight:700;">⚠ Warning: available points are negative (' + b.available + ' pt) after a cancellation — fix with an adjustment if needed.</p>' : "";
+  el.innerHTML = '<p class="pt-bal">Available: ' + b.available + ' pt<br>Pending (usable after 1 month): ' + b.pending + " pt</p>" + warn + rows;
   el.querySelectorAll("[data-cancel-earn]").forEach(function(btn){
     btn.addEventListener("click", function(){ cancelEarn(rec, Number(this.getAttribute("data-cancel-earn"))); });
   });
@@ -664,31 +654,31 @@ function renderPointsResult(rec, digits){
 function cancelEarn(rec, idx){
   var e = rec.entries[idx];
   if (!e || e.type !== "earn" || e.cancelled) return;
-  if (!window.confirm("このポイント付与を取り消しますか？\n+" + e.points + " pt — " + e.date + " 購入 / earned" + (e.note ? " ・ " + e.note : "") + "\nCancel this earn entry?")) return;
+  if (!window.confirm("Cancel this earn entry?\n+" + e.points + " pt — " + e.date + " earned" + (e.note ? " ・ " + e.note : ""))) return;
   e.cancelled = true;
   markPointsDirty();
   renderPointsResult(rec, lastPointsDigits);
   var b = pointBalances(rec);
   if (b.available < 0){
-    showMsg($("pointsMsg"), "⚠ 取り消しました。利用可能ポイントがマイナスになりました（" + b.available + " pt）。下の「ポイントを保存する」を押してください。Cancelled — available points are now NEGATIVE (" + b.available + " pt). Press Save points.", "err");
+    showMsg($("pointsMsg"), "⚠ Cancelled — available points are now NEGATIVE (" + b.available + " pt). Press Save points.", "err");
   } else {
-    showMsg($("pointsMsg"), "取り消しました。下の「ポイントを保存する」を押してください。Cancelled — now press Save points.", "ok");
+    showMsg($("pointsMsg"), "Cancelled — now press Save points.", "ok");
   }
 }
 function addAdjust(){
-  if (!$("ptPhone").value.trim()){ showMsg($("pointsMsg"), "電話番号を入力してください。Please enter the customer's phone number.", "err"); return; }
+  if (!$("ptPhone").value.trim()){ showMsg($("pointsMsg"), "Please enter the customer's phone number.", "err"); return; }
   var raw = $("ptAdjust").value.trim();
   var pts = Math.floor(Number(raw));
-  if (raw === "" || isNaN(pts) || pts === 0){ showMsg($("pointsMsg"), "調整ポイント数を入力してください（0以外）。Please enter an adjustment amount (not 0).", "err"); return; }
+  if (raw === "" || isNaN(pts) || pts === 0){ showMsg($("pointsMsg"), "Please enter an adjustment amount (not 0).", "err"); return; }
   var note = $("ptAdjustNote").value.trim();
-  if (!note){ showMsg($("pointsMsg"), "調整の理由を入力してください。A reason is required for adjustments (e.g. 注文キャンセル).", "err"); return; }
+  if (!note){ showMsg($("pointsMsg"), "A reason is required for adjustments (e.g. order cancelled).", "err"); return; }
   withCustomer(function(hash, digits){
     var rec = findCustomer(hash);
     if (!rec){ rec = { hash: hash, entries: [] }; pointsData.customers.push(rec); }
     rec.entries.push({ type: "adjust", points: pts, date: todayStr(), note: note });
     markPointsDirty(); renderPointsResult(rec, digits);
     $("ptAdjust").value = ""; $("ptAdjustNote").value = "";
-    showMsg($("pointsMsg"), "調整しました（" + (pts > 0 ? "+" : "") + pts + " pt）。下の「ポイントを保存する」を押してください。Adjusted (" + (pts > 0 ? "+" : "") + pts + " pt) — now press Save points.", "ok");
+    showMsg($("pointsMsg"), "Adjusted (" + (pts > 0 ? "+" : "") + pts + " pt) — now press Save points.", "ok");
   });
 }
 function lookupPoints(){
@@ -696,34 +686,34 @@ function lookupPoints(){
 }
 function addPoints(){
   var amount = Number($("ptAmount").value);
-  if (!$("ptPhone").value.trim()){ showMsg($("pointsMsg"), "電話番号を入力してください。Please enter the customer's phone number.", "err"); return; }
-  if (!amount || isNaN(amount) || amount <= 0){ showMsg($("pointsMsg"), "注文金額を入力してください。Please enter the order amount.", "err"); return; }
+  if (!$("ptPhone").value.trim()){ showMsg($("pointsMsg"), "Please enter the customer's phone number.", "err"); return; }
+  if (!amount || isNaN(amount) || amount <= 0){ showMsg($("pointsMsg"), "Please enter the order amount.", "err"); return; }
   var pts = Math.floor(amount * 0.01);
-  if (pts <= 0){ showMsg($("pointsMsg"), "1ポイント未満です（¥100以上の注文で貯まります）。Less than 1 point — orders of ¥100+ earn points.", "err"); return; }
+  if (pts <= 0){ showMsg($("pointsMsg"), "Less than 1 point — orders of ¥100+ earn points.", "err"); return; }
   withCustomer(function(hash, digits){
     var rec = findCustomer(hash);
     if (!rec){ rec = { hash: hash, entries: [] }; pointsData.customers.push(rec); }
     var t = todayStr();
-    rec.entries.push({ type: "earn", points: pts, date: t, matures: addOneMonth(t), note: "注文 ¥" + Math.round(amount).toLocaleString("ja-JP") });
+    rec.entries.push({ type: "earn", points: pts, date: t, matures: addOneMonth(t), note: "Order ¥" + Math.round(amount).toLocaleString("en-US") });
     markPointsDirty(); renderPointsResult(rec, digits);
-    showMsg($("pointsMsg"), pts + " ポイントを追加しました（" + addOneMonth(t) + " から利用可）。下の「ポイントを保存する」を押してください。Added " + pts + " pt — now press Save points.", "ok");
+    showMsg($("pointsMsg"), "Added " + pts + " pt (usable from " + addOneMonth(t) + ") — now press Save points.", "ok");
   });
 }
 function usePoints(){
   var want = Math.floor(Number($("ptUse").value));
-  if (!$("ptPhone").value.trim()){ showMsg($("pointsMsg"), "電話番号を入力してください。Please enter the customer's phone number.", "err"); return; }
-  if (!want || isNaN(want) || want <= 0){ showMsg($("pointsMsg"), "使うポイント数を入力してください。Please enter the points to use.", "err"); return; }
+  if (!$("ptPhone").value.trim()){ showMsg($("pointsMsg"), "Please enter the customer's phone number.", "err"); return; }
+  if (!want || isNaN(want) || want <= 0){ showMsg($("pointsMsg"), "Please enter the points to use.", "err"); return; }
   withCustomer(function(hash, digits){
     var rec = findCustomer(hash);
     var bal = pointBalances(rec);
     if (!rec || want > bal.available){
-      showMsg($("pointsMsg"), "使えるポイントが足りません（利用可能: " + bal.available + " pt）。Not enough available points (available: " + bal.available + " pt).", "err");
+      showMsg($("pointsMsg"), "Not enough available points (available: " + bal.available + " pt).", "err");
       renderPointsResult(rec, digits);
       return;
     }
-    rec.entries.push({ type: "redeem", points: want, date: todayStr(), note: "ポイント利用" });
+    rec.entries.push({ type: "redeem", points: want, date: todayStr(), note: "Points used" });
     markPointsDirty(); renderPointsResult(rec, digits);
-    showMsg($("pointsMsg"), want + " ポイントを使いました。下の「ポイントを保存する」を押してください。Used " + want + " pt — now press Save points.", "ok");
+    showMsg($("pointsMsg"), "Used " + want + " pt — now press Save points.", "ok");
   });
 }
 $("ptLookupBtn").addEventListener("click", lookupPoints);
@@ -738,11 +728,11 @@ window.__supershopAdmin = { getState: function(){ return state; }, buildPayload:
 
 /* ---------- init ---------- */
 if (token()){
-  showMsg($("setupMsg"), "トークンは保存済みです。読み込んでいます… Token found on this device — loading…", "info");
+  showMsg($("setupMsg"), "Token found on this device — loading…", "info");
   loadFromGitHub();
   loadPoints();
 } else {
-  showMsg($("setupMsg"), "まずトークンを貼ってください。Setup: paste your GitHub token to begin.", "info");
+  showMsg($("setupMsg"), "Setup: paste your GitHub token to begin.", "info");
 }
 updateLastSavedNote();
 renderTemplates();

@@ -3,7 +3,7 @@
 A simple online halal grocery shop for Madina Halal Restaurant & Foods (Gold Family Co. Ltd).
 
 - **Shop front:** `index.html` — customers order here; the order is sent to the shop on WhatsApp.
-- **Admin panel:** `admin.html` — Ali adds / edits / deletes products here. Big buttons, Japanese + English.
+- **Admin panel:** `admin.html` — Ali adds / edits / deletes products here. Big buttons, English only.
 - **Product data:** `products.json` — the single list of products. The shop reads it; the admin saves it.
 
 ## How saving works (GitHub is the database)
@@ -82,7 +82,7 @@ spreadsheet, so the shop has a permanent order book:
   WhatsApp order — if it fails, the order still completes normally.
 - The sheet is **private to the owner's Google account** — it is not shared with anyone.
   The **WhatsApp order remains the immediate alert**; the sheet is the saved record.
-- Staff open it from the admin panel's **「⑥ 注文 Orders」** section
+- Staff open it from the admin panel's **⑥ Orders** section
   (button → `https://docs.google.com/spreadsheets/d/1NYooZTu01gP6cmp5k8we60Uhz4KKhgU4993zGIgt5Hw/edit`).
 
 ## Address & phone check (checkout)
@@ -118,7 +118,7 @@ Everywhere else (ticket, confirmation email, order sheet) the address is one com
 
 ## Staff reply templates (admin panel)
 
-The bottom of `admin.html` has a **「返信テンプレート Reply templates」** section with three
+The bottom of `admin.html` has a **④ Reply templates** section with three
 copy-and-send Japanese templates for replying to customers on WhatsApp / LINE / email:
 (a) transfer payment (shows the `BANK_INFO` account details), (b) cash on delivery,
 (c) shop pickup. Staff fill in the 【お名前】 / 【合計】 / 【受取店舗】 blanks after copying.
@@ -134,7 +134,7 @@ Customers earn points and spend them on later orders:
 - **Maturity:** points become usable **1 month after the purchase date** (each earn entry has a
   `matures` date = purchase date + 1 month). Until then they are “pending”.
 - The ledger is a second data file, **`points.json`**, in the same repo, managed only from the
-  admin panel's **「⑤ ポイント Points」** section through the same GitHub token flow as products.
+  admin panel's **⑤ Points** section through the same GitHub token flow as products.
 
 **Privacy design (important):** the repo is **public**, so raw phone numbers are **never** stored.
 Each customer record is keyed by the **SHA-256 hex hash of the digits-only phone number**
@@ -148,15 +148,15 @@ public file; treat the file as a points ledger, not a customer database.)
 **Staff workflow:**
 
 1. Customer orders (WhatsApp). Shop confirms the order **and the payment** on WhatsApp first.
-2. Admin → ⑤ ポイント: enter the customer's phone number + the order amount → “Add points (1%)”.
+2. Admin → ⑤ Points: enter the customer's phone number + the order amount → “Add points (1%)”.
 3. When the customer asks to use points: enter the phone number → “Check balance” shows the
    **available** amount → enter the points → “Use points” (it refuses more than the available balance).
-4. Press **“💾 ポイントを保存する Save points”** after any change, or the change is lost.
+4. Press **“💾 Save points”** after any change, or the change is lost.
 
 **Cancelling / fixing points (admin):** if an order is cancelled or points were added by mistake,
-staff can fix the ledger in the same ⑤ ポイント section:
+staff can fix the ledger in the same ⑤ Points section:
 
-- **Cancel an earn:** each earn entry in the customer's history has a 「取消 Cancel」 button. It asks
+- **Cancel an earn:** each earn entry in the customer's history has a “Cancel” button. It asks
   for confirmation, then marks the entry `"cancelled": true`. Cancelled entries are **excluded from
   every balance computation** (admin and the shop-front balance check alike). If a cancellation makes
   the available balance negative, a warning is shown but the cancellation still goes through.
@@ -191,7 +191,7 @@ Each product may carry an optional **`stock`** field in `products.json`:
 **Stock is adjusted manually, never automatically.** The admin product form has a stock field
 (blank = no tracking), and each row of the admin product list shows the stock with **−1 / +1**
 stepper buttons (never below 0); like every other edit, steppers only mark the list dirty — the
-existing “💾 保存する Save to shop” publishes them. Stock is deliberately **not** cut when a customer
+existing “💾 Save to shop” publishes them. Stock is deliberately **not** cut when a customer
 places an order: orders are confirmed later on WhatsApp, and cancelled or unpaid orders would
 otherwise corrupt the count. Staff adjust the stock when an order is confirmed.
 
@@ -205,6 +205,8 @@ confirmation email stay JP+EN (they are shop-facing documents). Products may car
 product's slug); the card shows the Indonesian name line only when present. The admin product form
 has an optional “Indonesian name” field. Seeded categories use a trilingual lookup in `index.html`;
 a custom category typed in the admin displays exactly as entered.
+
+**Admin panel language:** the admin UI (`admin.html`) is **English only** (owner's instruction, 2026-11-21). Only the admin chrome changed — product data still holds Japanese / Indonesian names (that is data, shown on the shop front), and the three staff reply templates in ④ keep their Japanese message bodies, because those are messages sent to customers; their headings are English labels ("Template 1 — Bank transfer" etc.).
 
 ## Customer help (shop front)
 
