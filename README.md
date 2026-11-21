@@ -11,7 +11,7 @@ where it belongs — branch / pickup names, the logo, contact lines.)
 
 **Admin panel layout:** the daily-use sections come first — ① Add product
 (with the ⚡ Quick Add card at the top), ② Products, ③ Reply templates, ④ Points, ⑤ Orders,
-⑥ News board — and ⑦ Setup (GitHub token) sits at the very bottom, because the token is a one-time setup.
+⑥ News board, ⑦ Coupons & gift vouchers — and ⑧ Setup (GitHub token) sits at the very bottom, because the token is a one-time setup.
 If no token is saved on the device, a slim notice at the top of the page points down to Setup.
 
 ## How saving works (GitHub is the database)
@@ -278,7 +278,7 @@ add a product:
 3. Press **“⚡ Add & Save — goes live now”**. That one press runs the normal Add-product logic
    and then the normal Save, so the product is live in the shop immediately — no separate
    “Save to shop” press needed. If the name or price is missing, the card shows the error and
-   nothing is saved; if no token is set up yet, it says to do the one-time ⑦ Setup first.
+   nothing is saved; if no token is set up yet, it says to do the one-time ⑧ Setup first.
 
 The card's fields write through to the main form below (the form stays the single source of
 truth), and the full form still works exactly as before for stock, Japanese / Indonesian
@@ -387,6 +387,39 @@ from the admin, and customers see them in two prominent places on the shop front
 - **Performance & accessibility:** notices ride inside `products.json` (no extra downloads, no
   libraries, CSS-only animation). Customers who prefer reduced motion get **no rotation and no
   pulsing** (`prefers-reduced-motion`).
+
+## 🎟️ Coupons & gift vouchers
+
+The owner can create discount codes in the admin; customers type one code at checkout and the
+discount comes off the order. A **gift voucher** is not a separate system — it is simply a
+¥-off coupon with a gift-style code (e.g. `GIFT1000` for ¥1,000 off).
+
+- **Data:** an optional `coupons` array at the root of `products.json`:
+  `[{ "code", "kind": "yen"|"pct", "value", "min", "expiry": "YYYY-MM-DD"|"", "active" }]`.
+  `min` is the minimum **product subtotal** (0 = no minimum); `expiry` blank = never expires.
+  Like notices, coupons ride through the admin's load/save flow untouched by other saves, so a
+  product-only save never loses them.
+- **Creating codes (admin → ⑦ Coupons & gift vouchers):** type the code (it is stored
+  upper-cased), choose ¥ off or % off, the value, an optional minimum subtotal and an optional
+  expiry date, press “Add coupon” (or Edit an existing one), then “💾 Save to shop”. Codes must
+  be **unique** (case-insensitive), the value must be above 0, and a % coupon is capped at 90%.
+  Each listed coupon shows its summary (e.g. “¥500 off, min ¥5,000, until 2026-12-31”), a
+  Show/Hide switch, Edit and Delete.
+- **Checkout (shop front):** the cart/checkout sheet has a “クーポンコード / Coupon code /
+  Kode kupon” field with an Apply button. Unknown, hidden, or expired codes (expiry before
+  today, JST) and codes whose minimum is not met are rejected with a trilingual error. **One
+  code per order.** A ¥ coupon takes `min(value, subtotal)` off; a % coupon takes
+  `floor(subtotal × value ÷ 100)` off. The green “割引 / Discount / Diskon −¥X” line appears in
+  the totals, and an applied code shows as a chip with a ✕ to remove it.
+- **Totals rule:** grand total = **subtotal − discount + courier fee**. The free-courier
+  threshold (¥10,000) is judged on the **pre-discount** subtotal, and the courier fee itself is
+  never discounted — a ¥10,500 order with a ¥500 coupon still ships free and totals ¥10,000.
+- **Changing the cart:** if the subtotal drops below the applied coupon's minimum, the discount
+  **pauses** (a trilingual note says so) and resumes by itself if the subtotal recovers —
+  the same behaviour as the restaurant menu site.
+- **Order records:** the discount appears on the on-screen ticket, in the WhatsApp order text,
+  and in the Google Form / Sheet order details (a line like “クーポン COUPON500: −¥500”), and
+  the confirmation email's totals include it too — every record shows the same grand total.
 
 ## Responsive design (phones, tablets, desktops)
 

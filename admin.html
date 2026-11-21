@@ -244,9 +244,34 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <button type="button" class="big-btn gold" id="newsSaveBtn">💾 Save to shop</button>
   </section>
 
+  <!-- ===== Coupons & gift vouchers ===== -->
+  <section class="panel" id="couponPanel">
+    <h2>⑦ Coupons &amp; gift vouchers</h2>
+    <p class="hint">Create discount codes that customers type in at checkout. A <strong>gift voucher</strong> is simply a ¥-off code with a name like GIFT1000. Customers can use <strong>one code per order</strong>; the discount comes off the product subtotal (the free-courier ¥10,000 threshold is judged <em>before</em> the discount, and the courier fee itself is never discounted). Press "💾 Save to shop" to publish.</p>
+    <label for="cCode">Code</label>
+    <input type="text" id="cCode" placeholder="e.g. GIFT1000" autocomplete="off">
+    <label for="cKind">Type</label>
+    <select id="cKind">
+      <option value="yen">¥ off (fixed amount)</option>
+      <option value="pct">% off (percentage)</option>
+    </select>
+    <label for="cValue">Value (¥, or % when Type is "% off")</label>
+    <input type="number" id="cValue" min="0" step="1" placeholder="e.g. 500">
+    <label for="cMin">Minimum subtotal ¥ (blank = no minimum)</label>
+    <input type="number" id="cMin" min="0" step="1" placeholder="e.g. 5000">
+    <label for="cExpiry">Expiry date (blank = no expiry)</label>
+    <input type="date" id="cExpiry">
+    <div class="msg" id="couponMsg"></div>
+    <button type="button" class="big-btn" id="cAddBtn">Add coupon</button>
+    <button type="button" class="big-btn grey" id="cCancelBtn" hidden>Cancel edit</button>
+    <div id="couponList" style="margin-top:12px;"></div>
+    <p class="dirty-note" id="couponDirty">● Unsaved changes — press "Save to shop" below.</p>
+    <button type="button" class="big-btn gold" id="couponSaveBtn">💾 Save to shop</button>
+  </section>
+
   <!-- ===== Setup / token ===== -->
   <section class="panel" id="setupPanel">
-    <h2>⑦ Setup — GitHub Token</h2>
+    <h2>⑧ Setup — GitHub Token</h2>
     <p class="hint">A GitHub token (a password-like string) is needed once so this page can save products. Paste it below — it is stored <strong>only on this device</strong> (in this browser), never in any file.</p>
     <label for="tokenInput">Paste token</label>
     <input type="password" id="tokenInput" placeholder="github_pat_…" autocomplete="off">
@@ -284,7 +309,7 @@ var BANK_INFO = {
   bank: "（銀行：未設定）"
 };
 
-var state = { categories: [], products: [], notices: [] };
+var state = { categories: [], products: [], notices: [], coupons: [] };
 var extraRoot = {}; /* any other root fields found in products.json — carried through untouched on save */
 var fileSha = null;
 var dirty = false;
@@ -329,15 +354,15 @@ function loadFromGitHub(){
   if (!token()){ showMsg($("setupMsg"), "No token yet — paste it above.", "err"); return Promise.reject(new Error("no token")); }
   return fetch(API, { headers: apiHeaders() })
     .then(function(r){
-      if (r.status === 404) { fileSha = null; state = { categories: DEFAULT_CATEGORIES.slice(), products: [], notices: [] }; extraRoot = {}; return "new"; }
+      if (r.status === 404) { fileSha = null; state = { categories: DEFAULT_CATEGORIES.slice(), products: [], notices: [], coupons: [] }; extraRoot = {}; return "new"; }
       if (!r.ok) throw new Error("GitHub error " + r.status);
       return r.json().then(function(j){
         fileSha = j.sha;
         var data = JSON.parse(b64decodeUtf8(j.content));
-        state = { categories: data.categories || [], products: data.products || [], notices: data.notices || [] };
+        state = { categories: data.categories || [], products: data.products || [], notices: data.notices || [], coupons: data.coupons || [] };
         extraRoot = {};
         Object.keys(data).forEach(function(k){
-          if (k !== "categories" && k !== "products" && k !== "notices") extraRoot[k] = data[k];
+          if (k !== "categories" && k !== "products" && k !== "notices" && k !== "coupons") extraRoot[k] = data[k];
         });
         return "loaded";
       });
@@ -346,7 +371,7 @@ function loadFromGitHub(){
       state.products.forEach(normalizeActive);
       dirty = false; editingId = null;
       $("mainPanel").hidden = false; $("formPanel").hidden = false;
-      renderAll(); clearNoticeForm(); updateLastSavedNote();
+      renderAll(); clearNoticeForm(); clearCouponForm(); updateLastSavedNote();
       showMsg($("setupMsg"), how === "new"
         ? "products.json is not in the repo yet — add products and press Save to create it."
         : "Loaded " + state.products.length + " products.", "ok");
@@ -356,18 +381,19 @@ function loadFromGitHub(){
     });
 }
 function buildPayload(){
-  /* Rebuilt from state on every save — notices and any unknown root
-     fields (extraRoot) are written back too, so a product-only save
+  /* Rebuilt from state on every save — notices, coupons and any unknown
+     root fields (extraRoot) are written back too, so a product-only save
      never drops them. */
   var out = {};
   Object.keys(extraRoot).forEach(function(k){ out[k] = extraRoot[k]; });
   out.categories = state.categories;
   out.products = state.products;
   out.notices = state.notices;
+  out.coupons = state.coupons;
   return out;
 }
 function saveToGitHub(){
-  if (!token()){ showMsg($("saveMsg"), "No token — set it up in ⑦ Setup (bottom of this page) first.", "err"); return Promise.reject(new Error("no token")); }
+  if (!token()){ showMsg($("saveMsg"), "No token — set it up in ⑧ Setup (bottom of this page) first.", "err"); return Promise.reject(new Error("no token")); }
   var body = {
     message: "Update products via Madina Supershop admin panel",
     content: b64encodeUtf8(JSON.stringify(buildPayload(), null, 2))
@@ -381,7 +407,7 @@ function saveToGitHub(){
     })
     .then(function(j){
       if (j && j.content && j.content.sha) fileSha = j.content.sha;
-      dirty = false; $("dirtyNote").style.display = "none"; $("newsDirty").style.display = "none";
+      dirty = false; $("dirtyNote").style.display = "none"; $("newsDirty").style.display = "none"; $("couponDirty").style.display = "none";
       var when = new Date().toLocaleString("en-US");
       localStorage.setItem(SAVED_KEY, when);
       updateLastSavedNote();
@@ -444,7 +470,7 @@ function renderList(){
     var p = findProduct(this.getAttribute("data-stock-dec")); if (p && typeof p.stock === "number"){ p.stock = Math.max(0, p.stock - 1); markDirty(); renderList(); }
   }); });
 }
-function renderAll(){ renderCatOptions(); renderList(); renderNoticeList(); }
+function renderAll(){ renderCatOptions(); renderList(); renderNoticeList(); renderCouponList(); }
 function findProduct(id){ return state.products.filter(function(p){ return p.id === id; })[0] || null; }
 function markDirty(){ dirty = true; $("dirtyNote").style.display = "block"; hideMsg($("saveMsg")); }
 
@@ -755,7 +781,7 @@ function quickAddSave(){
   }
   if (!nm.trim()){ showMsg(qMsg, "Please type the product name — or pick a clear photo of the packet so it fills in automatically.", "err"); return; }
   if (pr.trim() === "" || isNaN(Number(pr)) || Number(pr) < 0){ showMsg(qMsg, "Please type the price.", "err"); return; }
-  if (!token()){ showMsg(qMsg, "No token yet — do the one-time Setup in ⑦ at the bottom of this page first, then try again.", "err"); return; }
+  if (!token()){ showMsg(qMsg, "No token yet — do the one-time Setup in ⑧ at the bottom of this page first, then try again.", "err"); return; }
   var before = state.products.length;
   applyForm();
   if (state.products.length === before){
@@ -864,7 +890,7 @@ function applyNotice(){
   hideMsg($("newsMsg"));
   var jp = $("nJp").value.trim(), en = $("nEn").value.trim(), idn = $("nIdn").value.trim();
   if (!jp && !en && !idn){ showMsg($("newsMsg"), "Please write the message in at least one language.", "err"); return; }
-  if (!token()){ showMsg($("newsMsg"), "No token — set it up in ⑦ Setup (bottom of this page) first.", "err"); return; }
+  if (!token()){ showMsg($("newsMsg"), "No token — set it up in ⑧ Setup (bottom of this page) first.", "err"); return; }
   var date = $("nDate").value || todayJstStr();
   var wasEdit = !!editingNoticeId;
   if (wasEdit){
@@ -893,7 +919,114 @@ $("newsSaveBtn").addEventListener("click", function(){
     showMsg($("newsMsg"), "✅ Saved! The shop updates in 1–2 minutes.", "ok");
   }).catch(function(err){
     showMsg($("newsMsg"), !token()
-      ? "No token — set it up in ⑦ Setup (bottom of this page) first."
+      ? "No token — set it up in ⑧ Setup (bottom of this page) first."
+      : "Save failed (" + err.message + ") — please try again.", "err");
+  }).finally(function(){ btn.disabled = false; });
+});
+
+/* ---------- 🎟️ Coupons & gift vouchers ----------
+   Discount codes live in the "coupons" array at the root of
+   products.json: { code, kind: "yen"|"pct", value, min, expiry, active }.
+   A gift voucher is just a yen-kind coupon with a gift-style code
+   (e.g. GIFT1000). They ride through the same load/save flow as
+   products — buildPayload() always writes them back, so a product-only
+   save never drops them. The shop applies ONE code per order against
+   the product subtotal; the free-courier threshold is judged before
+   the discount. */
+var editingCouponCode = null;
+function findCoupon(code){
+  var c = String(code || "").trim().toUpperCase();
+  return state.coupons.filter(function(x){ return String(x.code || "").trim().toUpperCase() === c; })[0] || null;
+}
+function couponSummary(c){
+  var s = c.kind === "pct" ? (Number(c.value) + "% off") : (yen(c.value) + " off");
+  if (Number(c.min)) s += ", min " + yen(c.min);
+  if (c.expiry) s += ", until " + c.expiry;
+  else s += ", no expiry";
+  return s;
+}
+function markCouponDirty(){ markDirty(); $("couponDirty").style.display = "block"; hideMsg($("couponMsg")); }
+function renderCouponList(){
+  var list = state.coupons.slice();
+  if (!list.length){ $("couponList").innerHTML = '<p class="hint">No coupons yet — create one above.</p>'; return; }
+  $("couponList").innerHTML = list.map(function(c){
+    return '<div class="prow' + (c.active === false ? " off-row" : "") + '" data-crow="' + esc(c.code) + '">'
+      + '<div class="info"><div class="n">' + esc(c.code) + '</div>'
+      + '<div class="d">' + esc(couponSummary(c)) + (c.active === false ? " ・ Hidden (OFF)" : "") + "</div></div>"
+      + '<label class="switch" title="Show / Hide in shop"><input type="checkbox" data-ctoggle="' + esc(c.code) + '"' + (c.active === false ? "" : " checked") + '><span class="sl"></span></label>'
+      + '<button type="button" class="mini edit" data-cedit="' + esc(c.code) + '">Edit</button>'
+      + '<button type="button" class="mini del" data-cdel="' + esc(c.code) + '">Delete</button></div>';
+  }).join("");
+  $("couponList").querySelectorAll("[data-ctoggle]").forEach(function(t){ t.addEventListener("change", function(){
+    var c = findCoupon(this.getAttribute("data-ctoggle")); if (c){ c.active = this.checked; markCouponDirty(); renderCouponList(); }
+  }); });
+  $("couponList").querySelectorAll("[data-cedit]").forEach(function(b){ b.addEventListener("click", function(){ startEditCoupon(this.getAttribute("data-cedit")); }); });
+  $("couponList").querySelectorAll("[data-cdel]").forEach(function(b){ b.addEventListener("click", function(){ deleteCoupon(this.getAttribute("data-cdel")); }); });
+}
+function clearCouponForm(){
+  editingCouponCode = null;
+  $("cCode").value = ""; $("cKind").value = "yen"; $("cValue").value = "";
+  $("cMin").value = ""; $("cExpiry").value = "";
+  $("cAddBtn").textContent = "Add coupon";
+  $("cCancelBtn").hidden = true;
+  hideMsg($("couponMsg"));
+}
+function startEditCoupon(code){
+  var c = findCoupon(code); if (!c) return;
+  editingCouponCode = String(c.code).trim().toUpperCase();
+  $("cCode").value = c.code || "";
+  $("cKind").value = c.kind === "pct" ? "pct" : "yen";
+  $("cValue").value = c.value;
+  $("cMin").value = Number(c.min) ? c.min : "";
+  $("cExpiry").value = c.expiry || "";
+  $("cAddBtn").textContent = "Update coupon";
+  $("cCancelBtn").hidden = false;
+  hideMsg($("couponMsg"));
+  $("couponPanel").scrollIntoView({ block: "start" });
+}
+function applyCoupon(){
+  hideMsg($("couponMsg"));
+  var code = $("cCode").value.trim().toUpperCase();
+  var kind = $("cKind").value === "pct" ? "pct" : "yen";
+  var value = Number($("cValue").value);
+  var min = $("cMin").value === "" ? 0 : Number($("cMin").value);
+  var expiry = $("cExpiry").value || "";
+  if (!code){ showMsg($("couponMsg"), "Please enter a code.", "err"); return; }
+  if (!value || isNaN(value) || value <= 0){ showMsg($("couponMsg"), "Please enter a value above 0.", "err"); return; }
+  if (kind === "pct" && value > 90){ showMsg($("couponMsg"), "A % off coupon can be at most 90%.", "err"); return; }
+  if (isNaN(min) || min < 0){ showMsg($("couponMsg"), "Minimum subtotal cannot be negative.", "err"); return; }
+  var dup = findCoupon(code);
+  if (dup && String(dup.code).trim().toUpperCase() !== editingCouponCode){
+    showMsg($("couponMsg"), "That code is already used — please pick a different code.", "err"); return;
+  }
+  if (!token()){ showMsg($("couponMsg"), "No token — set it up in ⑧ Setup (bottom of this page) first.", "err"); return; }
+  var wasEdit = !!editingCouponCode;
+  if (wasEdit){
+    var c = findCoupon(editingCouponCode);
+    if (c){ c.code = code; c.kind = kind; c.value = value; c.min = min; c.expiry = expiry; }
+  } else {
+    state.coupons.push({ code: code, kind: kind, value: value, min: min, expiry: expiry, active: true });
+  }
+  markCouponDirty(); renderCouponList(); clearCouponForm();
+  showMsg($("couponMsg"), wasEdit ? "Updated — now press Save to shop." : "Added — now press Save to shop.", "ok");
+}
+function deleteCoupon(code){
+  var c = findCoupon(code); if (!c) return;
+  if (!window.confirm("Delete this coupon?\n" + c.code + " — " + couponSummary(c))) return;
+  var key = String(c.code).trim().toUpperCase();
+  state.coupons = state.coupons.filter(function(x){ return String(x.code).trim().toUpperCase() !== key; });
+  if (editingCouponCode === key) clearCouponForm();
+  markCouponDirty(); renderCouponList();
+}
+$("cAddBtn").addEventListener("click", applyCoupon);
+$("cCancelBtn").addEventListener("click", clearCouponForm);
+$("couponSaveBtn").addEventListener("click", function(){
+  var btn = this; btn.disabled = true;
+  saveToGitHub().then(function(){
+    showMsg($("couponMsg"), "✅ Saved! The shop updates in 1–2 minutes.", "ok");
+  }).catch(function(err){
+    showMsg($("couponMsg"), !token()
+      ? "No token — set it up in ⑧ Setup (bottom of this page) first."
       : "Save failed (" + err.message + ") — please try again.", "err");
   }).finally(function(){ btn.disabled = false; });
 });
@@ -1043,7 +1176,7 @@ function pointBalances(rec){
 }
 function markPointsDirty(){ pointsDirty = true; $("pointsDirty").style.display = "block"; hideMsg($("pointsMsg")); }
 function loadPoints(){
-  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ⑦ Setup first.", "err"); return Promise.resolve(false); }
+  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ⑧ Setup first.", "err"); return Promise.resolve(false); }
   return fetch(POINTS_API, { headers: apiHeaders() })
     .then(function(r){
       if (r.status === 404){ pointsSha = null; pointsData = { customers: [] }; return true; }
@@ -1062,7 +1195,7 @@ function loadPoints(){
     });
 }
 function savePoints(){
-  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ⑦ Setup first.", "err"); return Promise.resolve(false); }
+  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ⑧ Setup first.", "err"); return Promise.resolve(false); }
   var body = {
     message: "Update points via Madina Supershop admin panel",
     content: b64encodeUtf8(JSON.stringify(pointsData, null, 2))
@@ -1200,6 +1333,7 @@ $("ptSaveBtn").addEventListener("click", function(){ savePoints(); });
 /* expose for testing */
 window.__supershopAdmin = { getState: function(){ return state; }, buildPayload: buildPayload, saveToGitHub: saveToGitHub, loadFromGitHub: loadFromGitHub, templates: REPLY_TEMPLATES, bankInfo: BANK_INFO,
   notices: { list: function(){ return state.notices; }, todayJst: todayJstStr, apply: applyNotice },
+  coupons: { list: function(){ return state.coupons; }, apply: applyCoupon, summary: couponSummary, find: findCoupon },
   quick: { addSave: quickAddSave, sync: syncQuickFromForm, updateTokenNotice: updateTokenNotice },
   ocr: { parse: parseOcrText, run: runOcr, apply: applyOcrResult },
   points: { data: function(){ return pointsData; }, balances: pointBalances, load: loadPoints, save: savePoints, sha256Hex: sha256Hex, addOneMonth: addOneMonth, normalizePhone: normalizePhone, todayStr: todayStr, cancelEarn: cancelEarn, addAdjust: addAdjust } };
@@ -1207,6 +1341,7 @@ window.__supershopAdmin = { getState: function(){ return state; }, buildPayload:
 /* ---------- init ---------- */
 $("nDate").value = todayJstStr();
 renderNoticeList();
+renderCouponList();
 updateTokenNotice();
 if (token()){
   showMsg($("setupMsg"), "Token found on this device — loading…", "info");

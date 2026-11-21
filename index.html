@@ -158,6 +158,17 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .totals{margin:12px 0; font-size:.98rem;}
 .totals .t-row{display:flex; justify-content:space-between; padding:3px 0;}
 .totals .t-grand{font-size:1.2rem; font-weight:800; color:var(--green); border-top:2px solid var(--green); padding-top:8px; margin-top:6px;}
+.totals .t-discount{color:#1e7d32; font-weight:700;}
+/* coupon code box (cart/checkout sheet, under the totals) */
+.coupon-box{margin:10px 0 2px;}
+.coupon-row{display:flex; gap:8px;}
+.coupon-row input{flex:1; min-width:0;}
+.coupon-apply{flex:0 0 auto; min-height:48px; background:var(--green); color:#fff; border:none; border-radius:10px; padding:11px 18px; font-size:1rem; font-weight:800; cursor:pointer;}
+.coupon-msg{background:#fbeae8; color:var(--red); border-radius:10px; padding:9px 12px; font-size:.9rem; margin:8px 0 0;}
+.coupon-applied{display:flex; align-items:center; justify-content:space-between; gap:10px; background:#e8f5e9; border:1px solid #1e7d32; color:#1e7d32; border-radius:10px; padding:9px 12px; font-weight:800;}
+.coupon-clear{background:none; border:none; color:#1e7d32; font-size:1.15rem; font-weight:800; cursor:pointer; padding:2px 8px; min-width:44px; min-height:44px;}
+.coupon-paused{background:#fdf3e0; color:#8a5a00; border-radius:10px; padding:9px 12px; font-size:.9rem; margin:8px 0 0;}
+.coupon-row[hidden],.coupon-applied[hidden]{display:none;}
 .fee-note{background:var(--gold-soft); border-radius:10px; padding:9px 12px; font-size:.85rem; margin:8px 0;}
 .seg{display:flex; gap:8px; margin:10px 0;}
 .seg button{flex:1; padding:12px 6px; border:2px solid var(--line); background:#fff; border-radius:12px; font-size:.95rem; font-weight:700; cursor:pointer; line-height:1.35; min-height:48px;}
@@ -364,6 +375,20 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
   <div class="totals" id="totals"></div>
   <p class="fee-note" id="feeLine"></p>
 
+  <div class="coupon-box">
+    <label class="flabel" for="couponInput">クーポンコード <span class="en">Coupon code</span> <span class="idn">Kode kupon</span></label>
+    <div class="coupon-row" id="couponRow">
+      <input type="text" id="couponInput" placeholder="クーポンコード Coupon code / Kode kupon" autocomplete="off">
+      <button type="button" class="coupon-apply" id="couponApplyBtn">適用 <span class="en">Apply</span> <span class="idn">Pakai</span></button>
+    </div>
+    <p class="coupon-msg" id="couponMsg" hidden></p>
+    <div class="coupon-applied" id="couponApplied" hidden>
+      <span id="couponAppliedText"></span>
+      <button type="button" class="coupon-clear" id="couponClearBtn" aria-label="クーポンを外す Remove coupon / Hapus kupon">✕</button>
+    </div>
+    <p class="coupon-paused" id="couponPaused" hidden></p>
+  </div>
+
   <span class="flabel">受け取り方法 <span class="en">Delivery / Pickup</span> <span class="idn">Pengiriman / Ambil</span></span>
   <div class="seg" id="fulfillSeg">
     <button type="button" data-fulfill="delivery" class="selected">宅配便<span class="en">Courier Delivery</span><span class="idn">Pengiriman</span></button>
@@ -490,6 +515,7 @@ var PAY_LABELS = {
 var CATEGORIES = [];
 var PRODUCTS = [];
 var NOTICES = [];
+var COUPONS = [];
 var cart = {};
 var activeCat = "all";
 var searchQuery = "";
@@ -1027,12 +1053,100 @@ function deliveryFee(){
   if (st >= FREE_THRESHOLD) return 0;
   return payment === "cod" ? COD_FEE : DELIVERY_FEE;
 }
+/* ---------- coupon codes & gift vouchers ----------
+   Coupons live in the "coupons" array at the root of products.json:
+   { code, kind: "yen"|"pct", value, min, expiry, active } — a gift
+   voucher is a yen-kind coupon (e.g. GIFT1000). ONE code per order.
+   The discount comes off the product subtotal only; the free-courier
+   threshold (¥10,000) is judged on the PRE-discount subtotal and the
+   courier fee is never discounted, so:
+     grand total = subtotal − discount + courier fee.
+   If the subtotal later drops below the coupon's minimum, the discount
+   pauses (and resumes if the subtotal recovers) — same behaviour as
+   the restaurant menu site. */
+var appliedCoupon = null;
+function todayJstStr(){
+  /* JST is UTC+9 with no daylight saving — shift and read the UTC date. */
+  return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+}
+function findShopCoupon(code){
+  var c = String(code || "").trim().toUpperCase();
+  if (!c) return null;
+  return COUPONS.filter(function(x){ return String(x.code || "").trim().toUpperCase() === c; })[0] || null;
+}
+function couponDiscount(){
+  if (!appliedCoupon) return 0;
+  var st = subtotal();
+  if (st < (Number(appliedCoupon.min) || 0)) return 0;   /* paused: below the minimum */
+  var v = Number(appliedCoupon.value) || 0;
+  if (appliedCoupon.kind === "pct") return Math.floor(st * v / 100);
+  return Math.min(v, st);
+}
+function couponPaused(){
+  return !!appliedCoupon && subtotal() < (Number(appliedCoupon.min) || 0);
+}
+function grandTotal(){ return subtotal() - couponDiscount() + deliveryFee(); }
+function couponError(html){
+  var m = document.getElementById("couponMsg");
+  m.innerHTML = html; m.hidden = false;
+}
+function renderCouponBox(){
+  var row = document.getElementById("couponRow");
+  var applied = document.getElementById("couponApplied");
+  var pausedEl = document.getElementById("couponPaused");
+  if (!row || !applied || !pausedEl) return;
+  if (appliedCoupon){
+    row.hidden = true; applied.hidden = false;
+    document.getElementById("couponAppliedText").textContent =
+      "🎟️ " + appliedCoupon.code + " — " + (appliedCoupon.kind === "pct" ? (Number(appliedCoupon.value) + "% OFF") : (yen(appliedCoupon.value) + " OFF"));
+    if (couponPaused()){
+      var min = Number(appliedCoupon.min) || 0;
+      pausedEl.innerHTML = "小計が " + yen(min) + " 未満のため、クーポンは一時停止中です。<br><span class=\"en\">Coupon paused — the subtotal is under " + yen(min) + ".</span><br><span class=\"idn\">Kupon dijeda — subtotal di bawah " + yen(min) + ".</span>";
+      pausedEl.hidden = false;
+    } else pausedEl.hidden = true;
+  } else {
+    row.hidden = false; applied.hidden = true; pausedEl.hidden = true;
+  }
+}
+function applyCoupon(){
+  var msgEl = document.getElementById("couponMsg");
+  msgEl.hidden = true;
+  var raw = document.getElementById("couponInput").value;
+  var c = findShopCoupon(raw);
+  if (!String(raw).trim() || !c){
+    couponError("クーポンコードが正しくありません。<br><span class=\"en\">Invalid coupon code.</span><br><span class=\"idn\">Kode kupon tidak valid.</span>");
+    return;
+  }
+  if (c.active === false){
+    couponError("このクーポンは現在使えません。<br><span class=\"en\">This coupon is not available.</span><br><span class=\"idn\">Kupon ini tidak tersedia.</span>");
+    return;
+  }
+  if (c.expiry && c.expiry < todayJstStr()){
+    couponError("このクーポンは有効期限が切れています。<br><span class=\"en\">This coupon has expired.</span><br><span class=\"idn\">Kupon ini sudah kedaluwarsa.</span>");
+    return;
+  }
+  var min = Number(c.min) || 0;
+  if (subtotal() < min){
+    couponError("このクーポンは小計 " + yen(min) + " 以上のご注文で使えます。<br><span class=\"en\">This coupon needs a subtotal of " + yen(min) + " or more.</span><br><span class=\"idn\">Kupon ini untuk subtotal " + yen(min) + " ke atas.</span>");
+    return;
+  }
+  appliedCoupon = c;
+  document.getElementById("couponInput").value = "";
+  renderCart();
+}
+document.getElementById("couponApplyBtn").addEventListener("click", applyCoupon);
+document.getElementById("couponInput").addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); applyCoupon(); } });
+document.getElementById("couponClearBtn").addEventListener("click", function(){
+  appliedCoupon = null;
+  document.getElementById("couponMsg").hidden = true;
+  renderCart();
+});
 var cartbar = document.getElementById("cartbar");
 function renderCartBar(){
   var n = cartTotalQty();
   cartbar.hidden = n === 0;
   document.getElementById("cbQty").textContent = n;
-  document.getElementById("cbTotal").textContent = yen(subtotal() + deliveryFee());
+  document.getElementById("cbTotal").textContent = yen(grandTotal());
 }
 var cartItemsEl = document.getElementById("cartItems");
 var totalsEl = document.getElementById("totals");
@@ -1052,16 +1166,18 @@ function renderCart(){
     cartItemsEl.querySelectorAll("[data-cinc]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-cinc"); setQty(id, cart[id]+1); }); });
     cartItemsEl.querySelectorAll("[data-cdec]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-cdec"); setQty(id, cart[id]-1); }); });
   }
-  var st = subtotal(), fee = deliveryFee();
+  var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), grand = st - disc + fee;
   totalsEl.innerHTML =
     '<div class="t-row"><span>小計 Subtotal</span><span>' + yen(st) + '</span></div>'
+    + (disc > 0 ? '<div class="t-row t-discount"><span>割引 / Discount / Diskon（' + esc(appliedCoupon.code) + '）</span><span>−' + yen(disc) + '</span></div>' : '')
     + '<div class="t-row"><span>送料 Courier fee / Ongkir</span><span>' + (fulfill==="pickup" ? "¥0（店頭受取 Pickup）" : (fee===0 && st>0 ? "¥0 — 無料 FREE" : yen(fee))) + '</span></div>'
-    + '<div class="t-row t-grand"><span>合計 Total</span><span>' + yen(st+fee) + '</span></div>';
-  if (fulfill === "pickup") feeLineEl.textContent = "店頭受取：送料 ¥0（無料） / Pickup: fee ¥0 — FREE / Ambil di toko: gratis ・ 合計 Total: " + yen(st);
-  else if (st >= FREE_THRESHOLD) feeLineEl.textContent = "送料：¥0 — 無料 FREE（¥10,000以上） / Courier fee: ¥0 — FREE / Ongkir: GRATIS ・ 合計 Total: " + yen(st);
-  else if (st > 0 && payment === "cod") feeLineEl.textContent = "送料（代引き）：¥1,800（¥10,000未満） / Courier fee (COD): ¥1,800 / Ongkir (COD): ¥1,800 ・ 合計 Total: " + yen(st + fee) + " — あと " + yen(FREE_THRESHOLD - st) + " で送料無料 / " + yen(FREE_THRESHOLD - st) + " more for FREE delivery";
-  else if (st > 0) feeLineEl.textContent = "送料：¥990（¥10,000未満） / Courier fee: ¥990 / Ongkir: ¥990 ・ 合計 Total: " + yen(st + fee) + " — あと " + yen(FREE_THRESHOLD - st) + " で送料無料 / " + yen(FREE_THRESHOLD - st) + " more for FREE delivery";
+    + '<div class="t-row t-grand"><span>合計 Total</span><span>' + yen(grand) + '</span></div>';
+  if (fulfill === "pickup") feeLineEl.textContent = "店頭受取：送料 ¥0（無料） / Pickup: fee ¥0 — FREE / Ambil di toko: gratis ・ 合計 Total: " + yen(grand);
+  else if (st >= FREE_THRESHOLD) feeLineEl.textContent = "送料：¥0 — 無料 FREE（¥10,000以上） / Courier fee: ¥0 — FREE / Ongkir: GRATIS ・ 合計 Total: " + yen(grand);
+  else if (st > 0 && payment === "cod") feeLineEl.textContent = "送料（代引き）：¥1,800（¥10,000未満） / Courier fee (COD): ¥1,800 / Ongkir (COD): ¥1,800 ・ 合計 Total: " + yen(grand) + " — あと " + yen(FREE_THRESHOLD - st) + " で送料無料 / " + yen(FREE_THRESHOLD - st) + " more for FREE delivery";
+  else if (st > 0) feeLineEl.textContent = "送料：¥990（¥10,000未満） / Courier fee: ¥990 / Ongkir: ¥990 ・ 合計 Total: " + yen(grand) + " — あと " + yen(FREE_THRESHOLD - st) + " で送料無料 / " + yen(FREE_THRESHOLD - st) + " more for FREE delivery";
   else feeLineEl.textContent = "宅配便：¥10,000以上は送料無料、未満は振込¥990・代引き¥1,800。店頭受取は無料。 / Courier: FREE at ¥10,000+, under — transfer ¥990 / COD ¥1,800. Pickup free. / Pengiriman: GRATIS ¥10,000+, di bawahnya transfer ¥990 / COD ¥1,800. Ambil di toko gratis.";
+  renderCouponBox();
   invoicePreviewEl.textContent = buildInvoiceText(readForm().name, readForm().phone, readForm().address, readForm().note, true);
   renderCartBar();
 }
@@ -1291,7 +1407,9 @@ function buildInvoiceText(name, phone, address, note, preview){
   });
   lines.push(sep);
   var fee = deliveryFee();
+  var disc = couponDiscount();
   lines.push("小計 / Subtotal: " + yen(st));
+  if (disc > 0 && appliedCoupon) lines.push("クーポン " + appliedCoupon.code + ": −" + yen(disc));
   if (isDelivery){
     if (fee === 0 && st >= FREE_THRESHOLD) lines.push("送料 / Courier fee: ¥0 — 無料 FREE（¥10,000以上のご注文 / orders ¥10,000+）");
     else if (payment === "cod") lines.push("送料 / Courier fee: " + yen(fee) + "（代引き COD・¥10,000未満 / COD, orders under ¥10,000）");
@@ -1299,7 +1417,7 @@ function buildInvoiceText(name, phone, address, note, preview){
   } else {
     lines.push("送料 / Courier fee: ¥0 — 店頭受取無料 / Pickup free");
   }
-  lines.push("合計 / TOTAL: " + yen(st + fee));
+  lines.push("合計 / TOTAL: " + yen(st - disc + fee));
   lines.push("ありがとうございます / Thank you for your order.");
   return lines.join("\n");
 }
@@ -1313,7 +1431,7 @@ function buildInvoiceText(name, phone, address, note, preview){
    blocks the WhatsApp order. */
 function buildAutoresponse(f){
   var isDelivery = fulfill === "delivery";
-  var st = subtotal(), fee = deliveryFee(), total = st + fee;
+  var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), total = st - disc + fee;
   var L = [];
   L.push("ご注文ありがとうございます！ Thank you for your order!");
   L.push("MADINA HALAL SUPER — ご注文確認 / Order Confirmation");
@@ -1324,6 +1442,7 @@ function buildAutoresponse(f){
   });
   L.push("──────────");
   L.push("小計 / Subtotal: " + yen(st));
+  if (disc > 0 && appliedCoupon) L.push("クーポン " + appliedCoupon.code + ": −" + yen(disc));
   if (isDelivery) L.push("送料 / Courier fee: " + yen(fee));
   L.push("合計 / TOTAL: " + yen(total));
   L.push("──────────");
@@ -1345,7 +1464,7 @@ function buildAutoresponse(f){
 }
 function sendConfirmationEmail(f){
   var isDelivery = fulfill === "delivery";
-  var st = subtotal(), fee = deliveryFee(), total = st + fee;
+  var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), total = st - disc + fee;
   var orderLines = sortedCartIds().map(function(id, i){
     var p = productById(id);
     return (i+1) + ". " + p.en + " (" + (p.jp||"") + ") " + (p.size||"") + " — " + yen(p.price) + " x " + cart[id] + " = " + yen(p.price*cart[id]);
@@ -1364,6 +1483,7 @@ function sendConfirmationEmail(f){
     "送料 Courier fee": isDelivery ? yen(fee) : "¥0",
     "合計 Grand Total": yen(total)
   };
+  if (disc > 0 && appliedCoupon) payload["クーポン割引 Coupon discount"] = appliedCoupon.code + ": −" + yen(disc);
   if (isDelivery){
     payload["住所 Address"] = f.address;
     payload["お支払い Payment"] = PAY_LABELS[payment];
@@ -1391,11 +1511,12 @@ var GFORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSenr_nuMWAbwOuqgvo5Nuj
 function sendOrderToSheet(f){
   try {
     var isDelivery = fulfill === "delivery";
-    var st = subtotal(), fee = deliveryFee(), total = st + fee;
+    var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), total = st - disc + fee;
     var itemLines = sortedCartIds().map(function(id){
       var p = productById(id); if (!p) return "";
       return p.en + (p.jp ? "（" + p.jp + "）" : "") + (p.size ? " " + p.size : "") + " × " + cart[id] + " — " + yen(p.price * cart[id]);
     }).filter(function(s){ return s; });
+    if (disc > 0 && appliedCoupon) itemLines.push("クーポン " + appliedCoupon.code + ": −" + yen(disc));
     if (isDelivery) itemLines.push("配送料： " + yen(fee));
     var pr = pointsRequest();
     var phone = f.phone || pr.phone || "";
@@ -1606,7 +1727,8 @@ document.getElementById("shareCopy").addEventListener("click", function(){
 });
 
 /* expose for testing */
-window.__supershopShop = { deliveryFee: deliveryFee, pointBalances: computePointBalances, getCart: function(){ return cart; }, setQty: setQty, faqItems: FAQ_ITEMS, siteUrl: SITE_URL };
+window.__supershopShop = { deliveryFee: deliveryFee, pointBalances: computePointBalances, getCart: function(){ return cart; }, setQty: setQty, faqItems: FAQ_ITEMS, siteUrl: SITE_URL,
+  coupon: { list: function(){ return COUPONS; }, applied: function(){ return appliedCoupon; }, discount: couponDiscount, paused: couponPaused, grandTotal: grandTotal, apply: applyCoupon } };
 
 /* ---------- load products ---------- */
 fetch("products.json", { cache: "no-store" })
@@ -1615,6 +1737,7 @@ fetch("products.json", { cache: "no-store" })
     CATEGORIES = data.categories || [];
     PRODUCTS = data.products || [];
     NOTICES = data.notices || [];
+    COUPONS = data.coupons || [];
     renderChips(); renderGrid(); renderSlideshow(); renderNews(); syncFulfillmentUI(); applySavedDetails();
   })
   .catch(function(err){
