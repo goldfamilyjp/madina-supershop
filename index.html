@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Madina Halal Supershop — マディナ ハラール スーパーショップ</title>
+<meta name="description" content="マディナ ハラール スーパーショップ — 100%ハラール食品のオンラインショップ。ハラール食品1,000点以上、¥10,000以上で送料無料、ポイント1%還元。Madina Halal Supershop — 100% halal groceries online: 1,000+ halal products, FREE delivery over ¥10,000, 1% points back. Toko halal online: 1.000+ produk halal, gratis ongkir di atas ¥10.000, poin kembali 1%.">
+<meta property="og:title" content="Madina Halal Supershop — マディナ ハラール スーパーショップ">
+<meta property="og:description" content="100%ハラール食品のオンラインショップ — ¥10,000以上で送料無料、ポイント1%還元。100% halal groceries online — FREE delivery over ¥10,000, 1% points back.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://goldfamilyjp.github.io/madina-supershop/">
+<meta property="og:image" content="https://goldfamilyjp.github.io/madina-supershop/logo.jpg">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Madina Halal Supershop — マディナ ハラール スーパーショップ">
+<meta name="twitter:description" content="100%ハラール食品のオンラインショップ — ¥10,000以上で送料無料、ポイント1%還元。100% halal groceries online — FREE delivery over ¥10,000, 1% points back.">
+<meta name="twitter:image" content="https://goldfamilyjp.github.io/madina-supershop/logo.jpg">
 <style>
 :root{
   --green:#0b4530; --green-dark:#07301f; --gold:#e3c04a; --gold-soft:#f6ecd2;
@@ -12,8 +22,10 @@
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif; background:var(--bg); color:var(--ink); padding-bottom:96px;}
-.en{font-size:.82em; color:var(--muted); font-weight:400;}
+/* Trilingual rule (owner): JP / EN / ID always render at the SAME font size — never shrink the 2nd/3rd language. */
+.en,.idn{font-size:1em; font-weight:inherit; color:inherit;}
 header{background:var(--green); color:#fff; padding:18px 16px 14px; text-align:center; border-bottom:4px solid var(--gold);}
+header .hero-logo{width:72px; height:72px; object-fit:cover; border-radius:50%; border:2px solid var(--gold); background:#fff; margin-bottom:6px;}
 header .shop-name{font-size:1.55rem; font-weight:800; letter-spacing:.02em;}
 header .shop-name-jp{font-size:.95rem; color:var(--gold); margin-top:2px;}
 header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
@@ -35,7 +47,7 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .card .ph-tile{width:100%; height:100%; background:linear-gradient(135deg,var(--green) 0%,#146344 100%); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:800;}
 .card .body{padding:10px 12px 12px; display:flex; flex-direction:column; gap:3px; flex:1;}
 .card .jp{font-weight:700; font-size:1rem; line-height:1.3;}
-.card .en-name{font-size:.85rem; color:var(--muted);}
+.card .en-name,.card .id-name{font-size:1rem; color:var(--muted); line-height:1.3;}
 .card .size{font-size:.8rem; color:var(--muted);}
 .card .price{font-size:1.15rem; font-weight:800; color:var(--green); margin-top:auto; padding-top:6px;}
 .add-btn{margin-top:8px; background:var(--green); color:#fff; border:none; border-radius:10px; padding:11px; font-size:1rem; font-weight:700; cursor:pointer; width:100%;}
@@ -70,7 +82,48 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .seg{display:flex; gap:8px; margin:10px 0;}
 .seg button{flex:1; padding:12px 6px; border:2px solid var(--line); background:#fff; border-radius:12px; font-size:.95rem; font-weight:700; cursor:pointer; line-height:1.35;}
 .seg button.selected{border-color:var(--green); background:#e3efe6; color:var(--green);}
-.seg button .en{display:block;}
+.seg button .en,.seg button .idn{display:block;}
+.soldout-badge{background:var(--red); color:#fff; font-weight:800; font-size:1rem; text-align:center; padding:8px 6px; line-height:1.35;}
+.few-note{color:var(--red); font-weight:700; font-size:1rem; margin-top:4px;}
+.add-btn:disabled{background:#9db3a0; cursor:default;}
+.stepper button:disabled{background:#9db3a0; cursor:default;}
+#stockToast{position:fixed; left:50%; transform:translateX(-50%); bottom:228px; background:var(--red); color:#fff; font-weight:700; font-size:.95rem; padding:11px 18px; border-radius:999px; z-index:75; display:none; box-shadow:0 4px 14px rgba(0,0,0,.3); text-align:center; max-width:92vw;}
+#stockToast.show{display:block;}
+/* help / chat buttons — stacked above the sticky cart bar, never overlapping it */
+.help-stack{position:fixed; right:12px; bottom:108px; z-index:45; display:flex; flex-direction:column; gap:8px; align-items:flex-end;}
+.help-btn{display:flex; align-items:center; gap:8px; min-height:48px; border-radius:999px; padding:10px 18px; font-size:1rem; font-weight:800; line-height:1.3; text-decoration:none; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.28);}
+.help-btn.wa{background:#25d366; color:#fff;}
+.help-btn.faq{background:var(--green); color:#fff; border:2px solid var(--gold);}
+/* FAQ panel */
+.faq-overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:80; display:none;}
+.faq-overlay.show{display:block;}
+.faq-panel{position:fixed; left:0; right:0; bottom:0; max-height:88vh; overflow-y:auto; background:#fff; border-radius:18px 18px 0 0; z-index:90; padding:18px 16px 26px; display:none;}
+.faq-panel.show{display:block;}
+@media(min-width:760px){.faq-panel{left:50%; right:auto; transform:translateX(-50%); width:640px; border-radius:18px; bottom:16px;}}
+.faq-panel h2{font-size:1.2rem; color:var(--green);}
+.faq-panel .close-x{float:right; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--muted);}
+.faq-auto{font-size:1rem; color:var(--muted); margin:4px 0 10px;}
+.faq-chips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;}
+.faq-chip{border:2px solid var(--green); background:#fff; color:var(--green); border-radius:999px; padding:10px 14px; font-size:1rem; font-weight:700; cursor:pointer; line-height:1.35; min-height:44px;}
+.faq-chip.active{background:var(--green); color:#fff;}
+.faq-answer{background:var(--gold-soft); border-radius:12px; padding:14px; font-size:1rem; line-height:1.55; display:none;}
+.faq-answer.show{display:block;}
+.faq-answer p{margin:0 0 6px;}
+.faq-answer p:last-child{margin-bottom:0;}
+.pc-result{background:#e3efe6; border:1px solid var(--green); border-radius:12px; padding:14px; margin-top:12px; font-size:1rem; line-height:1.6; display:none;}
+.pc-result.show{display:block;}
+.pc-result .pc-bal{font-size:1.15rem; font-weight:800; color:var(--green);}
+/* hero offer chips + share row (promotion) */
+.hero-chips{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px;}
+.hero-chip{background:rgba(255,255,255,.10); border:2px solid var(--gold); color:#fff; border-radius:999px; padding:8px 16px; font-size:1rem; font-weight:700; line-height:1.35; text-align:center;}
+.hero-chip .en,.hero-chip .idn{display:block;}
+.share-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:12px;}
+.share-label{font-weight:800; color:var(--green); font-size:1rem;}
+.share-btn{min-height:44px; display:inline-flex; align-items:center; padding:9px 16px; border-radius:999px; font-size:1rem; font-weight:700; text-decoration:none; border:none; cursor:pointer; color:#fff;}
+.share-btn.line{background:#06c755;}
+.share-btn.wa{background:#25d366;}
+.share-btn.fb{background:#1877f2;}
+.share-btn.copy{background:var(--green);}
 label.flabel{display:block; font-weight:700; font-size:.92rem; margin:12px 0 5px;}
 label.flabel .req{color:var(--red);}
 input[type=text],input[type=tel],input[type=email],input[type=number],textarea{width:100%; font-size:1rem; padding:11px 12px; border:2px solid var(--line); border-radius:10px; background:#fff;}
@@ -96,112 +149,173 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
 <body>
 
 <header>
+  <img class="hero-logo" src="logo.jpg" alt="Madina Halal Restaurant &amp; Foods">
   <div class="shop-name">Madina Halal Supershop</div>
   <div class="shop-name-jp">マディナ ハラール スーパーショップ</div>
-  <div class="tagline">100%ハラール食品のお店 — 100% Halal groceries, Anjo &amp; Toyota</div>
+  <div class="tagline">100%ハラール食品のお店 — 100% Halal groceries — Bahan makanan 100% Halal (Anjo &amp; Toyota)</div>
+  <div class="hero-chips">
+    <span class="hero-chip">送料無料（¥10,000以上）<span class="en">Free delivery over ¥10,000</span><span class="idn">Gratis ongkir ¥10,000+</span></span>
+    <span class="hero-chip">ポイント1%還元<span class="en">Points 1% back</span><span class="idn">Poin kembali 1%</span></span>
+    <span class="hero-chip">全品ハラール<span class="en">All halal</span><span class="idn">Semua halal</span></span>
+  </div>
 </header>
-<div class="ship-strip">宅配便で全国へお届け：¥10,000以上のご注文は送料無料、未満は送料¥990 <span class="en">— Courier delivery to your address — FREE for orders ¥10,000+, otherwise ¥990. Shop pickup always free.</span></div>
+<div class="ship-strip">宅配便：¥10,000以上は送料無料／未満は振込¥990・代引き¥1,800。店頭受取は無料 <span class="en">Courier: FREE over ¥10,000 — under: transfer ¥990 / COD ¥1,800. Pickup free.</span> <span class="idn">Pengiriman: GRATIS di atas ¥10,000 — di bawahnya: transfer ¥990 / COD ¥1,800. Ambil di toko gratis.</span></div>
 
 <div class="wrap">
+  <div class="share-row">
+    <span class="share-label">シェア <span class="en">Share</span> <span class="idn">Bagikan</span></span>
+    <a class="share-btn line" id="shareLine" href="#" target="_blank" rel="noopener">LINE</a>
+    <a class="share-btn wa" id="shareWa" href="#" target="_blank" rel="noopener">WhatsApp</a>
+    <a class="share-btn fb" id="shareFb" href="#" target="_blank" rel="noopener">Facebook</a>
+    <button type="button" class="share-btn copy" id="shareCopy">リンクをコピー <span class="en">Copy link</span> <span class="idn">Salin tautan</span></button>
+  </div>
   <div class="search-box">
-    <input type="text" id="searchInput" placeholder="商品を検索 Search products…">
+    <input type="text" id="searchInput" placeholder="商品を検索 Search / Cari produk…">
   </div>
   <div class="chips" id="chips"></div>
   <div class="grid" id="grid"></div>
-  <p class="empty-note" id="emptyNote" hidden>商品が見つかりません。No products found.</p>
-  <button type="button" class="show-more" id="showMore" hidden>もっと見る Show more</button>
+  <p class="empty-note" id="emptyNote" hidden>商品が見つかりません。No products found. Produk tidak ditemukan.</p>
+  <button type="button" class="show-more" id="showMore" hidden>もっと見る Show more / Tampilkan lebih banyak</button>
   <p class="count-line" id="countLine"></p>
 
   <div class="howto">
-    <h3>ご注文方法 <span class="en">How to order</span></h3>
+    <h3>ご注文方法 <span class="en">How to order</span> <span class="idn">Cara memesan</span></h3>
     <ol>
-      <li>商品をカートに入れてください。<span class="en">Add products to the cart.</span></li>
-      <li>カート画面でお名前・電話番号・受け取り方法（宅配便または店舗受け取り）を選んでください。宅配便の方は住所とお支払い方法をご入力ください。<span class="en">In the cart, enter your name and phone, and choose courier delivery or shop pickup. Delivery customers add their address and payment method.</span></li>
-      <li>「注文を確定する」を1回押すと、確認チケットが表示され、同時にWhatsAppが開きます。WhatsAppで送信を押してください。<span class="en">Press “Confirm Order” once — your confirmation ticket appears and WhatsApp opens at the same moment with the full order written. Tap Send in WhatsApp.</span></li>
-      <li>お支払い：店舗受け取りは店頭にて。宅配便は銀行・ゆうちょ振込（確認後に発送、到着まで約3日）または代引き（配達員へお支払い）が選べます。<span class="en">Payment: at the shop for pickup. For courier delivery, choose bank / Japan Post transfer (we ship after the transfer is confirmed; delivery takes about 3 days) or cash on delivery (pay the courier).</span></li>
+      <li>商品をカートに入れてください。<span class="en">Add products to the cart.</span> <span class="idn">Masukkan produk ke keranjang.</span></li>
+      <li>カートで名前・電話・受取方法を選び、宅配便の方は住所と支払い方法を入力してください。<span class="en">In the cart, enter name &amp; phone and choose delivery or pickup. Delivery customers add address &amp; payment.</span> <span class="idn">Di keranjang, isi nama &amp; telepon, pilih pengiriman atau ambil di toko. Untuk pengiriman, isi alamat &amp; cara bayar.</span></li>
+      <li>「注文を確定する」を押すとチケットが出て、WhatsAppが開きます。送信を押してください。<span class="en">Press “Confirm Order” — the ticket appears and WhatsApp opens. Tap Send in WhatsApp.</span> <span class="idn">Tekan “Konfirmasi Pesanan” — tiket muncul dan WhatsApp terbuka. Tekan Kirim di WhatsApp.</span></li>
+      <li>支払い：受取は店頭にて。宅配便は振込（確認後に発送・約3日）か代引き。送料は¥10,000以上無料、未満は振込¥990・代引き¥1,800。<span class="en">Payment: at the shop for pickup. Courier: transfer (ships after confirmation, ~3 days) or COD. Fee free at ¥10,000+, else transfer ¥990 / COD ¥1,800.</span> <span class="idn">Bayar: ambil di toko, bayar di toko. Pengiriman: transfer (dikirim setelah terkonfirmasi, ±3 hari) atau COD. Ongkir gratis ¥10,000+, di bawahnya transfer ¥990 / COD ¥1,800.</span></li>
     </ol>
+  </div>
+
+  <!-- ===== Points balance check ===== -->
+  <div class="howto" id="pointsCheck">
+    <h3>ポイント残高確認 <span class="en">Check your points</span> <span class="idn">Cek saldo poin</span></h3>
+    <p>電話番号を入力すると、ポイント残高が見られます。<span class="en">Enter your phone number to see your points balance.</span> <span class="idn">Masukkan nomor telepon untuk melihat saldo poin Anda.</span></p>
+    <label class="flabel" for="pcPhone">電話番号 <span class="en">Phone number</span> <span class="idn">Nomor telepon</span></label>
+    <input type="tel" id="pcPhone" autocomplete="tel" placeholder="090-…">
+    <button type="button" class="confirm-btn" id="pcBtn">残高を確認する <span class="en">Check balance</span> <span class="idn">Cek saldo</span></button>
+    <div class="pc-result" id="pcResult"></div>
+    <p class="fee-note">ポイントは購入の1ヶ月後から使えます。ご利用は注文時に店舗が確認して割引します。<br>Points become usable 1 month after purchase. The shop confirms your balance and applies the discount when you order.<br>Poin bisa dipakai 1 bulan setelah pembelian. Toko akan mengonfirmasi saldo dan memberi diskon saat Anda memesan.</p>
   </div>
   <footer>Madina Halal Supershop — Gold Family Co. Ltd.<br>安城店 Anjo: 0566-98-9995 ・ 豊田店 Toyota: 0565-41-5616</footer>
 </div>
 
+<!-- help / chat buttons (fixed, above the cart bar) -->
+<div class="help-stack">
+  <button type="button" class="help-btn faq" id="faqOpenBtn">よくある質問 <span class="en">FAQ</span> <span class="idn">Tanya Jawab</span></button>
+  <a class="help-btn wa" id="waChatBtn" href="#" target="_blank" rel="noopener">チャットで質問 <span class="en">Chat</span> <span class="idn">Chat</span></a>
+</div>
+<div id="stockToast" role="status"></div>
+
+<!-- FAQ assistant panel （自動案内 — automatic guide, not a human live chat) -->
+<div class="faq-overlay" id="faqOverlay"></div>
+<div class="faq-panel" id="faqPanel" aria-label="FAQ">
+  <button type="button" class="close-x" id="faqCloseBtn" aria-label="Close">×</button>
+  <h2>よくある質問 <span class="en">FAQ</span> <span class="idn">Tanya Jawab</span></h2>
+  <p class="faq-auto">自動案内（よくある質問ガイド）です。スタッフへの質問は緑のチャットボタンからどうぞ。<br>Automatic FAQ guide — for a staff member, use the green Chat button.<br>Panduan otomatis — untuk bertanya ke staf, gunakan tombol Chat hijau.</p>
+  <div class="faq-chips" id="faqChips"></div>
+  <div class="faq-answer" id="faqAnswer"></div>
+</div>
+
 <!-- cart bar -->
 <div class="cartbar" id="cartbar" hidden>
-  <div class="cb-info"><strong id="cbQty">0</strong> 点 items ・ <strong id="cbTotal">¥0</strong></div>
-  <button type="button" id="openCartBtn">カートを見る View Cart</button>
+  <div class="cb-info"><strong id="cbQty">0</strong> 点 items / barang ・ <strong id="cbTotal">¥0</strong></div>
+  <button type="button" id="openCartBtn">カートを見る View Cart / Keranjang</button>
 </div>
 
 <!-- cart sheet -->
 <div class="overlay" id="overlay"></div>
 <aside class="sheet" id="cartSheet" aria-label="Cart">
   <button type="button" class="close-x" id="closeCartBtn" aria-label="Close">×</button>
-  <h2>カート <span class="en">Your Cart</span></h2>
+  <h2>カート <span class="en">Your Cart</span> <span class="idn">Keranjang</span></h2>
   <div id="cartItems"></div>
   <div class="totals" id="totals"></div>
   <p class="fee-note" id="feeLine"></p>
 
-  <span class="flabel">受け取り方法 <span class="en">Courier Delivery / Pickup</span></span>
+  <span class="flabel">受け取り方法 <span class="en">Delivery / Pickup</span> <span class="idn">Pengiriman / Ambil</span></span>
   <div class="seg" id="fulfillSeg">
-    <button type="button" data-fulfill="delivery" class="selected">宅配便<span class="en">Courier Delivery — to your address</span></button>
-    <button type="button" data-fulfill="pickup">店頭受取<span class="en">Pickup at shop — always free</span></button>
+    <button type="button" data-fulfill="delivery" class="selected">宅配便<span class="en">Courier Delivery</span><span class="idn">Pengiriman</span></button>
+    <button type="button" data-fulfill="pickup">店頭受取<span class="en">Pickup at shop — free</span><span class="idn">Ambil di toko — gratis</span></button>
   </div>
 
   <div id="branchField">
-  <span class="flabel">受け取り店舗 <span class="en">Pickup Branch</span></span>
+  <span class="flabel">受け取り店舗 <span class="en">Pickup Branch</span> <span class="idn">Toko pengambilan</span></span>
   <div class="seg" id="branchSeg">
-    <button type="button" data-branch="Anjo" class="selected">安城店<span class="en">Anjo</span></button>
-    <button type="button" data-branch="Toyota">豊田店<span class="en">Toyota</span></button>
+    <button type="button" data-branch="Anjo" class="selected">安城店<span class="en">Anjo</span><span class="idn">Anjo</span></button>
+    <button type="button" data-branch="Toyota">豊田店<span class="en">Toyota</span><span class="idn">Toyota</span></button>
   </div>
-  <p class="fee-note" id="branchHint">選んだ店舗でお受け取りください。Please pick up at the branch you choose.</p>
+  <p class="fee-note" id="branchHint">選んだ店舗でお受け取りください。Pick up at the branch you choose. Ambil di toko yang dipilih.</p>
   </div>
 
   <form id="orderForm" novalidate>
-    <label class="flabel" for="fName">お名前 <span class="en">Name</span><span class="req">*</span></label>
-    <input type="text" id="fName" autocomplete="name" placeholder="お名前 Name">
-    <label class="flabel" for="fPhone">電話番号 <span class="en">Phone</span><span class="req">*</span></label>
-    <input type="tel" id="fPhone" autocomplete="tel" placeholder="電話番号 Phone number">
-    <label class="flabel" for="fEmail">確認メールを受け取るメールアドレス（任意）<span class="en"> Email for order confirmation (optional)</span></label>
+    <label class="flabel" for="fName">お名前 <span class="en">Name</span> <span class="idn">Nama</span><span class="req">*</span></label>
+    <input type="text" id="fName" autocomplete="name" placeholder="お名前 Name / Nama">
+    <label class="flabel" for="fPhone">電話番号 <span class="en">Phone</span> <span class="idn">Telepon</span><span class="req">*</span></label>
+    <input type="tel" id="fPhone" autocomplete="tel" placeholder="電話番号 Phone / Telepon">
+    <label class="flabel" for="fEmail">メールアドレス（任意・確認メール用）<span class="en"> Email for confirmation (optional)</span> <span class="idn">Email untuk konfirmasi (opsional)</span></label>
     <input type="email" id="fEmail" autocomplete="email" placeholder="メールアドレス Email (optional)">
     <div id="addressField">
-      <label class="flabel" for="fAddress">お届け先住所 <span class="en">Delivery Address</span><span class="req">*</span></label>
-      <textarea id="fAddress" autocomplete="street-address" placeholder="宅配便のお届け先住所 Your delivery address"></textarea>
+      <label class="flabel" for="fAddress">お届け先住所 <span class="en">Delivery Address</span> <span class="idn">Alamat pengiriman</span><span class="req">*</span></label>
+      <textarea id="fAddress" autocomplete="street-address" placeholder="お届け先住所 Delivery address / Alamat pengiriman"></textarea>
     </div>
     <div id="paymentField">
-      <span class="flabel">お支払い方法 <span class="en">Payment Method</span></span>
+      <span class="flabel">お支払い方法 <span class="en">Payment</span> <span class="idn">Cara bayar</span></span>
       <div class="seg" id="paymentSeg" style="flex-wrap:wrap;">
-        <button type="button" data-pay="yucho" class="selected">ゆうちょ銀行振込<span class="en">Japan Post Bank Transfer</span></button>
-        <button type="button" data-pay="bank">銀行振込<span class="en">Bank Transfer</span></button>
-        <button type="button" data-pay="cod">代引き<span class="en">Cash on Delivery</span></button>
+        <button type="button" data-pay="yucho" class="selected">ゆうちょ銀行振込<span class="en">Japan Post Transfer</span><span class="idn">Transfer Japan Post</span></button>
+        <button type="button" data-pay="bank">銀行振込<span class="en">Bank Transfer</span><span class="idn">Transfer Bank</span></button>
+        <button type="button" data-pay="cod">代引き<span class="en">Cash on Delivery</span><span class="idn">Bayar di tempat (COD)</span></button>
       </div>
       <p class="fee-note" id="paymentNote"></p>
     </div>
-    <label class="flabel" for="fNote">メッセージ <span class="en">Message (optional)</span></label>
-    <textarea id="fNote" placeholder="ご要望があればどうぞ Any requests"></textarea>
-    <label class="flabel" for="fPointsPhone">ポイント用 電話番号（任意）<span class="en"> Phone number for points (optional)</span></label>
-    <input type="tel" id="fPointsPhone" autocomplete="tel" placeholder="ポイント用電話番号 Phone number for points">
-    <label class="flabel" for="fPointsUse">使うポイント（任意）<span class="en"> Points to use (optional)</span></label>
+    <label class="flabel" for="fNote">メッセージ（任意）<span class="en"> Message (optional)</span> <span class="idn">Pesan (opsional)</span></label>
+    <textarea id="fNote" placeholder="ご要望があればどうぞ Any requests / Pesan"></textarea>
+    <label class="flabel" for="fPointsPhone">ポイント用電話番号（任意）<span class="en"> Phone for points (optional)</span> <span class="idn">Nomor telepon poin (opsional)</span></label>
+    <input type="tel" id="fPointsPhone" autocomplete="tel" placeholder="ポイント用電話番号 Phone for points">
+    <label class="flabel" for="fPointsUse">使うポイント（任意）<span class="en"> Points to use (optional)</span> <span class="idn">Poin yang dipakai (opsional)</span></label>
     <input type="number" id="fPointsUse" min="0" step="1" inputmode="numeric" placeholder="例：200 e.g. 200">
-    <p class="fee-note">ポイント：1ポイント = ¥1。ポイントは購入の1ヶ月後から使えます。使うポイントは店舗で残高を確認して割引します。<br>Points: 1 point = ¥1. Points become usable 1 month after purchase. The shop confirms your balance and applies the discount.</p>
+    <p class="fee-note">ポイント：1pt = ¥1。購入の1ヶ月後から使えます。店舗で残高を確認して割引します。<br>Points: 1 pt = ¥1, usable 1 month after purchase. The shop confirms your balance and applies the discount.<br>Poin: 1 poin = ¥1, bisa dipakai 1 bulan setelah pembelian. Toko akan memeriksa saldo dan memberi diskon.<br><a href="#pointsCheck" id="pointsCheckLink">ポイント残高を確認する Check points balance / Cek saldo poin →</a></p>
 
     <div class="form-error" id="formError"></div>
     <div class="invoice-preview" id="invoicePreview"></div>
-    <button type="submit" class="confirm-btn" id="confirmBtn">注文を確定する Confirm Order</button>
-    <p class="confirm-hint">1回押すと確認チケットが表示され、同時にWhatsAppが開きます。<br>One press: the confirmation ticket shows and WhatsApp opens together.</p>
-    <p class="pay-note">店舗受け取りは店頭でお支払いください。宅配便は振込（確認後に発送）または代引きです。<br>Pickup: pay at the shop. Courier: bank transfer (ships after confirmation) or cash on delivery.</p>
+    <button type="submit" class="confirm-btn" id="confirmBtn">注文を確定する <span class="en">Confirm Order</span> <span class="idn">Konfirmasi Pesanan</span></button>
+    <p class="confirm-hint">1回押すとチケットが出て、WhatsAppが開きます。<br>One press: ticket shows, WhatsApp opens. Sekali tekan: tiket muncul, WhatsApp terbuka.</p>
+    <p class="pay-note">受取は店頭でお支払い。宅配便は振込（確認後に発送）か代引き。<br>Pickup: pay at the shop. Courier: transfer (ships after confirmation) or COD.<br>Ambil di toko: bayar di toko. Pengiriman: transfer (dikirim setelah terkonfirmasi) atau COD.</p>
   </form>
 
   <div class="ticket-box" id="ticketBox" hidden>
-    <h3>ご注文ありがとうございます！<br><span class="en">Thank you — your order ticket</span></h3>
+    <h3>ご注文ありがとうございます！<br><span class="en">Thank you — your order ticket</span><br><span class="idn">Terima kasih — tiket pesanan Anda</span></h3>
     <pre id="ticketText"></pre>
-    <p class="email-note" id="emailSentNote" hidden>確認メールを送信しました<br><span class="en">Confirmation email sent</span></p>
-    <a class="wa-fallback" id="waFallback" href="#" target="_blank" rel="noopener">WhatsAppが開かない場合はこちら — Open WhatsApp</a>
+    <p class="email-note" id="emailSentNote" hidden>確認メールを送信しました<br><span class="en">Confirmation email sent</span><br><span class="idn">Email konfirmasi terkirim</span></p>
+    <a class="wa-fallback" id="waFallback" href="#" target="_blank" rel="noopener">WhatsAppが開かない場合はこちら — Open WhatsApp / Buka WhatsApp</a>
   </div>
 </aside>
 
 <script>
 var WA_NUMBER = "819065842039";
 var FREE_THRESHOLD = 10000;
-var DELIVERY_FEE = 990;
+var DELIVERY_FEE = 990;   /* courier fee under ¥10,000 — bank / Japan Post transfer */
+var COD_FEE = 1800;       /* courier fee under ¥10,000 — cash on delivery （代引き） */
 var PAGE_SIZE = 60;
+/* Trilingual labels for the seeded categories (JP / EN / ID).
+   Custom categories typed in the admin are shown exactly as entered. */
+var CAT_TRILINGUAL = {
+  rice:   { jp: "米・穀物", en: "Rice & Grains", idn: "Beras & Biji-bijian" },
+  dal:    { jp: "豆類", en: "Dal & Lentils", idn: "Kacang & Lentil" },
+  spices: { jp: "スパイス", en: "Spices", idn: "Rempah" },
+  tea:    { jp: "お茶", en: "Tea", idn: "Teh" },
+  fish:   { jp: "魚", en: "Fish", idn: "Ikan" },
+  meat:   { jp: "肉", en: "Meat", idn: "Daging" },
+  frozen: { jp: "冷凍", en: "Frozen", idn: "Beku" },
+  snacks: { jp: "お菓子", en: "Snacks", idn: "Camilan" },
+  drinks: { jp: "飲み物", en: "Drinks", idn: "Minuman" },
+  other:  { jp: "その他", en: "Other", idn: "Lainnya" }
+};
+function catChipLabel(c){
+  var t = CAT_TRILINGUAL[c.id];
+  if (t) return t.jp + " " + t.en + " / " + t.idn;
+  return (c.jp ? c.jp + " " : "") + c.en;
+}
 /* Bank details shown on the ticket for transfer payments.
    TODO (owner): replace these placeholders with the confirmed account details. */
 var BANK_INFO = {
@@ -235,7 +349,8 @@ function filteredProducts(){
     if (activeCat !== "all" && p.cat !== activeCat) return false;
     if (!q) return true;
     var c = catById(p.cat);
-    var hay = (p.en + " " + (p.jp||"") + " " + (p.size||"") + " " + (c ? c.en + " " + c.jp : "")).toLowerCase();
+    var t = CAT_TRILINGUAL[p.cat];
+    var hay = (p.en + " " + (p.jp||"") + " " + (p.idn||"") + " " + (p.size||"") + " " + (c ? c.en + " " + c.jp : "") + " " + (t ? t.idn : "")).toLowerCase();
     return hay.indexOf(q) !== -1;
   });
 }
@@ -246,10 +361,10 @@ function renderChips(){
   var vis = visibleProducts();
   var counts = {};
   vis.forEach(function(p){ counts[p.cat] = (counts[p.cat]||0)+1; });
-  var html = '<button type="button" class="chip' + (activeCat==="all" ? " active" : "") + '" data-cat="all">すべて All<span class="cnt">' + vis.length + '</span></button>';
+  var html = '<button type="button" class="chip' + (activeCat==="all" ? " active" : "") + '" data-cat="all">すべて All / Semua<span class="cnt">' + vis.length + '</span></button>';
   CATEGORIES.forEach(function(c){
     if (!counts[c.id]) return;
-    html += '<button type="button" class="chip' + (activeCat===c.id ? " active" : "") + '" data-cat="' + esc(c.id) + '">' + esc(c.jp) + ' ' + esc(c.en) + '<span class="cnt">' + counts[c.id] + '</span></button>';
+    html += '<button type="button" class="chip' + (activeCat===c.id ? " active" : "") + '" data-cat="' + esc(c.id) + '">' + esc(catChipLabel(c)) + '<span class="cnt">' + counts[c.id] + '</span></button>';
   });
   chipsEl.innerHTML = html;
   var btns = chipsEl.querySelectorAll(".chip");
@@ -265,17 +380,29 @@ var emptyNote = document.getElementById("emptyNote");
 var countLine = document.getElementById("countLine");
 function cardHTML(p){
   var qty = cart[p.id] || 0;
+  var tracked = typeof p.stock === "number";
+  var soldOut = tracked && p.stock <= 0;
+  var fewLeft = tracked && p.stock >= 1 && p.stock <= 5;
   var photo = p.photo
     ? '<img src="' + esc(p.photo) + '" alt="' + esc(p.en) + '" loading="lazy">'
     : '<div class="ph-tile">' + esc((p.en || p.jp || "?").trim().charAt(0).toUpperCase()) + '</div>';
-  var action = qty === 0
-    ? '<button type="button" class="add-btn" data-add="' + esc(p.id) + '">カートに入れる Add</button>'
-    : '<div class="stepper"><button type="button" data-dec="' + esc(p.id) + '">−</button><span class="qty">' + qty + '</span><button type="button" data-inc="' + esc(p.id) + '">＋</button></div>';
+  var action;
+  if (soldOut){
+    action = '<button type="button" class="add-btn" data-add="' + esc(p.id) + '" disabled>売り切れ Sold out / Habis</button>';
+  } else if (qty === 0){
+    action = '<button type="button" class="add-btn" data-add="' + esc(p.id) + '">カートに入れる Add / Tambah</button>';
+  } else {
+    var atCap = tracked && qty >= p.stock;
+    action = '<div class="stepper"><button type="button" data-dec="' + esc(p.id) + '">−</button><span class="qty">' + qty + '</span><button type="button" data-inc="' + esc(p.id) + '"' + (atCap ? " disabled" : "") + '>＋</button></div>';
+  }
   return '<article class="card" data-card="' + esc(p.id) + '">'
     + '<div class="photo">' + photo + '</div>'
+    + (soldOut ? '<div class="soldout-badge">売り切れ Sold out / Habis</div>' : '')
     + '<div class="body"><div class="jp">' + esc(p.jp || p.en) + '</div>'
     + '<div class="en-name">' + esc(p.en) + '</div>'
+    + (p.idn ? '<div class="id-name">' + esc(p.idn) + '</div>' : '')
     + (p.size ? '<div class="size">' + esc(p.size) + '</div>' : '')
+    + (fewLeft ? '<div class="few-note">残りわずか Only a few left / Sisa sedikit</div>' : '')
     + '<div class="price">' + yen(p.price) + '</div>' + action + '</div></article>';
 }
 function renderGrid(){
@@ -284,7 +411,7 @@ function renderGrid(){
   gridEl.innerHTML = show.map(cardHTML).join("");
   emptyNote.hidden = list.length !== 0;
   showMoreBtn.hidden = list.length <= shownCount;
-  countLine.textContent = list.length ? ("全 " + list.length + " 商品中 " + show.length + " 件を表示 — Showing " + show.length + " of " + list.length + " products") : "";
+  countLine.textContent = list.length ? ("全 " + list.length + " 商品中 " + show.length + " 件を表示 — Showing " + show.length + " of " + list.length + " products — Menampilkan " + show.length + " dari " + list.length + " produk") : "";
   bindGridButtons();
   renderCartBar();
 }
@@ -297,7 +424,21 @@ showMoreBtn.addEventListener("click", function(){ shownCount += PAGE_SIZE; rende
 document.getElementById("searchInput").addEventListener("input", function(){ searchQuery = this.value; shownCount = PAGE_SIZE; renderGrid(); });
 
 /* ---------- cart ---------- */
+var stockToastTimer = null;
+function showStockToast(p){
+  var el = document.getElementById("stockToast");
+  el.textContent = "在庫は " + p.stock + " 個までです — Only " + p.stock + " in stock / Stok hanya " + p.stock;
+  el.classList.add("show");
+  if (stockToastTimer) clearTimeout(stockToastTimer);
+  stockToastTimer = setTimeout(function(){ el.classList.remove("show"); }, 2400);
+}
 function setQty(id, qty){
+  var p = productById(id);
+  /* Stock control: never let the cart hold more than the tracked stock. */
+  if (p && typeof p.stock === "number" && qty > p.stock){
+    qty = p.stock;
+    showStockToast(p);
+  }
   if (qty <= 0) delete cart[id]; else cart[id] = qty;
   renderGrid(); renderCart();
 }
@@ -311,7 +452,8 @@ function deliveryFee(){
   if (fulfill !== "delivery") return 0;
   var st = subtotal();
   if (!st) return 0;
-  return st >= FREE_THRESHOLD ? 0 : DELIVERY_FEE;
+  if (st >= FREE_THRESHOLD) return 0;
+  return payment === "cod" ? COD_FEE : DELIVERY_FEE;
 }
 var cartbar = document.getElementById("cartbar");
 function renderCartBar(){
@@ -327,7 +469,7 @@ var invoicePreviewEl = document.getElementById("invoicePreview");
 function renderCart(){
   var ids = sortedCartIds();
   if (!ids.length){
-    cartItemsEl.innerHTML = '<p class="empty-note">カートは空です。Your cart is empty.</p>';
+    cartItemsEl.innerHTML = '<p class="empty-note">カートは空です。Your cart is empty. Keranjang kosong.</p>';
   } else {
     cartItemsEl.innerHTML = ids.map(function(id){
       var p = productById(id);
@@ -341,12 +483,13 @@ function renderCart(){
   var st = subtotal(), fee = deliveryFee();
   totalsEl.innerHTML =
     '<div class="t-row"><span>小計 Subtotal</span><span>' + yen(st) + '</span></div>'
-    + '<div class="t-row"><span>送料 Courier fee</span><span>' + (fulfill==="pickup" ? "¥0（店頭受取 Pickup）" : (fee===0 && st>0 ? "¥0 — 無料 FREE" : yen(fee))) + '</span></div>'
+    + '<div class="t-row"><span>送料 Courier fee / Ongkir</span><span>' + (fulfill==="pickup" ? "¥0（店頭受取 Pickup）" : (fee===0 && st>0 ? "¥0 — 無料 FREE" : yen(fee))) + '</span></div>'
     + '<div class="t-row t-grand"><span>合計 Total</span><span>' + yen(st+fee) + '</span></div>';
-  if (fulfill === "pickup") feeLineEl.textContent = "店頭受取：送料 ¥0（無料） / Pickup: delivery fee ¥0 — FREE ・ 合計 Total: " + yen(st);
-  else if (st >= FREE_THRESHOLD) feeLineEl.textContent = "送料：¥0 — 無料 FREE（¥10,000以上） / Courier fee: ¥0 — FREE ・ 合計 Total: " + yen(st);
-  else if (st > 0) feeLineEl.textContent = "送料：¥990（¥10,000未満） / Courier fee: ¥990 ・ 合計 Total: " + yen(st + DELIVERY_FEE) + " — あと " + yen(FREE_THRESHOLD - st) + " で送料無料 / " + yen(FREE_THRESHOLD - st) + " more for FREE delivery";
-  else feeLineEl.textContent = "宅配便：¥10,000以上のご注文は送料無料、未満は送料¥990。店頭受取は無料です。 / Courier delivery: FREE on orders ¥10,000+, otherwise ¥990. Pickup is free.";
+  if (fulfill === "pickup") feeLineEl.textContent = "店頭受取：送料 ¥0（無料） / Pickup: fee ¥0 — FREE / Ambil di toko: gratis ・ 合計 Total: " + yen(st);
+  else if (st >= FREE_THRESHOLD) feeLineEl.textContent = "送料：¥0 — 無料 FREE（¥10,000以上） / Courier fee: ¥0 — FREE / Ongkir: GRATIS ・ 合計 Total: " + yen(st);
+  else if (st > 0 && payment === "cod") feeLineEl.textContent = "送料（代引き）：¥1,800（¥10,000未満） / Courier fee (COD): ¥1,800 / Ongkir (COD): ¥1,800 ・ 合計 Total: " + yen(st + fee) + " — あと " + yen(FREE_THRESHOLD - st) + " で送料無料 / " + yen(FREE_THRESHOLD - st) + " more for FREE delivery";
+  else if (st > 0) feeLineEl.textContent = "送料：¥990（¥10,000未満） / Courier fee: ¥990 / Ongkir: ¥990 ・ 合計 Total: " + yen(st + fee) + " — あと " + yen(FREE_THRESHOLD - st) + " で送料無料 / " + yen(FREE_THRESHOLD - st) + " more for FREE delivery";
+  else feeLineEl.textContent = "宅配便：¥10,000以上は送料無料、未満は振込¥990・代引き¥1,800。店頭受取は無料。 / Courier: FREE at ¥10,000+, under — transfer ¥990 / COD ¥1,800. Pickup free. / Pengiriman: GRATIS ¥10,000+, di bawahnya transfer ¥990 / COD ¥1,800. Ambil di toko gratis.";
   invoicePreviewEl.textContent = buildInvoiceText(readForm().name, readForm().phone, readForm().address, readForm().note, true);
   renderCartBar();
 }
@@ -372,7 +515,7 @@ function fulfillmentText(){
   return "店頭受取 Pickup — " + branchJp() + " " + branch;
 }
 function paymentNoteText(){
-  if (payment === "cod") return "代引き：商品到着時に配達員へ合計金額をお支払いください。Cash on delivery — please pay the courier the total amount when your order arrives.";
+  if (payment === "cod") return "代引き：商品到着時に配達員へ合計金額をお支払いください。送料は¥10,000未満 ¥1,800／¥10,000以上 無料。Cash on delivery — pay the courier the total on arrival. Courier fee: ¥1,800 under ¥10,000, FREE at ¥10,000+. Bayar ke kurir saat barang tiba. Ongkir COD: ¥1,800 di bawah ¥10,000, GRATIS ¥10,000+.";
   var info = payment === "yucho" ? BANK_INFO.yucho : BANK_INFO.bank;
   return "振込先 / Transfer to: " + info + " — 振込確認後に発送します。到着まで約3日かかります。We ship after your transfer is confirmed; delivery takes about 3 days.";
 }
@@ -449,6 +592,7 @@ function buildInvoiceText(name, phone, address, note, preview){
   lines.push("小計 / Subtotal: " + yen(st));
   if (isDelivery){
     if (fee === 0 && st >= FREE_THRESHOLD) lines.push("送料 / Courier fee: ¥0 — 無料 FREE（¥10,000以上のご注文 / orders ¥10,000+）");
+    else if (payment === "cod") lines.push("送料 / Courier fee: " + yen(fee) + "（代引き COD・¥10,000未満 / COD, orders under ¥10,000）");
     else lines.push("送料 / Courier fee: " + yen(fee) + "（¥10,000未満 / orders under ¥10,000）");
   } else {
     lines.push("送料 / Courier fee: ¥0 — 店頭受取無料 / Pickup free");
@@ -534,6 +678,44 @@ function sendConfirmationEmail(f){
   });
 }
 
+/* ---------- order auto-save (Google Form → owner's private Sheet) ----------
+   EVERY order (not just ones with an email) is also POSTed to the shop's
+   Google Form, which appends it to the owner's private spreadsheet — the
+   order book linked from the admin panel's 「⑥ 注文 Orders」 section.
+   mode:"no-cors" because Google returns no CORS headers (the response is
+   opaque; success cannot be read back, and does not need to be).
+   Fire-and-forget: a failure never blocks or delays the WhatsApp order. */
+var GFORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSenr_nuMWAbwOuqgvo5NujCPK9B9zBwra7dA8PjzedssF05mw/formResponse";
+function sendOrderToSheet(f){
+  try {
+    var isDelivery = fulfill === "delivery";
+    var st = subtotal(), fee = deliveryFee(), total = st + fee;
+    var itemLines = sortedCartIds().map(function(id){
+      var p = productById(id); if (!p) return "";
+      return p.en + (p.jp ? "（" + p.jp + "）" : "") + (p.size ? " " + p.size : "") + " × " + cart[id] + " — " + yen(p.price * cart[id]);
+    }).filter(function(s){ return s; });
+    if (isDelivery) itemLines.push("配送料： " + yen(fee));
+    var pr = pointsRequest();
+    var phone = f.phone || pr.phone || "";
+    var payLabel = !isDelivery ? "店頭支払い"
+      : (payment === "yucho" ? "ゆうちょ銀行振込" : payment === "bank" ? "銀行振込" : "代引き");
+    var params = new URLSearchParams();
+    params.set("entry.1545102884", itemLines.join("\n"));              // 注文明細
+    params.set("entry.1670999267", yen(total));                         // 合計金額
+    params.set("entry.1493757328", f.name || "—");                      // お名前
+    params.set("entry.815110876", phone);                               // 電話番号
+    params.set("entry.222938360", f.email || "");                       // メールアドレス
+    params.set("entry.1424967474", isDelivery ? "宅配便" : "店頭受取（" + branchJp() + "）"); // 受取方法
+    params.set("entry.1361570823", payLabel);                           // 支払方法
+    params.set("entry.974216843", isDelivery ? (f.address || "") : branchJp()); // 住所・受取店舗
+    params.set("entry.1376764568", pr.use > 0
+      ? (pr.use + " pt（電話番号 " + (pr.phone || phone || "") + "）")
+      : "なし");                                                        // ポイント利用希望
+    fetch(GFORM_URL, { method: "POST", mode: "no-cors", body: params })
+      .catch(function(){ /* sheet save failed — the WhatsApp order still stands */ });
+  } catch (err) { /* building the sheet POST must never block the order */ }
+}
+
 /* ---------- sheet open/close ---------- */
 var overlay = document.getElementById("overlay");
 var sheet = document.getElementById("cartSheet");
@@ -552,10 +734,10 @@ document.getElementById("orderForm").addEventListener("submit", function(e){
   var ids = sortedCartIds();
   var f = readForm();
   var isDelivery = fulfill === "delivery";
-  if (!ids.length){ showError("カートが空です。まず商品をカートに入れてください。<br>Your cart is empty — please add items first."); return; }
-  if (!f.name){ showError("お名前をご入力ください。<br>Please enter your name."); return; }
-  if (!f.phone){ showError("電話番号をご入力ください。<br>Please enter your phone number."); return; }
-  if (isDelivery && !f.address){ showError("配達をご希望の方は住所をご入力ください。<br>Please enter your delivery address."); return; }
+  if (!ids.length){ showError("カートが空です。まず商品をカートに入れてください。<br>Your cart is empty — please add items first.<br>Keranjang kosong — tambahkan produk dulu."); return; }
+  if (!f.name){ showError("お名前をご入力ください。<br>Please enter your name.<br>Masukkan nama Anda."); return; }
+  if (!f.phone){ showError("電話番号をご入力ください。<br>Please enter your phone number.<br>Masukkan nomor telepon Anda."); return; }
+  if (isDelivery && !f.address){ showError("配達をご希望の方は住所をご入力ください。<br>Please enter your delivery address.<br>Masukkan alamat pengiriman."); return; }
   var text = buildInvoiceText(f.name, f.phone, f.address, f.note, false);
   var url = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(text);
   document.getElementById("ticketText").textContent = text;
@@ -563,6 +745,8 @@ document.getElementById("orderForm").addEventListener("submit", function(e){
   var ticketBox = document.getElementById("ticketBox");
   ticketBox.hidden = false;
   window.open(url, "_blank");
+  /* Auto-save the order to the shop's Google Sheet — fire-and-forget, never blocks. */
+  sendOrderToSheet(f);
   /* Optional confirmation email — fire-and-forget, never blocks the order. */
   var emailNote = document.getElementById("emailSentNote");
   emailNote.hidden = true;
@@ -573,6 +757,125 @@ document.getElementById("orderForm").addEventListener("submit", function(e){
   }
   ticketBox.scrollIntoView({ block: "start" });
 });
+
+/* ---------- points balance check (customer, view-only) ----------
+   The customer types their phone number; the page hashes it (SHA-256 of the
+   digits-only number — the same scheme as the admin ledger) and looks the
+   hash up in points.json, which sits next to this page. Only the totals for
+   THAT number are shown. Spending points still needs shop confirmation. */
+function shopTodayStr(){ var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+function shopSha256Hex(str){
+  return crypto.subtle.digest("SHA-256", new TextEncoder().encode(str)).then(function(buf){
+    return Array.prototype.map.call(new Uint8Array(buf), function(b){ return ("0" + b.toString(16)).slice(-2); }).join("");
+  });
+}
+function computePointBalances(rec){
+  var t = shopTodayStr(), av = 0, pe = 0;
+  if (rec) (rec.entries || []).forEach(function(e){
+    if (e.cancelled) return;
+    if (e.type === "earn"){ if (e.matures <= t) av += e.points; else pe += e.points; }
+    else if (e.type === "redeem"){ av -= e.points; }
+    else if (e.type === "adjust"){ av += e.points; }
+  });
+  return { available: av, pending: pe };
+}
+var PC_NOT_FOUND = "ポイント記録が見つかりませんでした<br>No points record found for this number<br>Data poin tidak ditemukan untuk nomor ini";
+document.getElementById("pcBtn").addEventListener("click", function(){
+  var digits = document.getElementById("pcPhone").value.replace(/\D/g, "");
+  var box = document.getElementById("pcResult");
+  box.classList.add("show");
+  if (!digits){ box.innerHTML = "電話番号を入力してください。<br>Please enter your phone number.<br>Masukkan nomor telepon Anda."; return; }
+  box.textContent = "確認中… Checking… Memeriksa…";
+  shopSha256Hex(digits).then(function(hash){
+    return fetch("points.json", { cache: "no-store" }).then(function(r){
+      if (!r.ok) throw new Error("points.json " + r.status);
+      return r.json();
+    }).then(function(data){
+      var rec = (data.customers || []).filter(function(c){ return c.hash === hash; })[0] || null;
+      if (!rec){ box.innerHTML = PC_NOT_FOUND; return; }
+      var b = computePointBalances(rec);
+      box.innerHTML = '<span class="pc-bal">利用可能ポイント Available points / Poin tersedia: ' + b.available + ' pt</span><br>'
+        + '<span class="pc-bal">利用待ちポイント Pending points / Poin menunggu: ' + b.pending + ' pt</span><br>'
+        + 'ポイントは購入の1ヶ月後から使えます。Points become usable 1 month after purchase. Poin bisa dipakai 1 bulan setelah pembelian.';
+    });
+  }).catch(function(){ box.innerHTML = PC_NOT_FOUND; });
+});
+document.getElementById("pointsCheckLink").addEventListener("click", function(e){
+  e.preventDefault();
+  closeCart();
+  document.getElementById("pointsCheck").scrollIntoView({ block: "start" });
+});
+
+/* ---------- help: WhatsApp chat button + FAQ assistant （自動案内） ---------- */
+document.getElementById("waChatBtn").href = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent("こんにちは、商品について質問があります / Hello, I have a question about a product");
+var FAQ_ITEMS = [
+  { q: { jp: "送料はいくら？", en: "How much is delivery?", idn: "Berapa ongkir?" },
+    a: { jp: "宅配便：¥10,000以上は無料。未満は振込¥990・代引き¥1,800。店頭受取は無料です。",
+         en: "Courier: FREE on orders ¥10,000+. Under that — transfer ¥990, COD ¥1,800. Pickup is free.",
+         idn: "Pengiriman: GRATIS untuk pesanan ¥10,000+. Di bawahnya — transfer ¥990, COD ¥1,800. Ambil di toko gratis." } },
+  { q: { jp: "支払い方法は？", en: "Payment methods?", idn: "Cara bayar?" },
+    a: { jp: "店頭受取は店頭払い。宅配便はゆうちょ振込・銀行振込・代引き（配達員へ支払い）です。",
+         en: "Pickup: pay at the shop. Courier: Japan Post transfer, bank transfer, or COD (pay the courier).",
+         idn: "Ambil di toko: bayar di toko. Pengiriman: transfer Japan Post, transfer bank, atau COD (bayar ke kurir)." } },
+  { q: { jp: "ポイントについて", en: "About points", idn: "Tentang poin" },
+    a: { jp: "購入額の1%がポイント（1pt = ¥1）。購入の1ヶ月後から使えます。このページの「ポイント残高確認」で電話番号を入れると残高が見られます。",
+         en: "Earn 1% back in points (1 pt = ¥1), usable 1 month after purchase. Check your balance on this page with your phone number.",
+         idn: "Dapat poin 1% dari pembelian (1 poin = ¥1), bisa dipakai setelah 1 bulan. Cek saldo di halaman ini dengan nomor telepon Anda." } },
+  { q: { jp: "営業時間・店舗", en: "Hours & shops", idn: "Jam buka & toko" },
+    a: { jp: "安城店・豊田店とも毎日10:30–22:00（定休日なし）。安城店：安城市今池町1-11-13、0566-98-9995。豊田店：豊田市広久手町1-1-1、0565-41-5616。",
+         en: "Both shops open every day 10:30–22:00. Anjo: 1-11-13 Imaike-cho, Anjo — 0566-98-9995. Toyota: 1-1-1 Hirokute-cho, Toyota — 0565-41-5616.",
+         idn: "Kedua toko buka setiap hari 10:30–22:00. Anjo: 1-11-13 Imaike-cho, Anjo — 0566-98-9995. Toyota: 1-1-1 Hirokute-cho, Toyota — 0565-41-5616." } },
+  { q: { jp: "ハラールですか？", en: "Is it halal?", idn: "Apakah halal?" },
+    a: { jp: "はい、全商品100%ハラールです。",
+         en: "Yes — all products are 100% halal.",
+         idn: "Ya — semua produk 100% halal." } },
+  { q: { jp: "注文方法", en: "How to order", idn: "Cara memesan" },
+    a: { jp: "カートに入れて「注文を確定する」を押すだけ。アカウント不要（ゲスト注文）。WhatsAppが開くので送信してください。",
+         en: "Add to cart and press Confirm Order — no account needed (guest order). WhatsApp opens; just tap Send.",
+         idn: "Masukkan ke keranjang dan tekan Konfirmasi Pesanan — tanpa akun (pesanan tamu). WhatsApp akan terbuka; tekan Kirim." } },
+  { q: { jp: "届くまで何日？", en: "How long is delivery?", idn: "Berapa lama pengiriman?" },
+    a: { jp: "振込は入金確認後に発送し、到着まで約3日。代引きも約3日です。",
+         en: "Transfers ship after payment is confirmed; delivery takes about 3 days. COD is also about 3 days.",
+         idn: "Transfer dikirim setelah pembayaran terkonfirmasi; sampai dalam ±3 hari. COD juga ±3 hari." } }
+];
+var faqChipsEl = document.getElementById("faqChips");
+var faqAnswerEl = document.getElementById("faqAnswer");
+faqChipsEl.innerHTML = FAQ_ITEMS.map(function(item, i){
+  return '<button type="button" class="faq-chip" data-faq="' + i + '">' + esc(item.q.jp) + ' <span class="en">' + esc(item.q.en) + '</span> <span class="idn">' + esc(item.q.idn) + '</span></button>';
+}).join("");
+faqChipsEl.querySelectorAll("[data-faq]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var item = FAQ_ITEMS[Number(this.getAttribute("data-faq"))];
+    faqChipsEl.querySelectorAll(".faq-chip").forEach(function(x){ x.classList.remove("active"); });
+    this.classList.add("active");
+    faqAnswerEl.innerHTML = "<p>" + esc(item.a.jp) + "</p><p>" + esc(item.a.en) + "</p><p>" + esc(item.a.idn) + "</p>";
+    faqAnswerEl.classList.add("show");
+  });
+});
+var faqOverlay = document.getElementById("faqOverlay");
+var faqPanel = document.getElementById("faqPanel");
+function openFaq(){ faqOverlay.classList.add("show"); faqPanel.classList.add("show"); }
+function closeFaq(){ faqOverlay.classList.remove("show"); faqPanel.classList.remove("show"); }
+document.getElementById("faqOpenBtn").addEventListener("click", openFaq);
+document.getElementById("faqCloseBtn").addEventListener("click", closeFaq);
+faqOverlay.addEventListener("click", closeFaq);
+
+/* ---------- share buttons (promotion) ---------- */
+var SITE_URL = "https://goldfamilyjp.github.io/madina-supershop/";
+var SHARE_TEXT = "マディナ ハラール スーパーショップ — 100%ハラール食品、¥10,000以上で送料無料！ Madina Halal Supershop — 100% halal groceries, FREE delivery over ¥10,000!";
+document.getElementById("shareLine").href = "https://social-plugins.line.me/lineit/share?url=" + encodeURIComponent(SITE_URL);
+document.getElementById("shareWa").href = "https://wa.me/?text=" + encodeURIComponent(SHARE_TEXT + " " + SITE_URL);
+document.getElementById("shareFb").href = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(SITE_URL);
+document.getElementById("shareCopy").addEventListener("click", function(){
+  var btn = this;
+  function done(){ var old = btn.textContent; btn.textContent = "コピーしました Copied ✓"; setTimeout(function(){ btn.textContent = old; }, 2200); }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(SITE_URL).then(done).catch(function(){ done(); });
+  } else { done(); }
+});
+
+/* expose for testing */
+window.__supershopShop = { deliveryFee: deliveryFee, pointBalances: computePointBalances, getCart: function(){ return cart; }, setQty: setQty, faqItems: FAQ_ITEMS, siteUrl: SITE_URL };
 
 /* ---------- load products ---------- */
 fetch("products.json", { cache: "no-store" })

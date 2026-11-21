@@ -30,9 +30,9 @@ inside the GitHub repository **goldfamilyjp/madina-supershop** (GitHub Pages hos
 - **Fulfilment — the customer chooses at checkout:**
   1. **Pickup （店頭受取）** at the Anjo or Toyota branch — always free; pay at the shop.
   2. **Courier delivery （宅配便）** to the customer's address (name / address / phone collected at checkout).
-     There is **no distance limit**. Courier fee: **¥990 flat when the subtotal is under ¥10,000; FREE at ¥10,000 or more**.
-     *(Assumption: the owner stated the ¥10,000 free-shipping threshold explicitly for cash on delivery;
-     the same threshold is applied to all delivery payment methods.)*
+     There is **no distance limit**. Courier fee: **FREE at ¥10,000 or more**. Under ¥10,000 the fee depends
+     on the payment method: **¥990 for bank / Japan Post transfer**, **¥1,800 for cash on delivery （代引き）**
+     (the courier company charges more for COD). Pickup is always ¥0.
 - **Payment for courier delivery** (pickup customers simply pay at the shop):
   - ゆうちょ銀行振込 (Japan Post Bank transfer)
   - 銀行振込 (bank transfer)
@@ -66,6 +66,24 @@ Notes:
   confirmation emails flow. Until then, submissions are held by FormSubmit.
 - The confirmation email to the customer is sent **by FormSubmit's system** (from a FormSubmit
   address), **not** from the Yahoo address itself — the shop's copy arrives in the Yahoo inbox.
+
+## Orders auto-save (Google Sheet)
+
+**Every** order — not just ones where the customer entered an email — is also saved to a
+spreadsheet, so the shop has a permanent order book:
+
+- On “Confirm Order”, alongside the WhatsApp order (and the optional FormSubmit email), the shop
+  page fire-and-forget POSTs the order to a **Google Form** owned by the shop's Google account
+  (`goldfamilyjp@yahoo.com`). The form appends each order to its linked **Google Sheet**:
+  注文明細 (item lines, plus the 配送料 line for courier orders), 合計金額， お名前， 電話番号，
+  メールアドレス, 受取方法 （店頭受取（安城店）/ 店頭受取（豊田店）/ 宅配便）, 支払方法
+  （店頭支払い / ゆうちょ銀行振込 / 銀行振込 / 代引き）, 住所・受取店舗， ポイント利用希望.
+- The POST uses `mode: "no-cors"` (Google sends no CORS headers) and can never block or delay the
+  WhatsApp order — if it fails, the order still completes normally.
+- The sheet is **private to the owner's Google account** — it is not shared with anyone.
+  The **WhatsApp order remains the immediate alert**; the sheet is the saved record.
+- Staff open it from the admin panel's **「⑥ 注文 Orders」** section
+  (button → `https://docs.google.com/spreadsheets/d/1NYooZTu01gP6cmp5k8we60Uhz4KKhgU4993zGIgt5Hw/edit`).
 
 ## Staff reply templates (admin panel)
 
@@ -104,15 +122,86 @@ public file; treat the file as a points ledger, not a customer database.)
    **available** amount → enter the points → “Use points” (it refuses more than the available balance).
 4. Press **“💾 ポイントを保存する Save points”** after any change, or the change is lost.
 
+**Cancelling / fixing points (admin):** if an order is cancelled or points were added by mistake,
+staff can fix the ledger in the same ⑤ ポイント section:
+
+- **Cancel an earn:** each earn entry in the customer's history has a 「取消 Cancel」 button. It asks
+  for confirmation, then marks the entry `"cancelled": true`. Cancelled entries are **excluded from
+  every balance computation** (admin and the shop-front balance check alike). If a cancellation makes
+  the available balance negative, a warning is shown but the cancellation still goes through.
+- **Manual adjustment:** enter a signed amount (+ or −) **and a reason (required, e.g. 注文キャンセル）**
+  → an `{type:"adjust"}` entry is added. Adjustments apply to the available balance **immediately**.
+- Balance formula: **available = matured, uncancelled earns − redeems + adjustments**;
+  **pending = unmatured, uncancelled earns**.
+
 **Shop front:** the cart has optional points fields (phone number + points to use). If the customer
 fills them in, the WhatsApp message, the ticket and the confirmation email carry a
 「ポイント利用希望」 line. The site does **not** deduct points from the total — the shop confirms
 the real balance in the admin and applies the discount, exactly as the line says.
 
+**Customer balance check (shop front):** the 「ポイント残高確認 Check your points」 section on the shop
+page (also linked from the cart's points note) lets a customer type their phone number and see their
+own **available** and **pending** totals. The page hashes the number in the browser (same SHA-256
+scheme as the ledger) and reads `points.json` from the same directory; only that number's totals are
+shown — no other customer's data, no entry details. If there is no record (or `points.json` does not
+exist yet), it shows 「ポイント記録が見つかりませんでした / No points record found for this number」.
+Points can still only be **spent** via shop confirmation at order time.
+
+## Stock control (products)
+
+Each product may carry an optional **`stock`** field in `products.json`:
+
+- **`stock` absent or `null`** = no stock tracking — the product is always orderable.
+- **`stock` = a number** = units in stock. `0` shows a 「売り切れ Sold out / Habis」 badge on the shop
+  and disables the Add button; **1–5** shows a small 「残りわずか Only a few left / Sisa sedikit」 note;
+  above 5 nothing extra is shown. The cart never lets a customer add more units than the tracked
+  stock (the quantity is clamped and a short note is shown).
+
+**Stock is adjusted manually, never automatically.** The admin product form has a stock field
+(blank = no tracking), and each row of the admin product list shows the stock with **−1 / +1**
+stepper buttons (never below 0); like every other edit, steppers only mark the list dirty — the
+existing “💾 保存する Save to shop” publishes them. Stock is deliberately **not** cut when a customer
+places an order: orders are confirmed later on WhatsApp, and cancelled or unpaid orders would
+otherwise corrupt the count. Staff adjust the stock when an order is confirmed.
+
+## Languages (shop front)
+
+The shop front is **trilingual — Japanese, English and Indonesian — shown together** on labels.
+**Owner's rule: all languages render at the same font size; the 2nd/3rd language is never shrunk**
+(the `.en` / `.idn` spans inherit the label's size). The WhatsApp order message, the ticket and the
+confirmation email stay JP+EN (they are shop-facing documents). Products may carry an optional
+**`idn`** field (Indonesian name — the field is called `idn`, not `id`, because `id` is already the
+product's slug); the card shows the Indonesian name line only when present. The admin product form
+has an optional “Indonesian name” field. Seeded categories use a trilingual lookup in `index.html`;
+a custom category typed in the admin displays exactly as entered.
+
+## Customer help (shop front)
+
+- **WhatsApp chat button** (green, floating, stacked above the cart bar): opens a WhatsApp chat with
+  the shop (090-6584-2039) with a prefilled JP+EN greeting. This is the real-person route.
+- **FAQ assistant** （自動案内）: a 「よくある質問 FAQ / Tanya Jawab」 button opens a panel of question
+  chips (delivery fee incl. the COD ¥1,800 rule, payment methods, points, shop hours/addresses,
+  halal, how to order, delivery time). Tapping a chip instantly shows the answer in JP+EN+ID —
+  rule-based, no external calls. It is honestly labelled an automatic guide, **not** a human live chat.
+  A true open-ended AI chat would need an external API / backend, which this free build does not have.
+
+## Promotion (shop front)
+
+- **Social share cards:** Open Graph + Twitter meta tags in `index.html` (title, JP+EN description,
+  `og:url` = the live GitHub Pages URL). `og:image` / `twitter:image` point to the Madina logo,
+  **`logo.jpg` in the repo root** → `https://goldfamilyjp.github.io/madina-supershop/logo.jpg`
+  (the logo also shows as a small round badge in the page header).
+- **Share buttons:** a シェア Share / Bagikan row near the top of the shop — LINE, WhatsApp and
+  Facebook share links (live URL + a short JP+EN share text) plus a copy-link button.
+- **Hero:** the green/gold header carries the full shop name, a trilingual tagline and three offer
+  chips — 送料無料（¥10,000以上）/ Free delivery over ¥10,000 · ポイント1%還元 / Points 1% back ·
+  全品ハラール / All halal — kept compact so products stay near the top on mobile.
+- SEO basics: JP+EN(+ID) meta description and a descriptive `<title>`.
+
 ## Setup (one time, done by Manager)
 
 1. Create the public GitHub repo **goldfamilyjp/madina-supershop**.
-2. Put `index.html`, `admin.html`, `products.json` in the repo root; enable GitHub Pages (main branch, root).
+2. Put `index.html`, `admin.html`, `products.json`, `logo.jpg` in the repo root; enable GitHub Pages (main branch, root).
    (`points.json` does not need to be created by hand — the admin panel creates it on the first “Save points”.)
    Shop URL becomes `https://goldfamilyjp.github.io/madina-supershop/`,
    admin URL is the same + `admin.html`.
