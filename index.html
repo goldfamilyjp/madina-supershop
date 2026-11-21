@@ -130,6 +130,10 @@ input[type=text],input[type=tel],input[type=email],input[type=number],textarea{w
 textarea{min-height:64px;}
 .form-error{display:none; background:#fbeae8; color:var(--red); border-radius:10px; padding:10px 12px; font-size:.9rem; margin:10px 0;}
 .form-error.show{display:block;}
+.zip-note{background:#fdf3e0; color:#8a5a00; border-radius:10px; padding:9px 12px; font-size:.9rem; margin:8px 0 0;}
+.addr-warn{background:#fbeae8; color:var(--red); border-radius:10px; padding:10px 12px; font-size:.9rem; margin:8px 0 0;}
+.map-line{margin:10px 0 0; font-size:.95rem;}
+.map-line a{color:var(--green); font-weight:700;}
 .confirm-btn{width:100%; background:var(--green); color:#fff; border:none; border-radius:12px; padding:16px; font-size:1.15rem; font-weight:800; cursor:pointer; margin-top:14px;}
 .confirm-hint{text-align:center; font-size:.82rem; color:var(--muted); margin-top:8px;}
 .pay-note{text-align:center; font-size:.85rem; color:var(--muted); margin-top:10px;}
@@ -253,11 +257,25 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
     <input type="text" id="fName" autocomplete="name" placeholder="お名前 Name / Nama">
     <label class="flabel" for="fPhone">電話番号 <span class="en">Phone</span> <span class="idn">Telepon</span><span class="req">*</span></label>
     <input type="tel" id="fPhone" autocomplete="tel" placeholder="電話番号 Phone / Telepon">
+    <p class="addr-warn" id="phoneWarn" hidden>電話番号の形式が正しくないようです — 確認してください<br><span class="en">This phone number looks incorrect — please check it</span><br><span class="idn">Nomor telepon tampaknya tidak valid — silakan periksa kembali</span></p>
     <label class="flabel" for="fEmail">メールアドレス（任意・確認メール用）<span class="en"> Email for confirmation (optional)</span> <span class="idn">Email untuk konfirmasi (opsional)</span></label>
     <input type="email" id="fEmail" autocomplete="email" placeholder="メールアドレス Email (optional)">
     <div id="addressField">
-      <label class="flabel" for="fAddress">お届け先住所 <span class="en">Delivery Address</span> <span class="idn">Alamat pengiriman</span><span class="req">*</span></label>
-      <textarea id="fAddress" autocomplete="street-address" placeholder="お届け先住所 Delivery address / Alamat pengiriman"></textarea>
+      <label class="flabel" for="fZip">郵便番号 <span class="en">Postal Code</span> <span class="idn">Kode pos</span><span class="req">*</span></label>
+      <input type="text" id="fZip" inputmode="numeric" autocomplete="postal-code" placeholder="例：446-0071 / e.g. 446-0071">
+      <p class="zip-note" id="zipNote" hidden>郵便番号が見つかりません — 番号を確認してください<br><span class="en">Postal code not found — please check it</span><br><span class="idn">Kode pos tidak ditemukan — silakan periksa kembali</span></p>
+      <label class="flabel" for="fPref">都道府県 <span class="en">Prefecture</span> <span class="idn">Prefektur</span><span class="req">*</span></label>
+      <input type="text" id="fPref" autocomplete="address-level1" placeholder="都道府県 Prefecture / Prefektur">
+      <label class="flabel" for="fCity">市区町村 <span class="en">City / Ward</span> <span class="idn">Kota</span><span class="req">*</span></label>
+      <input type="text" id="fCity" autocomplete="address-level2" placeholder="市区町村 City / Kota">
+      <label class="flabel" for="fTown">町名 <span class="en">Town / District</span> <span class="idn">Kelurahan / Distrik</span><span class="req">*</span></label>
+      <input type="text" id="fTown" placeholder="町名 Town / Distrik">
+      <label class="flabel" for="fStreet">番地 <span class="en">Street Number</span> <span class="idn">Nomor jalan</span><span class="req">*</span></label>
+      <input type="text" id="fStreet" autocomplete="address-line1" placeholder="番地 Street number / Nomor jalan">
+      <label class="flabel" for="fBuilding">建物名・部屋番号 <span class="en">Building / Room (optional)</span> <span class="idn">Gedung / Kamar (opsional)</span></label>
+      <input type="text" id="fBuilding" autocomplete="address-line2" placeholder="建物名・部屋番号 Building / Room (optional)">
+      <p class="map-line"><a href="https://www.google.com/maps/search/?api=1&amp;query=" id="mapCheckLink" target="_blank" rel="noopener">📍 地図で確認 <span class="en">Check on map</span> <span class="idn">Lihat di peta</span></a></p>
+      <p class="addr-warn" id="addrWarn" hidden>住所が短すぎるようです。番地まで正しく入力されていますか？<br><span class="en">This address looks too short — please check it</span><br><span class="idn">Alamat tampaknya terlalu singkat — silakan periksa kembali</span></p>
     </div>
     <div id="paymentField">
       <span class="flabel">お支払い方法 <span class="en">Payment</span> <span class="idn">Cara bayar</span></span>
@@ -272,6 +290,7 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
     <textarea id="fNote" placeholder="ご要望があればどうぞ Any requests / Pesan"></textarea>
     <label class="flabel" for="fPointsPhone">ポイント用電話番号（任意）<span class="en"> Phone for points (optional)</span> <span class="idn">Nomor telepon poin (opsional)</span></label>
     <input type="tel" id="fPointsPhone" autocomplete="tel" placeholder="ポイント用電話番号 Phone for points">
+    <p class="addr-warn" id="pointsPhoneWarn" hidden>電話番号の形式が正しくないようです — 確認してください<br><span class="en">This phone number looks incorrect — please check it</span><br><span class="idn">Nomor telepon tampaknya tidak valid — silakan periksa kembali</span></p>
     <label class="flabel" for="fPointsUse">使うポイント（任意）<span class="en"> Points to use (optional)</span> <span class="idn">Poin yang dipakai (opsional)</span></label>
     <input type="number" id="fPointsUse" min="0" step="1" inputmode="numeric" placeholder="例：200 e.g. 200">
     <p class="fee-note">ポイント：1pt = ¥1。購入の1ヶ月後から使えます。店舗で残高を確認して割引します。<br>Points: 1 pt = ¥1, usable 1 month after purchase. The shop confirms your balance and applies the discount.<br>Poin: 1 poin = ¥1, bisa dipakai 1 bulan setelah pembelian. Toko akan memeriksa saldo dan memberi diskon.<br><a href="#pointsCheck" id="pointsCheckLink">ポイント残高を確認する Check points balance / Cek saldo poin →</a></p>
@@ -493,19 +512,100 @@ function renderCart(){
   invoicePreviewEl.textContent = buildInvoiceText(readForm().name, readForm().phone, readForm().address, readForm().note, true);
   renderCartBar();
 }
+function fieldVal(id){ var el = document.getElementById(id); return el ? el.value.trim() : ""; }
 function readForm(){
   return {
-    name: document.getElementById("fName").value.trim(),
-    phone: document.getElementById("fPhone").value.trim(),
-    email: document.getElementById("fEmail").value.trim(),
-    address: document.getElementById("fAddress").value.trim(),
-    note: document.getElementById("fNote").value.trim()
+    name: fieldVal("fName"),
+    phone: fieldVal("fPhone"),
+    email: fieldVal("fEmail"),
+    address: composedAddress(),
+    note: fieldVal("fNote")
   };
 }
-["fName","fPhone","fAddress","fNote","fPointsPhone","fPointsUse"].forEach(function(id){
+function refreshInvoicePreview(){
+  invoicePreviewEl.textContent = buildInvoiceText(readForm().name, readForm().phone, readForm().address, readForm().note, true);
+}
+["fName","fPhone","fNote","fPointsPhone","fPointsUse"].forEach(function(id){
+  document.getElementById(id).addEventListener("input", refreshInvoicePreview);
+});
+
+/* ---------- delivery address: split fields + postal-code check ----------
+   The full Japanese structure is kept as separate fields:
+   郵便番号 → 都道府県 → 市区町村 → 町名 → 番地 （必須） → 建物名・部屋番号 （任意）.
+   Typing a 7-digit postal code auto-fills the first three area fields from
+   the free zipcloud database (no key). Everything stays editable. */
+function zipDigits(){ return document.getElementById("fZip").value.replace(/\D/g, ""); }
+function zipFormatted(){
+  var d = zipDigits();
+  return d.length === 7 ? d.slice(0, 3) + "-" + d.slice(3) : d;
+}
+function composedAddress(){
+  var body = [fieldVal("fPref"), fieldVal("fCity"), fieldVal("fTown"), fieldVal("fStreet"), fieldVal("fBuilding")]
+    .filter(function(s){ return s; }).join(" ");
+  var z = zipFormatted();
+  if (z && body) return "〒" + z + " " + body;
+  if (z) return "〒" + z;
+  return body;
+}
+function mapsUrl(addr){
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(addr || "");
+}
+/* Soft-check state: a warning is shown once; pressing Confirm again proceeds.
+   Editing the field it belongs to re-arms the warning. */
+var addrWarnOk = false, phoneWarnOk = false;
+var lastZipLookup = "";
+document.getElementById("fZip").addEventListener("input", function(){
+  var note = document.getElementById("zipNote");
+  note.hidden = true;
+  var d = zipDigits();
+  if (d.length !== 7){ lastZipLookup = ""; return; }
+  if (d === lastZipLookup) return;
+  lastZipLookup = d;
+  fetch("https://zipcloud.ibsnet.co.jp/api/search?zipcode=" + d)
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if (zipDigits() !== d) return; /* the customer kept typing — stale result */
+      var res = j && j.results && j.results[0];
+      if (!res){ note.hidden = false; return; }
+      document.getElementById("fPref").value = res.address1 || "";
+      document.getElementById("fCity").value = res.address2 || "";
+      document.getElementById("fTown").value = res.address3 || "";
+      refreshInvoicePreview();
+    })
+    .catch(function(){ /* network failed — no note; the customer types manually */ });
+});
+["fZip","fPref","fCity","fTown","fStreet","fBuilding"].forEach(function(id){
   document.getElementById(id).addEventListener("input", function(){
-    invoicePreviewEl.textContent = buildInvoiceText(readForm().name, readForm().phone, readForm().address, readForm().note, true);
+    addrWarnOk = false;
+    document.getElementById("addrWarn").hidden = true;
+    refreshInvoicePreview();
   });
+});
+document.getElementById("mapCheckLink").addEventListener("click", function(){
+  this.href = mapsUrl(composedAddress());
+});
+
+/* ---------- phone number check ----------
+   Strip spaces/hyphens, accept a +81 prefix and normalise it to 0….
+   Valid = 10 or 11 digits starting with 0; mobiles (070/080/090) must be 11. */
+function normalizePhone(raw){
+  var d = String(raw || "").replace(/[\s\-()]/g, "");
+  if (d.indexOf("+81") === 0) d = "0" + d.slice(3);
+  return d;
+}
+function phoneLooksValid(raw){
+  var d = normalizePhone(raw);
+  if (!/^0\d{9,10}$/.test(d)) return false;
+  if (/^0[789]0/.test(d)) return d.length === 11;
+  return true;
+}
+document.getElementById("fPhone").addEventListener("input", function(){
+  phoneWarnOk = false;
+  document.getElementById("phoneWarn").hidden = true;
+});
+document.getElementById("fPointsPhone").addEventListener("input", function(){
+  var v = this.value.trim();
+  document.getElementById("pointsPhoneWarn").hidden = !(v && !phoneLooksValid(v));
 });
 
 /* ---------- fulfillment / branch ---------- */
@@ -707,7 +807,7 @@ function sendOrderToSheet(f){
     params.set("entry.222938360", f.email || "");                       // メールアドレス
     params.set("entry.1424967474", isDelivery ? "宅配便" : "店頭受取（" + branchJp() + "）"); // 受取方法
     params.set("entry.1361570823", payLabel);                           // 支払方法
-    params.set("entry.974216843", isDelivery ? (f.address || "") : branchJp()); // 住所・受取店舗
+    params.set("entry.974216843", isDelivery ? ((f.address || "") + "\n" + mapsUrl(f.address)) : branchJp()); // 住所・受取店舗（+地図リンク）
     params.set("entry.1376764568", pr.use > 0
       ? (pr.use + " pt（電話番号 " + (pr.phone || phone || "") + "）")
       : "なし");                                                        // ポイント利用希望
@@ -737,9 +837,36 @@ document.getElementById("orderForm").addEventListener("submit", function(e){
   if (!ids.length){ showError("カートが空です。まず商品をカートに入れてください。<br>Your cart is empty — please add items first.<br>Keranjang kosong — tambahkan produk dulu."); return; }
   if (!f.name){ showError("お名前をご入力ください。<br>Please enter your name.<br>Masukkan nama Anda."); return; }
   if (!f.phone){ showError("電話番号をご入力ください。<br>Please enter your phone number.<br>Masukkan nomor telepon Anda."); return; }
-  if (isDelivery && !f.address){ showError("配達をご希望の方は住所をご入力ください。<br>Please enter your delivery address.<br>Masukkan alamat pengiriman."); return; }
+  if (isDelivery){
+    if (!zipDigits()){ showError("郵便番号をご入力ください。<br>Please enter your postal code.<br>Masukkan kode pos Anda."); return; }
+    if (!fieldVal("fPref") || !fieldVal("fCity") || !fieldVal("fTown")){ showError("都道府県・市区町村・町名をご入力ください。<br>Please enter your prefecture, city and town.<br>Masukkan prefektur, kota, dan kelurahan Anda."); return; }
+    if (!fieldVal("fStreet")){ showError("番地をご入力ください。<br>Please enter your street number.<br>Masukkan nomor jalan Anda."); return; }
+  }
+  /* Soft checks — warn once, proceed on the second press. Never a dead end. */
+  var softBlocked = false, firstWarn = null;
+  if (!phoneWarnOk && !phoneLooksValid(f.phone)){
+    var pw = document.getElementById("phoneWarn");
+    pw.hidden = false; phoneWarnOk = true; softBlocked = true; firstWarn = pw;
+  }
+  if (isDelivery && !addrWarnOk && (!/\d/.test(fieldVal("fStreet")) || f.address.length < 12)){
+    var aw = document.getElementById("addrWarn");
+    aw.hidden = false; addrWarnOk = true; softBlocked = true; if (!firstWarn) firstWarn = aw;
+  }
+  if (softBlocked){
+    if (firstWarn) firstWarn.scrollIntoView({ block: "center" });
+    return;
+  }
+  if (phoneLooksValid(f.phone)){
+    f.phone = normalizePhone(f.phone);
+    document.getElementById("fPhone").value = f.phone;
+  }
   var text = buildInvoiceText(f.name, f.phone, f.address, f.note, false);
-  var url = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(text);
+  var waText = text;
+  if (isDelivery && f.address){
+    var addrLine = "住所 / Address: " + f.address;
+    waText = text.replace(addrLine, addrLine + "\n📍 " + mapsUrl(f.address));
+  }
+  var url = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(waText);
   document.getElementById("ticketText").textContent = text;
   document.getElementById("waFallback").href = url;
   var ticketBox = document.getElementById("ticketBox");

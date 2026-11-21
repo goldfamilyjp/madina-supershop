@@ -85,6 +85,37 @@ spreadsheet, so the shop has a permanent order book:
 - Staff open it from the admin panel's **「⑥ 注文 Orders」** section
   (button → `https://docs.google.com/spreadsheets/d/1NYooZTu01gP6cmp5k8we60Uhz4KKhgU4993zGIgt5Hw/edit`).
 
+## Address & phone check (checkout)
+
+The courier address is entered as the **full Japanese structure in separate fields**:
+郵便番号 (postal code) → 都道府県 (prefecture) → 市区町村 (city/ward) → 町名 (town) →
+番地 (street number, **required**) → 建物名・部屋番号 (building/room, optional).
+Everywhere else (ticket, confirmation email, order sheet) the address is one composed string:
+`〒zip 都道府県 市区町村 町名 番地 建物名・部屋番号`.
+
+- **Postal-code auto-fill:** when the customer types a 7-digit postal code (hyphen optional), the
+  page calls the **free zipcloud API** (`zipcloud.ibsnet.co.jp`, no key) and fills 都道府県 /
+  市区町村 / 町名 from its `address1` / `address2` / `address3`. All three stay editable.
+  If the code is not in the database, an inline trilingual note says so (warning only — typing is
+  never blocked); if the network call fails, nothing is shown and the customer just types manually.
+- **Instant completeness check on Confirm (courier only):** empty postal code, prefecture/city/town,
+  or 番地 is a hard stop (the usual required-field error). A **soft check** then looks at the
+  composed address: if the 番地 contains no digit, or the whole address is under 12 characters, a red
+  trilingual warning appears under the address block and the customer presses Confirm **once more**
+  to proceed with that address. Editing any address field re-arms the warning.
+- **Map check link:** a 「地図で確認 Check on map / Lihat di peta」 link under the address fields opens
+  Google Maps with the address as currently entered. The same Maps link is appended to the
+  **WhatsApp order message** (📍 line after the address) and to the **order sheet's 住所・受取店舗**
+  entry, so staff can tap straight to the location. (The printed ticket does not carry it.)
+- **Phone check:** the checkout phone is validated instantly — spaces/hyphens are stripped, a `+81`
+  prefix is normalised to `0…`, and a valid number is 10 or 11 digits starting with 0 (mobiles
+  070/080/090 must be 11 digits). A number that looks wrong gets the same warn-then-press-Confirm-again
+  treatment as the address soft check — never a silent pass, never a dead-end block. The points phone
+  field gets the same check as a **warning only** (it never blocks an order).
+- **Honesty note:** a full Google Address Validation API check would need a **paid** Google API key,
+  which this free build does not use. Instead it combines the free postal-code database, the
+  completeness checks above, and the map link so the customer (and staff) can eyeball the location.
+
 ## Staff reply templates (admin panel)
 
 The bottom of `admin.html` has a **「返信テンプレート Reply templates」** section with three
