@@ -2195,5 +2195,19 @@ fetch("products.json", { cache: "no-store" })
     emptyNote.textContent = "商品を読み込めませんでした。Could not load products (" + err.message + "). Please reload.";
   });
 </script>
+<script>
+/* Animated tab title — blinks gently so the open tab catches the eye */
+(function () {
+  var titles = [
+    "MADINA HALAL SUPER — マディナ ハラルスーパー",
+    "⭐ MADINA HALAL SUPER ⭐ お買い物はこちら！"
+  ];
+  var i = 0;
+  setInterval(function () {
+    i = (i + 1) % titles.length;
+    document.title = titles[i];
+  }, 1400);
+})();
+</script>
 </body>
 </html>
