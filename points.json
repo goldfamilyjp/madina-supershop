@@ -1,0 +1,16 @@
+{
+  "customers": [
+    {
+      "hash": "ff6b43a0086c27ad1205799f6273db885465c01aa8266ed0a6ea4a106f31fc8d",
+      "entries": [
+        {
+          "type": "earn",
+          "points": 20,
+          "date": "2026-11-22",
+          "matures": "2026-12-22",
+          "note": "Order ¥2,000"
+        }
+      ]
+    }
+  ]
+}
