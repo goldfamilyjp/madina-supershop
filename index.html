@@ -28,7 +28,11 @@
 body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif; background:var(--bg); color:var(--ink); padding-bottom:96px;}
 /* Trilingual rule (owner): JP / EN / ID always render at the SAME font size — never shrink the 2nd/3rd language. */
 .en,.idn{font-size:1em; font-weight:inherit; color:inherit;}
-header{background-color:var(--green); background-image:linear-gradient(rgba(7,48,31,.80), rgba(11,69,48,.42)), url("shop-banner.jpg"); background-size:cover; background-position:center; color:#fff; padding:24px 16px 20px; text-align:center; border-bottom:4px solid var(--gold); text-shadow:0 1px 6px rgba(0,0,0,.5);}
+/* hero: a solid Madina-green band (logo + two-line name + JP name + tagline);
+   the full shop photo sits UNDER it as its own full-width strip (.hero-photo)
+   at natural aspect — the whole shop front shows, never cropped. */
+header{background:var(--green); color:#fff; padding:24px 16px 20px; text-align:center; border-bottom:4px solid var(--gold);}
+.hero-photo{display:block; width:100%; height:auto;}
 header .hero-logo{width:72px; height:72px; object-fit:cover; border-radius:50%; border:2px solid var(--gold); background:#fff; margin-bottom:6px;}
 /* the shop name in gold-gradient display type (CSS only — no font downloads) */
 header .shop-name{
@@ -209,13 +213,19 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .pc-result{background:#e3efe6; border:1px solid var(--green); border-radius:12px; padding:14px; margin-top:12px; font-size:1rem; line-height:1.6; display:none;}
 .pc-result.show{display:block;}
 .pc-result .pc-bal{font-size:1.15rem; font-weight:800; color:var(--green);}
+/* phone-first checkout: hint under the phone field + "details found" line */
+.phone-hint{font-size:.85rem; color:var(--muted); margin:5px 0 0; line-height:1.5;}
+.lookup-msg{background:#e8f5e9; color:#1e7d32; border:1px solid #1e7d32; border-radius:10px; padding:9px 12px; font-size:.9rem; font-weight:700; margin:8px 0 0;}
+#lookupMsg[hidden]{display:none;}
+.points-bal-line{background:#fffdf4; border:1px solid var(--gold); color:var(--green-dark); border-radius:10px; padding:9px 12px; font-size:.9rem; font-weight:700; margin:8px 0 0;}
+#checkoutPointsLine[hidden]{display:none;}
 /* "remember my details" note inside the checkout form */
 .saved-note{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; background:#eef6f0; border:1px solid var(--green); border-radius:10px; padding:8px 10px; margin-bottom:6px; font-size:.85rem;}
 #savedNote[hidden]{display:none;}
 .saved-clear{background:#fff; color:var(--green-dark); border:1.5px solid var(--green); border-radius:999px; padding:8px 14px; min-height:40px; font-weight:700; cursor:pointer; font-size:.85rem;}
 /* hero offer chips + share row (promotion) */
-.hero-chips{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px;}
-.hero-chip{background:rgba(255,255,255,.10); border:2px solid var(--gold); color:#fff; border-radius:999px; padding:8px 16px; font-size:1rem; font-weight:700; line-height:1.35; text-align:center;}
+.hero-chips{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:12px 10px;}
+.hero-chip{background:var(--green); border:2px solid var(--gold); color:#fff; border-radius:999px; padding:8px 16px; font-size:1rem; font-weight:700; line-height:1.35; text-align:center;}
 .hero-chip .en,.hero-chip .idn{display:block;}
 .share-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:12px;}
 .share-label{font-weight:800; color:var(--green); font-size:1rem;}
@@ -272,17 +282,19 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
   <div class="nb-track" id="nbTrack"></div>
 </div>
 
-<header role="img" aria-label="Madina Halal — Anjo shop">
+<header>
   <img class="hero-logo" src="logo.jpg" alt="Madina Halal Restaurant &amp; Foods">
-  <div class="shop-name">MADINA HALAL SUPER</div>
+  <div class="shop-name">MADINA<br>HALAL SUPER</div>
   <div class="shop-name-jp">マディナ ハラルスーパー</div>
   <div class="tagline">100%ハラール食品のお店 — 100% Halal groceries — Bahan makanan 100% Halal (Anjo &amp; Toyota)</div>
-  <div class="hero-chips">
-    <span class="hero-chip">送料無料（¥10,000以上）<span class="en">Free delivery over ¥10,000</span><span class="idn">Gratis ongkir ¥10,000+</span></span>
-    <span class="hero-chip">ポイント1%還元<span class="en">Points 1% back</span><span class="idn">Poin kembali 1%</span></span>
-    <span class="hero-chip">全品ハラール<span class="en">All halal</span><span class="idn">Semua halal</span></span>
-  </div>
 </header>
+<!-- the FULL Anjo shop front — natural aspect, never cropped -->
+<img class="hero-photo" src="shop-banner-full.jpg" alt="マディナ ハラール レストラン＆フーズ 安城店 Madina Halal Restaurant &amp; Foods — Anjo shop">
+<div class="hero-chips">
+  <span class="hero-chip">送料無料（¥10,000以上）<span class="en">Free delivery over ¥10,000</span><span class="idn">Gratis ongkir ¥10,000+</span></span>
+  <span class="hero-chip">ポイント1%還元<span class="en">Points 1% back</span><span class="idn">Poin kembali 1%</span></span>
+  <span class="hero-chip">全品ハラール<span class="en">All halal</span><span class="idn">Semua halal</span></span>
+</div>
 <div class="ship-strip">宅配便：¥10,000以上は送料無料／未満は振込¥990・代引き¥1,800。店頭受取は無料 <span class="en">Courier: FREE over ¥10,000 — under: transfer ¥990 / COD ¥1,800. Pickup free.</span> <span class="idn">Pengiriman: GRATIS di atas ¥10,000 — di bawahnya: transfer ¥990 / COD ¥1,800. Ambil di toko gratis.</span></div>
 
 <div class="wrap">
@@ -409,11 +421,14 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
       <span>前回の情報を保存しています <span class="en">Your details are saved on this device</span> <span class="idn">Data Anda tersimpan di perangkat ini</span></span>
       <button type="button" class="saved-clear" id="savedClearBtn">クリア <span class="en">Clear</span> <span class="idn">Hapus</span></button>
     </div>
-    <label class="flabel" for="fName">お名前 <span class="en">Name</span> <span class="idn">Nama</span><span class="req">*</span></label>
-    <input type="text" id="fName" autocomplete="name" placeholder="お名前 Name / Nama">
     <label class="flabel" for="fPhone">電話番号 <span class="en">Phone</span> <span class="idn">Telepon</span><span class="req">*</span></label>
     <input type="tel" id="fPhone" autocomplete="tel" placeholder="電話番号 Phone / Telepon">
+    <p class="phone-hint">前回ご注文の方は、番号を入れると住所などが自動で入ります<br><span class="en">If you ordered before, enter your number and your details will fill in automatically</span><br><span class="idn">Jika pernah memesan, masukkan nomor Anda dan data akan terisi otomatis</span></p>
+    <p class="lookup-msg" id="lookupMsg" hidden>お客様情報を見つけました <span class="en">Found your details</span> <span class="idn">Data Anda ditemukan</span></p>
+    <p class="points-bal-line" id="checkoutPointsLine" hidden></p>
     <p class="addr-warn" id="phoneWarn" hidden>電話番号の形式が正しくないようです — 確認してください<br><span class="en">This phone number looks incorrect — please check it</span><br><span class="idn">Nomor telepon tampaknya tidak valid — silakan periksa kembali</span></p>
+    <label class="flabel" for="fName">お名前 <span class="en">Name</span> <span class="idn">Nama</span><span class="req">*</span></label>
+    <input type="text" id="fName" autocomplete="name" placeholder="お名前 Name / Nama">
     <label class="flabel" for="fEmail">メールアドレス（任意・確認メール用）<span class="en"> Email for confirmation (optional)</span> <span class="idn">Email untuk konfirmasi (opsional)</span></label>
     <input type="email" id="fEmail" autocomplete="email" placeholder="メールアドレス Email (optional)">
     <div id="addressField">
@@ -449,6 +464,7 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
     <p class="addr-warn" id="pointsPhoneWarn" hidden>電話番号の形式が正しくないようです — 確認してください<br><span class="en">This phone number looks incorrect — please check it</span><br><span class="idn">Nomor telepon tampaknya tidak valid — silakan periksa kembali</span></p>
     <label class="flabel" for="fPointsUse">使うポイント（任意）<span class="en"> Points to use (optional)</span> <span class="idn">Poin yang dipakai (opsional)</span></label>
     <input type="number" id="fPointsUse" min="0" step="1" inputmode="numeric" placeholder="例：200 e.g. 200">
+    <p class="addr-warn" id="pointsUseWarn" hidden>使うポイントが残高を超えています — 店舗で残高を確認します。このまま注文する場合は、もう一度「注文を確定する」を押してください。<br><span class="en">That is more points than your available balance — the shop will confirm. To order anyway, press Confirm Order once more.</span><br><span class="idn">Poin melebihi saldo tersedia — toko akan memeriksa. Untuk tetap memesan, tekan Konfirmasi Pesanan sekali lagi.</span></p>
     <p class="fee-note">ポイント：1pt = ¥1。購入の1ヶ月後から使えます。店舗で残高を確認して割引します。<br>Points: 1 pt = ¥1, usable 1 month after purchase. The shop confirms your balance and applies the discount.<br>Poin: 1 poin = ¥1, bisa dipakai 1 bulan setelah pembelian. Toko akan memeriksa saldo dan memberi diskon.<br><a href="#pointsCheck" id="pointsCheckLink">ポイント残高を確認する Check points balance / Cek saldo poin →</a></p>
 
     <div class="form-error" id="formError"></div>
@@ -477,6 +493,17 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
 
 <script>
 var WA_NUMBER = "819065842039";
+/* Customer-ID (phone number) + order numbers — the Google Apps Script web
+   app that keeps the cross-device customer/order store (see apps-script.gs
+   and the README section "📱 Customer ID (phone number) + order numbers").
+   EMPTY = the feature is dormant and checkout behaves exactly as before
+   (orders go to the Google Form). After the script is deployed in the
+   owner's Google account, paste its /exec URL here. Tests may override it
+   via window.__ORDER_API_URL. */
+var ORDER_API_URL = "";
+function orderApiUrl(){
+  return (typeof window !== "undefined" && window.__ORDER_API_URL != null) ? String(window.__ORDER_API_URL) : ORDER_API_URL;
+}
 var FREE_THRESHOLD = 10000;
 var DELIVERY_FEE = 990;   /* courier fee under ¥10,000 — bank / Japan Post transfer */
 var COD_FEE = 1800;       /* courier fee under ¥10,000 — cash on delivery （代引き） */
@@ -1238,7 +1265,7 @@ function mapsUrl(addr){
 }
 /* Soft-check state: a warning is shown once; pressing Confirm again proceeds.
    Editing the field it belongs to re-arms the warning. */
-var addrWarnOk = false, phoneWarnOk = false;
+var addrWarnOk = false, phoneWarnOk = false, pointsUseWarnOk = false;
 var lastZipLookup = "";
 document.getElementById("fZip").addEventListener("input", function(){
   var note = document.getElementById("zipNote");
@@ -1288,6 +1315,178 @@ function phoneLooksValid(raw){
 document.getElementById("fPhone").addEventListener("input", function(){
   phoneWarnOk = false;
   document.getElementById("phoneWarn").hidden = true;
+});
+
+/* ---------- 📱 customer ID: phone-number lookup (Google Apps Script) ----------
+   The phone number is the customer's ID. When a returning customer enters
+   their number, the Apps Script web app (ORDER_API_URL) looks them up in the
+   owner's "Customers" sheet and the saved details fill in automatically —
+   on ANY device, not just this one. Privacy rule (enforced by the script):
+   the full address + email come back only when the postal code in the form
+   matches the saved one; a phone number alone reveals just the name and the
+   saved fulfilment/branch/payment preferences.
+   Dormant while ORDER_API_URL is empty. Every failure is silent — a lookup
+   must never block or delay checkout. Returned values fill ONLY fields that
+   are still empty, so anything the customer typed is never overwritten. */
+var lookupKeyDone = "";
+var lookupTimer = null;
+function phoneDigitsForLookup(){
+  return normalizePhone(fieldVal("fPhone")).replace(/\D/g, "");
+}
+function fetchWithTimeout(url, opts, ms){
+  return new Promise(function(resolve, reject){
+    var done = false;
+    var timer = setTimeout(function(){ if (!done){ done = true; reject(new Error("timeout")); } }, ms);
+    fetch(url, opts).then(
+      function(r){ if (!done){ done = true; clearTimeout(timer); resolve(r); } },
+      function(e){ if (!done){ done = true; clearTimeout(timer); reject(e); } });
+  });
+}
+function applyLookupResult(res){
+  if (!res || !res.found) return false;
+  var filled = false;
+  var setIfEmpty = function(id, v){
+    var el = document.getElementById(id);
+    if (el && v && !el.value.trim()){ el.value = v; filled = true; }
+  };
+  setIfEmpty("fName", res.name);
+  if (res.verified){
+    setIfEmpty("fEmail", res.email);
+    setIfEmpty("fZip", res.zip);
+    setIfEmpty("fPref", res.prefecture);
+    setIfEmpty("fCity", res.city);
+    setIfEmpty("fTown", res.town);
+    setIfEmpty("fStreet", res.street);
+    setIfEmpty("fBuilding", res.building);
+  }
+  /* saved preferences (segmented choices, not text fields) */
+  var prefsChanged = false;
+  if ((res.fulfilment === "delivery" || res.fulfilment === "pickup") && fulfill !== res.fulfilment){ fulfill = res.fulfilment; prefsChanged = true; }
+  if ((res.branch === "Anjo" || res.branch === "Toyota") && branch !== res.branch){ branch = res.branch; prefsChanged = true; }
+  if ((res.payment === "yucho" || res.payment === "bank" || res.payment === "cod") && payment !== res.payment){ payment = res.payment; prefsChanged = true; }
+  if (prefsChanged) syncFulfillmentUI();
+  if (filled) refreshInvoicePreview();
+  return true;
+}
+function customerLookup(){
+  var url = orderApiUrl();
+  if (!url) return Promise.resolve(false);
+  var digits = phoneDigitsForLookup();
+  if (digits.length < 10 || digits.length > 11) return Promise.resolve(false);
+  var zip = zipDigits();
+  var key = digits + "|" + zip;
+  if (key === lookupKeyDone) return Promise.resolve(false);
+  var q = url + (url.indexOf("?") >= 0 ? "&" : "?")
+    + "action=lookup&phone=" + encodeURIComponent(digits)
+    + "&zip=" + encodeURIComponent(zip);
+  return fetchWithTimeout(q, { method: "GET" }, 6000)
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      lookupKeyDone = key;
+      if (phoneDigitsForLookup() !== digits) return false;   /* edited while waiting */
+      var found = applyLookupResult(res);
+      document.getElementById("lookupMsg").hidden = !found;
+      return found;
+    })
+    .catch(function(){ return false; });   /* silent — checkout never blocks on this */
+}
+function scheduleLookup(){
+  if (lookupTimer) clearTimeout(lookupTimer);
+  lookupTimer = setTimeout(function(){ customerLookup(); checkoutPointsLookup(); }, 600);
+}
+document.getElementById("fPhone").addEventListener("blur", function(){ customerLookup(); checkoutPointsLookup(); });
+document.getElementById("fPhone").addEventListener("input", function(){
+  document.getElementById("lookupMsg").hidden = true;
+  pointsUseWarnOk = false;
+  renderCheckoutPoints();
+  var d = phoneDigitsForLookup();
+  if (d.length === 10 || d.length === 11) scheduleLookup();
+});
+document.getElementById("fZip").addEventListener("input", function(){
+  if (zipDigits().length === 7) scheduleLookup();   /* zip completed → full-address lookup */
+});
+
+/* ---------- 🪙 points balance at checkout ----------
+   The same mechanism as the shop-page points check card: hash the
+   digits-only phone number (SHA-256), find the record in points.json and
+   compute the balances with computePointBalances(). Runs at the same
+   moments as the customer lookup (phone blur / 10–11 digits, debounced)
+   and re-runs whenever the number changes. No record — or any failure —
+   shows NOTHING: silent, and it never blocks checkout. This works whether
+   or not the Apps Script customer-ID feature is switched on, because
+   points.json already lives next to this page.
+   The balance also feeds the "points to use" soft check at Confirm: ask
+   for more than the available balance and the customer is warned once,
+   then may proceed — the shop still confirms the balance by hand. */
+var checkoutPoints = null;        /* { available, pending } for checkoutPointsPhone */
+var checkoutPointsPhone = "";     /* the digits that balance belongs to */
+function renderCheckoutPoints(){
+  var el = document.getElementById("checkoutPointsLine");
+  if (!el) return;
+  if (checkoutPoints && checkoutPointsPhone === phoneDigitsForLookup()){
+    var t = "利用可能ポイント / Available points / Poin tersedia: " + checkoutPoints.available + " pt";
+    if (checkoutPoints.pending > 0) t += "（利用待ち / pending / menunggu: " + checkoutPoints.pending + " pt）";
+    el.textContent = t;
+    el.hidden = false;
+  } else {
+    el.hidden = true;
+    el.textContent = "";
+  }
+  refreshPointsUseWarn();
+}
+function checkoutPointsLookup(){
+  /* the points phone defaults to the main phone number when left empty */
+  var pp = document.getElementById("fPointsPhone");
+  if (pp && !pp.value.trim()){
+    var mp = fieldVal("fPhone");
+    if (mp) pp.value = mp;
+  }
+  var digits = phoneDigitsForLookup();
+  if (digits.length < 10 || digits.length > 11){
+    checkoutPoints = null; checkoutPointsPhone = "";
+    renderCheckoutPoints();
+    return Promise.resolve(false);
+  }
+  return shopSha256Hex(digits).then(function(hash){
+    return fetch("points.json", { cache: "no-store" }).then(function(r){
+      if (!r.ok) throw new Error("points.json " + r.status);
+      return r.json();
+    }).then(function(data){
+      if (phoneDigitsForLookup() !== digits) return false;   /* number changed meanwhile */
+      var rec = (data.customers || []).filter(function(c){ return c.hash === hash; })[0] || null;
+      checkoutPoints = rec ? computePointBalances(rec) : null;
+      checkoutPointsPhone = digits;
+      renderCheckoutPoints();
+      return !!rec;
+    });
+  }).catch(function(){
+    if (phoneDigitsForLookup() === digits){
+      checkoutPoints = null; checkoutPointsPhone = digits;
+      renderCheckoutPoints();
+    }
+    return false;   /* silent — never block checkout */
+  });
+}
+/* Live half of the over-balance warning: show the note as soon as the
+   requested points exceed the known balance. The Confirm press still
+   applies the warn-once gate (pointsUseWarnOk) before proceeding. */
+function pointsUseExceeds(){
+  var pr = pointsRequest();
+  if (pr.use <= 0 || !checkoutPoints) return false;
+  var effDigits = normalizePhone(pr.phone || fieldVal("fPhone")).replace(/\D/g, "");
+  return checkoutPointsPhone === effDigits && pr.use > checkoutPoints.available;
+}
+function refreshPointsUseWarn(){
+  var w = document.getElementById("pointsUseWarn");
+  if (w) w.hidden = !pointsUseExceeds();
+}
+document.getElementById("fPointsUse").addEventListener("input", function(){
+  pointsUseWarnOk = false;
+  refreshPointsUseWarn();
+});
+document.getElementById("fPointsPhone").addEventListener("input", function(){
+  pointsUseWarnOk = false;
+  refreshPointsUseWarn();
 });
 document.getElementById("fPointsPhone").addEventListener("input", function(){
   var v = this.value.trim();
@@ -1389,11 +1588,12 @@ function orderDateStr(){
   var d = new Date(); var days = ["日","月","火","水","木","金","土"];
   return d.getFullYear() + "年" + (d.getMonth()+1) + "月" + d.getDate() + "日（" + days[d.getDay()] + "）" + pad(d.getHours()) + ":" + pad(d.getMinutes());
 }
-function buildInvoiceText(name, phone, address, note, preview){
+function buildInvoiceText(name, phone, address, note, preview, orderNo){
   var sep = "──────────";
   var ids = sortedCartIds();
   var isDelivery = fulfill === "delivery";
   var lines = [];
+  if (orderNo && !preview) lines.push("注文番号 / Order No. / No. Pesanan: " + orderNo);
   lines.push("MADINA HALAL SUPER — Online Order");
   lines.push("日時 / Date: " + orderDateStr());
   lines.push(sep);
@@ -1527,19 +1727,32 @@ function sendConfirmationEmail(f){
    order book linked from the admin panel's 「⑤ 注文 Orders」 section.
    mode:"no-cors" because Google returns no CORS headers (the response is
    opaque; success cannot be read back, and does not need to be).
-   Fire-and-forget: a failure never blocks or delays the WhatsApp order. */
+   Fire-and-forget: a failure never blocks or delays the WhatsApp order.
+   CUSTOMER-ID RULE: when ORDER_API_URL is set and the Apps Script order
+   POST succeeds, this Form POST is SKIPPED — the script's "Orders" sheet
+   is the record then. On any script failure the Form POST below runs, so
+   an order is never lost and never double-recorded. */
 var GFORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSenr_nuMWAbwOuqgvo5NujCPK9B9zBwra7dA8PjzedssF05mw/formResponse";
-function sendOrderToSheet(f){
+/* The order's item lines (+ coupon / tax / courier lines) — shared by the
+   Google Form record and the Apps Script order payload. */
+function orderItemLines(){
+  var isDelivery = fulfill === "delivery";
+  var fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount();
+  var lines = sortedCartIds().map(function(id){
+    var p = productById(id); if (!p) return "";
+    return p.en + (p.jp ? "（" + p.jp + "）" : "") + (p.size ? " " + p.size : "") + " × " + cart[id] + " — " + yen(p.price * cart[id]);
+  }).filter(function(s){ return s; });
+  if (disc > 0 && appliedCoupon) lines.push("クーポン " + appliedCoupon.code + ": −" + yen(disc));
+  if (tax > 0) lines.push(taxLineText());
+  if (isDelivery) lines.push("配送料： " + yen(fee));
+  return lines;
+}
+function sendOrderToSheet(f, orderNo){
   try {
     var isDelivery = fulfill === "delivery";
     var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount(), total = st - disc + tax + fee;
-    var itemLines = sortedCartIds().map(function(id){
-      var p = productById(id); if (!p) return "";
-      return p.en + (p.jp ? "（" + p.jp + "）" : "") + (p.size ? " " + p.size : "") + " × " + cart[id] + " — " + yen(p.price * cart[id]);
-    }).filter(function(s){ return s; });
-    if (disc > 0 && appliedCoupon) itemLines.push("クーポン " + appliedCoupon.code + ": −" + yen(disc));
-    if (tax > 0) itemLines.push(taxLineText());
-    if (isDelivery) itemLines.push("配送料： " + yen(fee));
+    var itemLines = orderItemLines();
+    if (orderNo) itemLines.unshift("注文番号： " + orderNo);
     var pr = pointsRequest();
     var phone = f.phone || pr.phone || "";
     var payLabel = !isDelivery ? "店頭支払い"
@@ -1570,10 +1783,80 @@ document.getElementById("openCartBtn").addEventListener("click", openCart);
 document.getElementById("closeCartBtn").addEventListener("click", closeCart);
 overlay.addEventListener("click", closeCart);
 
+/* ---------- 📱 order POST to the Apps Script (customer ID + order number) ----------
+   Sends the full order as JSON; the script assigns the order number
+   (MS-0001, MS-0002, …), appends its "Orders" sheet and upserts the
+   customer under their phone number, then answers { ok:true, orderNo }.
+   The body is text/plain on purpose — a "simple request", so the browser
+   sends no CORS preflight; Apps Script answers with CORS headers and the
+   JSON can be read back. Resolves with the order number; REJECTS on any
+   failure (network, timeout ~8s, bad response) so the caller can fall
+   back to the Google Form record. */
+function buildOrderPayload(f){
+  var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount();
+  var pr = pointsRequest();
+  return {
+    phone: f.phone, name: f.name, email: f.email,
+    zip: zipFormatted(), prefecture: fieldVal("fPref"), city: fieldVal("fCity"),
+    town: fieldVal("fTown"), street: fieldVal("fStreet"), building: fieldVal("fBuilding"),
+    address: f.address, note: f.note,
+    fulfilment: fulfill, branch: branch, payment: payment,
+    itemsText: orderItemLines().join("\n"),
+    subtotal: st, discount: disc, couponCode: appliedCoupon ? appliedCoupon.code : "",
+    taxRate: TAX_RATE, tax: tax, courierFee: fee,
+    total: st - disc + tax + fee,
+    pointsUse: pr.use, pointsPhone: pr.phone,
+    dateTime: new Date().toISOString()
+  };
+}
+function postOrderToScript(f){
+  var url = orderApiUrl();
+  return fetchWithTimeout(url, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(buildOrderPayload(f))
+  }, 8000)
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res || res.ok !== true || !res.orderNo) throw new Error("script did not confirm the order");
+      return String(res.orderNo);
+    });
+}
+
 /* ---------- Confirm Order: ticket + WhatsApp in one press ---------- */
 var formError = document.getElementById("formError");
 function showError(msg){ formError.innerHTML = msg; formError.classList.add("show"); }
 function hideError(){ formError.classList.remove("show"); }
+var orderSubmitting = false;
+function finishOrder(f, orderNo, viaScript){
+  var isDelivery = fulfill === "delivery";
+  var text = buildInvoiceText(f.name, f.phone, f.address, f.note, false, orderNo);
+  var waText = text;
+  if (isDelivery && f.address){
+    var addrLine = "住所 / Address: " + f.address;
+    waText = text.replace(addrLine, addrLine + "\n📍 " + mapsUrl(f.address));
+  }
+  var url = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(waText);
+  document.getElementById("ticketText").textContent = text;
+  document.getElementById("waFallback").href = url;
+  var ticketBox = document.getElementById("ticketBox");
+  ticketBox.hidden = false;
+  window.open(url, "_blank");
+  /* Record the order: the Apps Script already saved it when viaScript —
+     otherwise the Google Form POST is the record (fire-and-forget). */
+  if (!viaScript) sendOrderToSheet(f, orderNo);
+  /* Remember the checkout details on this device for the next order. */
+  saveCheckoutDetails();
+  /* Optional confirmation email — fire-and-forget, never blocks the order. */
+  var emailNote = document.getElementById("emailSentNote");
+  emailNote.hidden = true;
+  if (f.email){
+    sendConfirmationEmail(f).then(function(r){
+      if (r && r.ok) emailNote.hidden = false;
+    }).catch(function(){ /* offline / service down: the WhatsApp order still stands */ });
+  }
+  ticketBox.scrollIntoView({ block: "start" });
+}
 document.getElementById("orderForm").addEventListener("submit", function(e){
   e.preventDefault(); hideError();
   var ids = sortedCartIds();
@@ -1597,6 +1880,10 @@ document.getElementById("orderForm").addEventListener("submit", function(e){
     var aw = document.getElementById("addrWarn");
     aw.hidden = false; addrWarnOk = true; softBlocked = true; if (!firstWarn) firstWarn = aw;
   }
+  if (!pointsUseWarnOk && pointsUseExceeds()){
+    var uw = document.getElementById("pointsUseWarn");
+    uw.hidden = false; pointsUseWarnOk = true; softBlocked = true; if (!firstWarn) firstWarn = uw;
+  }
   if (softBlocked){
     if (firstWarn) firstWarn.scrollIntoView({ block: "center" });
     return;
@@ -1605,31 +1892,21 @@ document.getElementById("orderForm").addEventListener("submit", function(e){
     f.phone = normalizePhone(f.phone);
     document.getElementById("fPhone").value = f.phone;
   }
-  var text = buildInvoiceText(f.name, f.phone, f.address, f.note, false);
-  var waText = text;
-  if (isDelivery && f.address){
-    var addrLine = "住所 / Address: " + f.address;
-    waText = text.replace(addrLine, addrLine + "\n📍 " + mapsUrl(f.address));
-  }
-  var url = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(waText);
-  document.getElementById("ticketText").textContent = text;
-  document.getElementById("waFallback").href = url;
-  var ticketBox = document.getElementById("ticketBox");
-  ticketBox.hidden = false;
-  window.open(url, "_blank");
-  /* Auto-save the order to the shop's Google Sheet — fire-and-forget, never blocks. */
-  sendOrderToSheet(f);
-  /* Remember the checkout details on this device for the next order. */
-  saveCheckoutDetails();
-  /* Optional confirmation email — fire-and-forget, never blocks the order. */
-  var emailNote = document.getElementById("emailSentNote");
-  emailNote.hidden = true;
-  if (f.email){
-    sendConfirmationEmail(f).then(function(r){
-      if (r && r.ok) emailNote.hidden = false;
-    }).catch(function(){ /* offline / service down: the WhatsApp order still stands */ });
-  }
-  ticketBox.scrollIntoView({ block: "start" });
+  if (orderSubmitting) return;   /* one press, one order */
+  if (!orderApiUrl()){ finishOrder(f, "", false); return; }
+  /* Customer-ID path: ask the script to record the order + assign its
+     number first (max ~8s). ANY failure falls back to the Form record —
+     the order itself never waits longer and is never lost. */
+  orderSubmitting = true;
+  var btn = document.getElementById("confirmBtn");
+  btn.disabled = true;
+  postOrderToScript(f).then(function(orderNo){
+    orderSubmitting = false; btn.disabled = false;
+    finishOrder(f, orderNo, true);
+  }).catch(function(){
+    orderSubmitting = false; btn.disabled = false;
+    finishOrder(f, "", false);
+  });
 });
 
 /* ---------- points balance check (customer, view-only) ----------
@@ -1751,7 +2028,9 @@ document.getElementById("shareCopy").addEventListener("click", function(){
 /* expose for testing */
 window.__supershopShop = { deliveryFee: deliveryFee, pointBalances: computePointBalances, getCart: function(){ return cart; }, setQty: setQty, faqItems: FAQ_ITEMS, siteUrl: SITE_URL,
   coupon: { list: function(){ return COUPONS; }, applied: function(){ return appliedCoupon; }, discount: couponDiscount, paused: couponPaused, grandTotal: grandTotal, apply: applyCoupon },
-  tax: { rate: function(){ return TAX_RATE; }, amount: taxAmount, label: taxLabel } };
+  tax: { rate: function(){ return TAX_RATE; }, amount: taxAmount, label: taxLabel },
+  customerId: { apiUrl: orderApiUrl, lookup: customerLookup, payload: buildOrderPayload },
+  pointsCheckout: { balance: function(){ return checkoutPoints; }, lookup: checkoutPointsLookup, exceeds: pointsUseExceeds } };
 
 /* ---------- load products ---------- */
 fetch("products.json", { cache: "no-store" })

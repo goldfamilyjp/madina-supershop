@@ -104,10 +104,71 @@ spreadsheet, so the shop has a permanent order book:
   （店頭支払い / ゆうちょ銀行振込 / 銀行振込 / 代引き）, 住所・受取店舗， ポイント利用希望.
 - The POST uses `mode: "no-cors"` (Google sends no CORS headers) and can never block or delay the
   WhatsApp order — if it fails, the order still completes normally.
+- **Exception:** once the customer-ID feature below is switched on, this Form POST is skipped
+  for orders the Apps Script records successfully (its “Orders” sheet becomes the record);
+  the Form remains the fallback whenever the script cannot be reached.
 - The sheet is **private to the owner's Google account** — it is not shared with anyone.
   The **WhatsApp order remains the immediate alert**; the sheet is the saved record.
 - Staff open it from the admin panel's **⑤ Orders** section
   (button → `https://docs.google.com/spreadsheets/d/1NYooZTu01gP6cmp5k8we60Uhz4KKhgU4993zGIgt5Hw/edit`).
+
+## 📱 Customer ID (phone number) + order numbers
+
+The customer's **mobile phone number is their ID**. A small Google Apps Script web app
+(`apps-script.gs`, bound to a spreadsheet in the owner's Google account) is the cross-device
+store behind it — customers are recognised on any phone or browser, not just the device they
+last ordered on. The on-device “remember my details” (below) still runs as the instant first
+layer; this feature is the second, permanent layer.
+
+**How it flows**
+
+- **Checkout starts with the phone number** — it is the first field of the checkout form, with a
+  trilingual hint: 前回ご注文の方は、番号を入れると住所などが自動で入ります / *If you ordered
+  before, enter your number and your details will fill in automatically* / *Jika pernah memesan,
+  masukkan nomor Anda dan data akan terisi otomatis*.
+- **Lookup:** when the phone field loses focus (or reaches 10–11 digits, debounced) the page
+  calls the script with the phone number — and with the postal code too, once one is in the
+  form; completing a 7-digit postal code triggers a second lookup. Returned values fill **only
+  fields that are still empty** (typed values are never overwritten), plus the saved
+  fulfilment / branch / payment preferences. A small trilingual line under the phone field —
+  お客様情報を見つけました / *Found your details* / *Data Anda ditemukan* — confirms the fill.
+  A new customer simply types number first, then the rest; the order itself saves them.
+- **Privacy rule:** the script returns the **full address and email only when the postal code
+  matches** the one on file. A phone number on its own reveals just the customer's **name and
+  saved preferences** — knowing someone's number is not enough to pull their address.
+- **Order numbers:** on Confirm, the order is POSTed to the script first (max ~8 seconds). The
+  script — under a lock, so numbers are never duplicated — assigns the next number
+  (**MS-0001, MS-0002, …**), appends the order to its **“Orders”** sheet and upserts the
+  customer in **“Customers”** (details refreshed, order count +1; a field is only overwritten
+  when the new order carries a value, so a pickup order never wipes a saved address). The
+  number comes back and is printed at the **top of the ticket**, as the **first line of the
+  WhatsApp order text**, and stored in the Orders row.
+- **Fallback — an order is never lost:** on *any* script failure (offline, timeout, bad
+  response) the shop falls back to the Google Form POST exactly as before, with no order
+  number shown. And when the script path succeeds, the Form POST is **skipped** — the
+  script's Orders sheet is the record then, so nothing is ever double-recorded. The
+  confirmation email and the device-local remember-me run the same either way.
+- **Points balance at checkout:** at the same moments (phone blur / 10–11 digits, debounced),
+  the checkout also looks the number up in `points.json` — the exact mechanism of the
+  points check card (SHA-256 of the digits, `computePointBalances`) — and shows a trilingual
+  line under the phone field: 利用可能ポイント / *Available points* / *Poin tersedia*: **X pt**,
+  plus （利用待ち / *pending* / *menunggu*: **Y pt**）when points are still maturing. No record
+  or a failed fetch shows nothing. This works **with or without** the Apps Script feature,
+  since `points.json` already lives next to the page. The points-phone field is prefilled
+  from the main phone field when empty, and asking to use **more points than the available
+  balance** triggers the usual soft warning at Confirm — warned once, the customer may
+  proceed; the shop still confirms the balance by hand before applying any discount.
+
+**Switching it on (one time, owner's Google account)**
+
+1. Open (or create) the spreadsheet that should hold the records.
+2. Extensions → Apps Script → delete the sample code → paste all of `apps-script.gs` → Save.
+3. Deploy → New deployment → type **Web app**: Execute as **Me**, Who has access **Anyone** →
+   Deploy → authorise once → copy the **/exec URL**.
+4. Paste that URL into `index.html` as the `ORDER_API_URL` constant (top of the main script)
+   and redeploy the shop. While the constant is empty the whole feature is dormant and
+   checkout behaves exactly as it did before. (Later script changes need
+   Deploy → Manage deployments → New version to go live.)
 
 ## Address & phone check (checkout)
 
@@ -349,14 +410,19 @@ a custom category typed in the admin displays exactly as entered.
 
 ## Hero banner photo
 
-- The shop hero (top header) sits on a real photo of the shop: **`shop-banner.jpg`** in the repo
-  root — the **Anjo shop exterior** (1170×560). The owner specifically asked for the Anjo shop only
-  in the online shop's banner (no Toyota photo there).
-- It is a normal file reference (`url("shop-banner.jpg")` in the header CSS), **not** inlined into
-  the HTML, so browsers cache it and it costs nothing on repeat visits. A dark Madina-green
-  gradient overlay sits between the photo and the text so the name, tagline and offer chips stay
-  clearly readable; the photo is centre-cropped (`background-size: cover`) so the shop front
-  stays in frame on narrow phone screens.
+- The hero is a **solid Madina-green band** holding only the logo, the shop name — set on **two
+  fixed lines, “MADINA” / “HALAL SUPER”**, with an explicit line break and the gold-gradient
+  styling running across both lines — the Japanese name (マディナ ハラルスーパー, one line) and
+  the tagline.
+- Directly under the band sits the **full Anjo shop front** as a normal `<img>`:
+  **`shop-banner-full.jpg`** in the repo root (1400×1029, colour/sharpness enhanced), styled
+  `width:100%; height:auto; display:block` — the **whole shop is always visible at its natural
+  aspect, never cropped**. (The owner specifically asked for the Anjo shop only — no Toyota
+  photo in the online shop.) The older cropped `shop-banner.jpg` is no longer referenced by the
+  page; the file is simply left in the repo.
+- The offer chips (free delivery / points / all halal) sit **under the photo** on the page
+  background, keeping their gold-bordered pill styling (now with a solid green fill so the white
+  text stays readable off the photo); the courier-fee strip follows under them as before.
 - The social-share image (`og:image`) is unchanged — it still uses `logo.jpg`.
 
 ## 📢 News board (owner announcements)
@@ -485,7 +551,7 @@ and that the key elements stay visible and usable.
 ## Setup (one time, done by Manager)
 
 1. Create the public GitHub repo **goldfamilyjp/madina-supershop**.
-2. Put `index.html`, `admin.html`, `products.json`, `logo.jpg`, `shop-banner.jpg` in the repo root; enable GitHub Pages (main branch, root).
+2. Put `index.html`, `admin.html`, `products.json`, `logo.jpg`, `shop-banner-full.jpg` in the repo root; enable GitHub Pages (main branch, root).
    (`points.json` does not need to be created by hand — the admin panel creates it on the first “Save points”.)
    Shop URL becomes `https://goldfamilyjp.github.io/madina-supershop/`,
    admin URL is the same + `admin.html`.
