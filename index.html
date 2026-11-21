@@ -496,11 +496,12 @@ var WA_NUMBER = "819065842039";
 /* Customer-ID (phone number) + order numbers — the Google Apps Script web
    app that keeps the cross-device customer/order store (see apps-script.gs
    and the README section "📱 Customer ID (phone number) + order numbers").
-   EMPTY = the feature is dormant and checkout behaves exactly as before
-   (orders go to the Google Form). After the script is deployed in the
-   owner's Google account, paste its /exec URL here. Tests may override it
+   WIRED to the live deployment (2026-11-21): the feature is ON — lookups
+   fill returning customers' details and orders get their MS-number from
+   the script. EMPTY would make the feature dormant and checkout behave
+   exactly as before (orders go to the Google Form). Tests may override it
    via window.__ORDER_API_URL. */
-var ORDER_API_URL = "";
+var ORDER_API_URL = "https://script.google.com/macros/s/AKfycby_-upjOI-USCbrD8b9wjcnYC7APdUrcIOVKY8S3zcB_r0ptbMgxAU-5k6hji53bDOhYA/exec";
 function orderApiUrl(){
   return (typeof window !== "undefined" && window.__ORDER_API_URL != null) ? String(window.__ORDER_API_URL) : ORDER_API_URL;
 }
@@ -557,10 +558,19 @@ function yen(n){ return "¥" + Number(n).toLocaleString("ja-JP"); }
 function catById(id){ for (var i=0;i<CATEGORIES.length;i++) if (CATEGORIES[i].id===id) return CATEGORIES[i]; return null; }
 function productById(id){ for (var i=0;i<PRODUCTS.length;i++) if (PRODUCTS[i].id===id) return PRODUCTS[i]; return null; }
 function visibleProducts(){ return PRODUCTS.filter(function(p){ return p.active !== false && p.on !== false; }); }
+/* A product may belong to several categories ("cats" array); the legacy
+   single "cat" is its primary category and the fallback when "cats" is
+   absent. The filter matches when the selected chip is in the list. */
+function productCats(p){
+  var raw = (p && Array.isArray(p.cats) && p.cats.length) ? p.cats : (p && p.cat ? [p.cat] : []);
+  var out = [];
+  raw.forEach(function(c){ var id = String(c == null ? "" : c).trim(); if (id && out.indexOf(id) === -1) out.push(id); });
+  return out;
+}
 function filteredProducts(){
   var q = searchQuery.trim().toLowerCase();
   return visibleProducts().filter(function(p){
-    if (activeCat !== "all" && p.cat !== activeCat) return false;
+    if (activeCat !== "all" && productCats(p).indexOf(activeCat) === -1) return false;
     if (!q) return true;
     var c = catById(p.cat);
     var t = CAT_TRILINGUAL[p.cat];
@@ -574,7 +584,7 @@ var chipsEl = document.getElementById("chips");
 function renderChips(){
   var vis = visibleProducts();
   var counts = {};
-  vis.forEach(function(p){ counts[p.cat] = (counts[p.cat]||0)+1; });
+  vis.forEach(function(p){ productCats(p).forEach(function(c){ counts[c] = (counts[c]||0)+1; }); });
   var html = '<button type="button" class="chip' + (activeCat==="all" ? " active" : "") + '" data-cat="all">すべて All / Semua<span class="cnt">' + vis.length + '</span></button>';
   CATEGORIES.forEach(function(c){
     if (!counts[c.id]) return;
@@ -1350,7 +1360,12 @@ function applyLookupResult(res){
     if (el && v && !el.value.trim()){ el.value = v; filled = true; }
   };
   setIfEmpty("fName", res.name);
-  if (res.verified){
+  /* Zip-verified? The original script variant says so with `verified`;
+     the deployed variant has no such flag — it simply ADDS the address
+     keys (email, zip, …) to the answer when the postal code matched.
+     Treat either signal as verified; only then may the address fill. */
+  var zipVerified = (res.verified === true) || (res.email !== undefined && res.zip !== undefined);
+  if (zipVerified){
     setIfEmpty("fEmail", res.email);
     setIfEmpty("fZip", res.zip);
     setIfEmpty("fPref", res.prefecture);
@@ -1795,17 +1810,22 @@ overlay.addEventListener("click", closeCart);
 function buildOrderPayload(f){
   var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount();
   var pr = pointsRequest();
+  var itemsText = orderItemLines().join("\n");
   return {
+    /* Live-script contract: the deployed variant routes on `action` and
+       reads the items text as `items` and the points request as
+       `pointsUsed`; the original field names are sent too (see README). */
+    action: "order",
     phone: f.phone, name: f.name, email: f.email,
     zip: zipFormatted(), prefecture: fieldVal("fPref"), city: fieldVal("fCity"),
     town: fieldVal("fTown"), street: fieldVal("fStreet"), building: fieldVal("fBuilding"),
     address: f.address, note: f.note,
     fulfilment: fulfill, branch: branch, payment: payment,
-    itemsText: orderItemLines().join("\n"),
+    itemsText: itemsText, items: itemsText,
     subtotal: st, discount: disc, couponCode: appliedCoupon ? appliedCoupon.code : "",
     taxRate: TAX_RATE, tax: tax, courierFee: fee,
     total: st - disc + tax + fee,
-    pointsUse: pr.use, pointsPhone: pr.phone,
+    pointsUse: pr.use, pointsUsed: pr.use, pointsPhone: pr.phone,
     dateTime: new Date().toISOString()
   };
 }
