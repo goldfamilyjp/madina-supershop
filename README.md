@@ -6,8 +6,8 @@ A simple online halal grocery shop for Madina Halal Restaurant & Foods (Gold Fam
 - **Admin panel:** `admin.html` — Ali adds / edits / deletes products here. Big buttons, English only.
 - **Product data:** `products.json` — the single list of products. The shop reads it; the admin saves it.
 
-**Admin panel layout:** the daily-use sections come first — ① Products, ② Add product
-(with the ⚡ Quick Add card at the top), ③ Reply templates, ④ Points, ⑤ Orders — and
+**Admin panel layout:** the daily-use sections come first — ① Add product
+(with the ⚡ Quick Add card at the top), ② Products, ③ Reply templates, ④ Points, ⑤ Orders — and
 ⑥ Setup (GitHub token) sits at the very bottom, because the token is a one-time setup.
 If no token is saved on the device, a slim notice at the top of the page points down to Setup.
 

@@ -79,24 +79,9 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 
   <div class="msg info" id="tokenNotice">Setup needed: paste your GitHub token — the Setup section is at the bottom of this page ↓</div>
 
-  <!-- ===== Main ===== -->
-  <section class="panel" id="mainPanel" hidden>
-    <h2>① Products <span id="prodCount" class="en"></span></h2>
-    <div class="search-row">
-      <input type="text" id="adminSearch" placeholder="Search products…">
-      <button type="button" class="mini edit" id="reloadBtn" style="font-size:1rem;">Reload</button>
-    </div>
-    <div id="productList"></div>
-    <p class="hint">Stock can also be adjusted with the −1 / +1 buttons on each product. Adjust stock when an order is confirmed — it is never cut automatically.</p>
-    <p class="dirty-note" id="dirtyNote">● Unsaved changes — press "Save to shop" below.</p>
-    <button type="button" class="big-btn gold" id="saveBtn">💾 Save to shop</button>
-    <p class="hint" id="lastSaved">Last saved: —</p>
-    <div class="msg" id="saveMsg"></div>
-  </section>
-
   <!-- ===== Add / Edit form ===== -->
   <section class="panel" id="formPanel" hidden>
-    <h2 id="formTitle">② Add product</h2>
+    <h2 id="formTitle">① Add product</h2>
     <p class="hint">Quick way: pick a photo — name, size and category fill in automatically. Type the price, then press Add &amp; Save. To make a new category, type its name in the New category box.</p>
 
     <!-- ===== Quick Add (photo + price, one button) ===== -->
@@ -150,7 +135,22 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <div class="msg" id="formMsg"></div>
     <button type="button" class="big-btn" id="applyBtn">Add / Update product</button>
     <button type="button" class="big-btn grey" id="cancelEditBtn" hidden>Cancel edit</button>
-    <p class="hint">After adding or changing, press "💾 Save to shop" above to publish.</p>
+    <p class="hint">After adding or changing, press "💾 Save to shop" below to publish.</p>
+  </section>
+
+  <!-- ===== Main ===== -->
+  <section class="panel" id="mainPanel" hidden>
+    <h2>② Products <span id="prodCount" class="en"></span></h2>
+    <div class="search-row">
+      <input type="text" id="adminSearch" placeholder="Search products…">
+      <button type="button" class="mini edit" id="reloadBtn" style="font-size:1rem;">Reload</button>
+    </div>
+    <div id="productList"></div>
+    <p class="hint">Stock can also be adjusted with the −1 / +1 buttons on each product. Adjust stock when an order is confirmed — it is never cut automatically.</p>
+    <p class="dirty-note" id="dirtyNote">● Unsaved changes — press "Save to shop" below.</p>
+    <button type="button" class="big-btn gold" id="saveBtn">💾 Save to shop</button>
+    <p class="hint" id="lastSaved">Last saved: —</p>
+    <div class="msg" id="saveMsg"></div>
   </section>
 
   <!-- ===== Staff quick-reply templates ===== -->
@@ -390,7 +390,7 @@ function clearForm(){
   ["fId","fEn","fJp","fIdn","fPrice","fSize","fStock","fNewCat","fPhotoUrl"].forEach(function(id){ $(id).value = ""; });
   $("fPhotoFile").value = ""; $("fOn").checked = true;
   $("photoPreview").style.display = "none"; $("photoPreview").src = "";
-  $("formTitle").innerHTML = '② Add product';
+  $("formTitle").innerHTML = '① Add product';
   $("applyBtn").innerHTML = 'Add product';
   $("cancelEditBtn").hidden = true; hideMsg($("formMsg")); hideMsg($("ocrMsg"));
 }
@@ -406,7 +406,7 @@ function startEdit(id){
   $("fNewCat").value = ""; $("fPhotoUrl").value = p.photo && p.photo.indexOf("data:") !== 0 ? p.photo : "";
   $("fOn").checked = p.active !== false;
   if (p.photo){ $("photoPreview").src = p.photo; $("photoPreview").style.display = "block"; } else { $("photoPreview").style.display = "none"; }
-  $("formTitle").innerHTML = '② Edit product';
+  $("formTitle").innerHTML = '① Edit product';
   $("applyBtn").innerHTML = 'Update product';
   $("cancelEditBtn").hidden = false; hideMsg($("formMsg"));
   $("formPanel").scrollIntoView({ block: "start" });
@@ -669,7 +669,7 @@ function quickAddSave(){
     showMsg(qMsg, "✅ Added and saved — it's live in the shop now.", "ok");
     clearQuick();
   }).catch(function(err){
-    showMsg(qMsg, "The product was added to the list, but saving failed (" + err.message + "). Press “💾 Save to shop” in ① Products to try again.", "err");
+    showMsg(qMsg, "The product was added to the list, but saving failed (" + err.message + "). Press “💾 Save to shop” in ② Products to try again.", "err");
   }).finally(function(){ btn.disabled = false; });
 }
 $("qPhotoBtn").addEventListener("click", function(){ $("qPhotoFile").click(); });
