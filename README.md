@@ -366,19 +366,33 @@ text and pre-fills the form, so the owner only has to type the **price**. Two re
    shop uses for orders) with `{"action":"ocr", …}`. The script reads it server-side with
    OCR.space; **the OCR.space API key lives only in the script's properties** — there is no key
    in the admin page, nothing key-like is stored in the browser, and the owner never handles a
-   key. Any failure or a ~20 s timeout falls back silently to the built-in reader.
+   key. Any failure or a ~20 s timeout falls back silently to the built-in reader. When the
+   deployed script returns printed-line sizes (`lines: [{t, h}, …]`, where `h` is a line's
+   printed height in pixels), the admin uses them to identify the packet title.
 2. **Built-in reader (fallback)** — **Tesseract.js** (jsDelivr CDN; **English + Japanese**) in
    the browser, run on a pre-processed copy of the photo (upscaled 2×, grayscale, contrast
    boost, light sharpen, mild threshold at the extremes), which reads packet print far better
-   than the raw photo. Works offline.
+   than the raw photo. Works offline. When Tesseract supplies line bounding boxes, their
+   heights are converted to the same `{t, h}` line-size contract.
+
+**Script update for line sizes:** replace the deployed script's whole old `handleOcr_`
+function with `apps-script-ocr2-snippet.txt` (it requests OCR.space overlay data and returns
+`ParsedText` plus `TextOverlay.Lines` as `{t, h}` entries), then deploy a **New version**.
+Until that script update is deployed, the online reader simply returns text without line
+sizes and the admin keeps using the fallback name heuristic below.
 
 The status line always says which reader produced the result (“Read by online reader” /
 “Read by built-in reader”). What gets filled:
 
-- **Product name (English)** — the printed line with the most Latin letters, with weight text
-  removed. Junk lines (barcodes, prices, symbol noise, long digit runs) are never candidates.
-  An ALL-CAPS brand line printed just above the name (e.g. `SHAN`) is kept **in caps** in front
-  of the name; a lone brand word is joined with the next clean line.
+- **Product name (English)** — when line sizes are available, the name is taken from the
+  **largest printed Latin line — the packet title** — with weight text removed. A directly
+  adjacent clean Latin line printed at at least 70% of the title's height is joined in
+  reading order when the combined name is at most 42 characters (a title often wraps over
+  two large lines). Junk lines (barcodes, prices, symbol noise, long digit runs) are never
+  candidates, and no separate brand-line rule is applied to a size-based pick. When no line
+  sizes are available, the older fallback applies: the printed line with the most Latin
+  letters wins; an ALL-CAPS brand line printed just above it (e.g. `SHAN`) is kept **in caps**
+  in front of the name, and a lone brand word is joined with the next clean line.
 - **Japanese name** — the first mostly-Japanese printed line, if the field is empty.
 - **Size / weight** — `450g`, `NET WT 450g`, `450 g`, `1.5kg`, `5kg`, `500ml`, `1L`,
   `100g x 20`, `500ml×12`, `100枚`, `20 bags` and similar go into the Size field.
