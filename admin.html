@@ -87,6 +87,31 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 .cat-chip .primary-tag{font-size:.72rem; color:var(--gold); background:var(--green); border-radius:6px; padding:1px 6px; display:none;}
 .cat-chip.on.first .primary-tag{display:inline-block;}
 #tokenNotice{margin-bottom:16px;}
+/* ---------- tab bar: one section at a time ---------- */
+.tabbar{position:sticky; top:0; z-index:60; display:flex; gap:6px; overflow-x:auto; padding:8px 2px; margin:0 0 14px; background:var(--bg); -webkit-overflow-scrolling:touch; scrollbar-width:thin;}
+.tab-btn{flex:0 0 auto; min-height:48px; padding:10px 14px; border:2px solid var(--green); border-radius:999px; background:#fff; color:var(--green-dark); font-size:.95rem; font-weight:700; cursor:pointer; white-space:nowrap;}
+.tab-btn.on{background:var(--green); color:#fff; box-shadow:inset 0 -4px 0 var(--gold);}
+/* ---------- customers table ---------- */
+.cust-table{width:100%; border-collapse:collapse; margin-top:10px; font-size:.95rem;}
+.cust-table th,.cust-table td{border-bottom:1px solid var(--line); padding:8px 6px; text-align:left; vertical-align:top;}
+.cust-table th{color:var(--green-dark); font-size:.82rem; text-transform:uppercase; letter-spacing:.04em;}
+.cust-table td.num,.cust-table th.num{text-align:right; white-space:nowrap;}
+/* ---------- big photo boxes (Add form + Quick Add) ---------- */
+.photo-boxes{display:flex; gap:12px; margin-top:6px;}
+.photo-box{position:relative; flex:1 1 0; min-height:150px; border:2px dashed var(--green); border-radius:14px; background:#f2f7f3; color:var(--green-dark); cursor:pointer; overflow:hidden; padding:0; font:inherit;}
+.photo-box .ph-empty{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:10px; text-align:center;}
+.photo-box .ph-icon{font-size:2rem; line-height:1;}
+.photo-box .ph-label{font-size:1.05rem; font-weight:800; letter-spacing:.06em;}
+.photo-box .ph-sub{font-size:.78rem; color:#5a6b5e; font-weight:400;}
+.photo-box .ph-tag{position:absolute; top:6px; left:6px; z-index:2; background:var(--green); color:#fff; font-size:.72rem; font-weight:800; letter-spacing:.06em; border-radius:6px; padding:2px 8px;}
+.photo-box .photo-preview{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; margin:0; border:none; border-radius:0; background:#fff;}
+/* price + size side by side */
+.field-row{display:flex; gap:12px;}
+.field-row > div{flex:1 1 0;}
+.field-row label{margin-top:14px;}
+/* collapsed "More options" */
+details.more{border:1px solid var(--line); border-radius:12px; padding:10px 14px 14px; margin-top:18px; background:#fbfbf8;}
+details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); padding:6px 0; min-height:32px;}
 /* small phones: panels and product rows stack into a single column */
 @media(max-width:560px){
   .panel{padding:12px;}
@@ -94,6 +119,8 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
   .prow{flex-wrap:wrap; row-gap:6px;}
   .prow .info{flex:1 1 55%;}
   .search-row{flex-wrap:wrap;}
+  .photo-boxes{flex-direction:column;}
+  .photo-box{min-height:130px;}
 }
 </style>
 </head>
@@ -105,23 +132,51 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 
 <div class="wrap">
 
-  <div class="msg info" id="tokenNotice">Setup needed: paste your GitHub token — the Setup section is at the bottom of this page ↓</div>
+  <div class="msg info" id="tokenNotice">Setup needed: paste your GitHub token — tap the ⚙️ Setup tab at the top of this page.</div>
+
+  <!-- ===== Tab bar — one section at a time ===== -->
+  <nav class="tabbar" id="tabBar">
+    <button type="button" class="tab-btn" data-tab-btn="products">📦 Products</button>
+    <button type="button" class="tab-btn" data-tab-btn="orders">🧾 Orders</button>
+    <button type="button" class="tab-btn" data-tab-btn="customers">👥 Customers</button>
+    <button type="button" class="tab-btn" data-tab-btn="points">🪙 Points</button>
+    <button type="button" class="tab-btn" data-tab-btn="sales">📊 Sales</button>
+    <button type="button" class="tab-btn" data-tab-btn="news">📢 News</button>
+    <button type="button" class="tab-btn" data-tab-btn="coupons">🎟 Coupons &amp; Tax</button>
+    <button type="button" class="tab-btn" data-tab-btn="templates">💬 Templates</button>
+    <button type="button" class="tab-btn" data-tab-btn="setup">⚙️ Setup</button>
+  </nav>
+
+  <div data-tabpage="products">
+  <!-- Shown instead of the product panels until a GitHub token is saved on this device. -->
+  <div class="panel" id="productsNoToken" hidden>
+    <h2>Products</h2>
+    <p class="hint">Products appear here after the one-time setup. Paste your GitHub token in the ⚙️ Setup tab, then come back to this tab.</p>
+  </div>
 
   <!-- ===== Add / Edit form ===== -->
   <section class="panel" id="formPanel" hidden>
-    <h2 id="formTitle">① Add product</h2>
-    <p class="hint">Quick way: pick a photo — name, size and category fill in automatically. Type the price, then press Add &amp; Save. To make a new category, type its name in the New category box.</p>
+    <h2 id="formTitle">Add product</h2>
+    <p class="hint">Pick a photo — the name, size and category fill in automatically. Type the price, then press Add &amp; Save.</p>
 
     <!-- ===== Quick Add (photo + price, one button) ===== -->
     <div class="qa-card" id="quickAddCard">
       <div class="qa-title">⚡ Quick Add</div>
-      <input type="file" id="qPhotoFile" accept="image/*" hidden>
-      <button type="button" class="big-btn qa-photo-btn" id="qPhotoBtn">📷 Take / pick a product photo</button>
-      <img class="photo-preview" id="qPhotoPreview" alt="">
-      <div class="msg" id="qOcrMsg"></div>
+      <div class="photo-boxes">
+        <button type="button" class="photo-box" id="qPhotoBox1">
+          <span class="ph-empty"><span class="ph-icon">📷</span><span class="ph-label">FRONT</span><span class="ph-sub">front side — tap to pick a photo</span></span>
+          <span class="ph-tag">FRONT</span>
+          <img class="photo-preview" id="qPhotoPreview" alt="">
+        </button>
+        <button type="button" class="photo-box" id="qPhotoBox2">
+          <span class="ph-empty"><span class="ph-icon">📷</span><span class="ph-label">BACK</span><span class="ph-sub">back side — optional, tap to pick</span></span>
+          <span class="ph-tag">BACK</span>
+          <img class="photo-preview" id="qPhoto2Preview" alt="">
+        </button>
+      </div>
+      <input type="file" id="qPhotoFile" accept="image/*" multiple hidden>
       <input type="file" id="qPhoto2File" accept="image/*" hidden>
-      <button type="button" class="big-btn grey qa-photo2-btn" id="qPhoto2Btn">＋ Add back photo (optional)</button>
-      <img class="photo-preview" id="qPhoto2Preview" alt="">
+      <div class="msg" id="qOcrMsg"></div>
       <label for="qEn">Product name (English) *</label>
       <input type="text" id="qEn" placeholder="Fills in from the photo — or type it">
       <label for="qPrice">Price ¥ (yen) *</label>
@@ -140,52 +195,74 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     </div>
 
     <input type="hidden" id="fId">
+    <!-- 1) Photos — two big boxes. Tap FRONT to pick (pick two photos
+         together and the second one becomes the BACK automatically). -->
+    <div class="photo-boxes">
+      <button type="button" class="photo-box" id="photoBox1">
+        <span class="ph-empty"><span class="ph-icon">📷</span><span class="ph-label">FRONT</span><span class="ph-sub">front side — tap to pick a photo</span></span>
+        <span class="ph-tag">FRONT</span>
+        <img class="photo-preview" id="photoPreview" alt="">
+      </button>
+      <button type="button" class="photo-box" id="photoBox2">
+        <span class="ph-empty"><span class="ph-icon">📷</span><span class="ph-label">BACK</span><span class="ph-sub">back side — optional, tap to pick</span></span>
+        <span class="ph-tag">BACK</span>
+        <img class="photo-preview" id="photo2Preview" alt="">
+      </button>
+    </div>
+    <input type="file" id="fPhotoFile" accept="image/*" multiple hidden>
+    <input type="file" id="fPhoto2File" accept="image/*" hidden>
+    <div class="msg" id="ocrMsg"></div>
+    <p class="hint">Tip: pick a clear photo of the packet FRONT — the product name, size and category are read from it and filled in automatically. Always check them; you only need to type the price yourself. In the shop, customers tap or swipe the product photo to switch between the front and back photos.</p>
+    <!-- 2) Names -->
     <label for="fEn">Product name (English) *</label>
     <input type="text" id="fEn" placeholder="e.g. Chana Dal">
     <label for="fJp">Japanese name</label>
     <input type="text" id="fJp" placeholder="Product name in Japanese">
-    <label for="fIdn">Indonesian name (optional)</label>
-    <input type="text" id="fIdn" placeholder="e.g. Beras Basmati Mehran">
-    <label for="fPrice">Price ¥ (yen) *</label>
-    <input type="number" id="fPrice" min="0" step="1" inputmode="numeric" placeholder="e.g. 490">
-    <label for="fSize">Size / weight</label>
-    <input type="text" id="fSize" placeholder="e.g. 1kg / 450g / 100 bags">
-    <label for="fStock">Stock — blank = no stock tracking</label>
-    <input type="number" id="fStock" min="0" step="1" inputmode="numeric" placeholder="Blank = not tracked">
-    <p class="hint">Stock is NOT cut automatically at order time — adjust it when an order is confirmed, so cancelled or unpaid orders never corrupt the stock count.</p>
+    <!-- 3) Price + size, side by side -->
+    <div class="field-row">
+      <div>
+        <label for="fPrice">Price ¥ (yen) *</label>
+        <input type="number" id="fPrice" min="0" step="1" inputmode="numeric" placeholder="e.g. 490">
+      </div>
+      <div>
+        <label for="fSize">Size / weight</label>
+        <input type="text" id="fSize" placeholder="e.g. 1kg / 450g / 100 bags">
+      </div>
+    </div>
+    <!-- 4) Categories -->
     <label>Categories — tick all that apply (the first one ticked is the main category)</label>
     <div class="cat-chips" id="fCats"></div>
-    <label for="fNewCat">New category name (only if you need a new one)</label>
-    <input type="text" id="fNewCat" placeholder="e.g. Frozen">
-    <label for="fPhotoUrl">Photo URL</label>
-    <input type="url" id="fPhotoUrl" placeholder="https://…">
-    <label for="fPhotoFile">…or choose a photo file</label>
-    <input type="file" id="fPhotoFile" accept="image/*">
-    <img class="photo-preview" id="photoPreview" alt="">
-    <div class="msg" id="ocrMsg"></div>
-    <p class="hint">Tip: choose a clear photo of the packet — the product name, size and category are read from the photo and filled in automatically. Always check them; you only need to type the price yourself.</p>
-    <label for="fPhoto2Url">Photo 2 — back side URL (optional)</label>
-    <input type="url" id="fPhoto2Url" placeholder="https://…">
-    <label for="fPhoto2File">…or choose a back-side photo file</label>
-    <input type="file" id="fPhoto2File" accept="image/*">
-    <img class="photo-preview" id="photo2Preview" alt="">
-    <p class="hint">Optional second photo (e.g. the back of the packet). In the shop, customers tap the product photo to switch between the front and back photos.</p>
-    <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">Show in shop
-      <span class="switch"><input type="checkbox" id="fOn" checked><span class="sl"></span></span>
-    </label>
-    <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">⭐ Popular — show in the top slideshow
-      <span class="switch"><input type="checkbox" id="fPopular"><span class="sl"></span></span>
-    </label>
+    <!-- Rarely-needed fields, collapsed -->
+    <details class="more" id="moreOptions">
+      <summary>More options — Indonesian name, stock, photo URLs, new category, show / popular</summary>
+      <label for="fIdn">Indonesian name (optional)</label>
+      <input type="text" id="fIdn" placeholder="e.g. Beras Basmati Mehran">
+      <label for="fStock">Stock — blank = no stock tracking</label>
+      <input type="number" id="fStock" min="0" step="1" inputmode="numeric" placeholder="Blank = not tracked">
+      <p class="hint">Stock is NOT cut automatically at order time — adjust it when an order is confirmed, so cancelled or unpaid orders never corrupt the stock count.</p>
+      <label for="fNewCat">New category name (only if you need a new one)</label>
+      <input type="text" id="fNewCat" placeholder="e.g. Frozen">
+      <label for="fPhotoUrl">Photo URL — front (instead of picking a photo)</label>
+      <input type="url" id="fPhotoUrl" placeholder="https://…">
+      <label for="fPhoto2Url">Photo 2 URL — back side (optional)</label>
+      <input type="url" id="fPhoto2Url" placeholder="https://…">
+      <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">Show in shop
+        <span class="switch"><input type="checkbox" id="fOn" checked><span class="sl"></span></span>
+      </label>
+      <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">⭐ Popular — show in the top slideshow
+        <span class="switch"><input type="checkbox" id="fPopular"><span class="sl"></span></span>
+      </label>
+    </details>
+    <!-- 5) One big primary button: apply + save in one press -->
     <div class="msg" id="formMsg"></div>
-    <button type="button" class="big-btn" id="applyBtn">Add / Update product</button>
+    <button type="button" class="big-btn gold" id="applyBtn">Add &amp; Save</button>
     <button type="button" class="big-btn grey" id="cancelEditBtn" hidden>Cancel edit</button>
     <button type="button" class="big-btn grey" id="formResetBtn">↺ Reset form</button>
-    <p class="hint">After adding or changing, press "💾 Save to shop" below to publish.</p>
   </section>
 
   <!-- ===== Main ===== -->
   <section class="panel" id="mainPanel" hidden>
-    <h2>② Products <span id="prodCount" class="en"></span></h2>
+    <h2>Products <span id="prodCount" class="en"></span></h2>
     <div class="search-row">
       <input type="text" id="adminSearch" placeholder="Search products…">
       <button type="button" class="mini edit" id="reloadBtn" style="font-size:1rem;">↺ Reload</button>
@@ -199,17 +276,21 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <p class="hint" id="lastSaved">Last saved: —</p>
     <div class="msg" id="saveMsg"></div>
   </section>
+  </div><!-- /tabpage products -->
 
+  <div data-tabpage="templates" hidden>
   <!-- ===== Staff quick-reply templates ===== -->
   <section class="panel" id="templatePanel">
-    <h2>③ Reply templates</h2>
+    <h2>Reply templates</h2>
     <p class="hint">Copy a template, fill in the bracketed blanks (customer name, total, pickup branch), and send it to the customer (WhatsApp / LINE / email). The messages themselves are in Japanese, ready to send.</p>
     <div id="templateList"></div>
   </section>
+  </div><!-- /tabpage templates -->
 
+  <div data-tabpage="points" hidden>
   <!-- ===== Points ===== -->
   <section class="panel" id="pointsPanel">
-    <h2>④ Points</h2>
+    <h2>Points</h2>
     <p class="hint">Customers earn <strong>1%</strong> back in points (1 pt = ¥1). Points become usable <strong>1 month after</strong> the purchase.<br>
     Add / use points only <strong>after</strong> the order and payment are confirmed on WhatsApp.<br>
     Phone numbers are stored only as hashes — the raw number is never saved.</p>
@@ -233,29 +314,47 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <button type="button" class="big-btn gold" id="ptSaveBtn">💾 Save points</button>
     <div class="msg" id="pointsMsg"></div>
   </section>
+  </div><!-- /tabpage points -->
 
+  <div data-tabpage="orders" hidden>
   <!-- ===== Orders (auto-saved to the owner's Google Sheet) ===== -->
   <section class="panel" id="ordersPanel">
-    <h2>⑤ Orders</h2>
+    <h2>Orders</h2>
     <p class="hint">Every customer order is <strong>automatically saved</strong> to the owner's Google Sheet (items, total, name, phone, fulfilment, payment, address). Open the order list with the button below.<br>
     The sheet is <strong>private</strong> to the owner's Google account (goldfamilyjp@yahoo.com) — customers and other people cannot see it.<br>
     The <strong>WhatsApp order remains the immediate alert</strong> — the sheet is the saved record for checking later.<br>
     <strong>Order numbers &amp; customer ID:</strong> once the customer-ID feature is switched on (the Apps Script deployed and its URL pasted into the shop — see the README, “Customer ID (phone number) + order numbers”), every order is recorded in that spreadsheet's <strong>“Orders”</strong> tab and carries its own order number, <strong>MS-0001, MS-0002, …</strong> — the same number the customer sees on their ticket and in the WhatsApp message. Customers are saved under their <strong>phone number</strong> in the <strong>“Customers”</strong> tab, so their name and address fill in automatically on their next order. Until the feature is switched on, orders keep arriving in the form-responses sheet linked below, without numbers.</p>
     <a class="big-btn gold" style="text-align:center; text-decoration:none;" href="https://docs.google.com/spreadsheets/d/1NYooZTu01gP6cmp5k8we60Uhz4KKhgU4993zGIgt5Hw/edit" target="_blank" rel="noopener">📋 Open orders sheet</a>
   </section>
+  </div><!-- /tabpage orders -->
 
+  <div data-tabpage="customers" hidden>
+  <!-- ===== Customers (from the spreadsheet's "Customers" tab, via the Apps Script) ===== -->
+  <section class="panel" id="customersPanel">
+    <h2>Customers</h2>
+    <p class="hint">Everyone who has ordered, saved under their phone number in the spreadsheet's <strong>“Customers”</strong> tab — biggest spenders first. Press the button to load the latest list.</p>
+    <button type="button" class="big-btn" id="custLoadBtn">👥 Load customers</button>
+    <div class="msg" id="custMsg"></div>
+    <div id="custResult"></div>
+    <a class="big-btn grey" style="text-align:center; text-decoration:none; display:block;" href="https://docs.google.com/spreadsheets/d/1NYooZTu01gP6cmp5k8we60Uhz4KKhgU4993zGIgt5Hw/edit" target="_blank" rel="noopener">📋 Open the full sheet</a>
+  </section>
+  </div><!-- /tabpage customers -->
+
+  <div data-tabpage="sales" hidden>
   <!-- ===== Sales report (from the Orders sheet, via the Apps Script) ===== -->
   <section class="panel" id="salesPanel">
-    <h2>⑥ Sales report</h2>
-    <p class="hint">Sales totals worked out from the orders recorded in the Google Sheet's <strong>“Orders”</strong> tab (see ⑤ Orders) — today, this week and this month, how they compare with the period before, the best-selling products, and how many customers came back. Press the button to load the latest figures.</p>
+    <h2>Sales report</h2>
+    <p class="hint">Sales totals worked out from the orders recorded in the Google Sheet's <strong>“Orders”</strong> tab (see the 🧾 Orders tab) — today, this week and this month, how they compare with the period before, the best-selling products, and how many customers came back. Press the button to load the latest figures.</p>
     <button type="button" class="big-btn" id="salesLoadBtn">📊 Load sales report</button>
     <div class="msg" id="salesMsg"></div>
     <div id="salesResult"></div>
   </section>
+  </div><!-- /tabpage sales -->
 
+  <div data-tabpage="news" hidden>
   <!-- ===== News board (owner announcements) ===== -->
   <section class="panel" id="newsPanel">
-    <h2>⑦ News board</h2>
+    <h2>News board</h2>
     <p class="hint">Post a message or offer here — for example a courier-delay warning or a rice special offer. It appears at the top of the shop in an animated gold banner, and in the shop's News board under the banner photo. Write it in any language (or all three) — the shop shows each customer the matching language, falling back to the first one filled in. The newest message shows first. Press "💾 Save to shop" to publish.</p>
     <label for="nJp">Message — Japanese</label>
     <textarea id="nJp" rows="2" placeholder="例：年末は宅配便が遅れる場合があります"></textarea>
@@ -272,10 +371,12 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <p class="dirty-note" id="newsDirty">● Unsaved changes — press "Save to shop" below.</p>
     <button type="button" class="big-btn gold" id="newsSaveBtn">💾 Save to shop</button>
   </section>
+  </div><!-- /tabpage news -->
 
+  <div data-tabpage="coupons" hidden>
   <!-- ===== Coupons, vouchers & tax ===== -->
   <section class="panel" id="couponPanel">
-    <h2>⑧ Coupons, vouchers &amp; tax</h2>
+    <h2>Coupons, vouchers &amp; tax</h2>
     <h3 style="color:var(--green); font-size:1rem; margin:10px 0 2px;">🧾 Consumption tax</h3>
     <label for="taxRate">Consumption tax rate %</label>
     <input type="number" id="taxRate" min="0" max="30" step="0.1" value="8">
@@ -301,10 +402,12 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <p class="dirty-note" id="couponDirty">● Unsaved changes — press "Save to shop" below.</p>
     <button type="button" class="big-btn gold" id="couponSaveBtn">💾 Save to shop</button>
   </section>
+  </div><!-- /tabpage coupons -->
 
+  <div data-tabpage="setup" hidden>
   <!-- ===== Setup / token ===== -->
   <section class="panel" id="setupPanel">
-    <h2>⑨ Setup — GitHub Token</h2>
+    <h2>Setup — GitHub Token</h2>
     <p class="hint">A GitHub token (a password-like string) is needed once so this page can save products. Paste it below — it is stored <strong>only on this device</strong> (in this browser), never in any file.</p>
     <label for="tokenInput">Paste token</label>
     <input type="password" id="tokenInput" placeholder="github_pat_…" autocomplete="off">
@@ -312,6 +415,7 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <button type="button" class="big-btn grey" id="forgetTokenBtn">Forget token on this device</button>
     <div class="msg" id="setupMsg"></div>
   </section>
+  </div><!-- /tabpage setup -->
 
 </div>
 
@@ -434,6 +538,7 @@ function loadFromGitHub(){
       state.products.forEach(normalizeCats);
       dirty = false; editingId = null;
       $("mainPanel").hidden = false; $("formPanel").hidden = false;
+      syncProductsGate();
       renderAll(); clearNoticeForm(); clearCouponForm(); updateLastSavedNote();
       showMsg($("setupMsg"), how === "new"
         ? "products.json is not in the repo yet — add products and press Save to create it."
@@ -458,7 +563,7 @@ function buildPayload(){
 }
 function saveToGitHub(){
   syncTaxFromInput();   /* the tax field rides along with every save, whichever button is pressed */
-  if (!token()){ showMsg($("saveMsg"), "No token — set it up in ⑨ Setup (bottom of this page) first.", "err"); return Promise.reject(new Error("no token")); }
+  if (!token()){ showMsg($("saveMsg"), "No token — set it up in the ⚙️ Setup tab first.", "err"); return Promise.reject(new Error("no token")); }
   var body = {
     message: "Update products via Madina Supershop admin panel",
     content: b64encodeUtf8(JSON.stringify(buildPayload(), null, 2))
@@ -601,8 +706,9 @@ function clearForm(){
   $("fPhotoFile").value = ""; $("fPhoto2File").value = ""; $("fOn").checked = true; $("fPopular").checked = false;
   $("photoPreview").style.display = "none"; $("photoPreview").src = "";
   $("photo2Preview").style.display = "none"; $("photo2Preview").src = "";
-  $("formTitle").innerHTML = '① Add product';
-  $("applyBtn").innerHTML = 'Add product';
+  $("moreOptions").open = false;
+  $("formTitle").innerHTML = 'Add product';
+  $("applyBtn").innerHTML = 'Add &amp; Save';
   $("cancelEditBtn").hidden = true; hideMsg($("formMsg")); hideMsg($("ocrMsg"));
   formDirty = false;
 }
@@ -633,9 +739,15 @@ function startEdit(id){
   $("fPopular").checked = p.popular === true;
   if (p.photo){ $("photoPreview").src = p.photo; $("photoPreview").style.display = "block"; } else { $("photoPreview").style.display = "none"; }
   if (p.photo2){ $("photo2Preview").src = p.photo2; $("photo2Preview").style.display = "block"; } else { $("photo2Preview").style.display = "none"; $("photo2Preview").src = ""; }
-  $("formTitle").innerHTML = '① Edit product';
-  $("applyBtn").innerHTML = 'Update product';
+  $("formTitle").innerHTML = 'Edit product';
+  $("applyBtn").innerHTML = 'Update &amp; Save';
   $("cancelEditBtn").hidden = false; hideMsg($("formMsg"));
+  /* If this product HAS values in the collapsed fields (Indonesian name,
+     stock, photo URLs, popular, hidden), open "More options" so nothing
+     the owner saved is hiding out of sight while editing. */
+  $("moreOptions").open = !!((p.idn && String(p.idn).trim()) || typeof p.stock === "number"
+    || $("fPhotoUrl").value.trim() || $("fPhoto2Url").value.trim()
+    || p.popular === true || p.active === false);
   formDirty = false;
   $("formPanel").scrollIntoView({ block: "start" });
 }
@@ -654,8 +766,8 @@ function applyForm(){
   var en = $("fEn").value.trim();
   var priceRaw = $("fPrice").value.trim();
   var price = Number(priceRaw);
-  if (!en){ showMsg($("formMsg"), "Please enter the product name (English).", "err"); return; }
-  if (priceRaw === "" || isNaN(price) || price < 0){ showMsg($("formMsg"), "Please enter a valid price.", "err"); return; }
+  if (!en){ showMsg($("formMsg"), "Please enter the product name (English).", "err"); return false; }
+  if (priceRaw === "" || isNaN(price) || price < 0){ showMsg($("formMsg"), "Please enter a valid price.", "err"); return false; }
   var cats = formCats.slice();
   var newCat = $("fNewCat").value.trim();
   if (newCat){
@@ -669,7 +781,7 @@ function applyForm(){
   var stockVal = null;
   if (stockRaw !== ""){
     stockVal = Math.floor(Number(stockRaw));
-    if (isNaN(stockVal) || stockVal < 0){ showMsg($("formMsg"), "Please enter a valid stock (0 or more, or blank).", "err"); return; }
+    if (isNaN(stockVal) || stockVal < 0){ showMsg($("formMsg"), "Please enter a valid stock (0 or more, or blank).", "err"); return false; }
   }
   var data = {
     en: en, jp: $("fJp").value.trim(), idn: $("fIdn").value.trim(), price: Math.round(price),
@@ -685,6 +797,7 @@ function applyForm(){
     showMsg($("formMsg"), "Added — now press Save.", "ok");
   }
   markDirty(); renderAll(); clearForm();
+  return true;
 }
 function deleteProduct(id){
   var p = findProduct(id); if (!p) return;
@@ -711,8 +824,9 @@ function resizePhotoFileSized(file, maxDim, quality, cb){
 }
 /* The photo SAVED with the product stays small: max 480px wide, q0.82. */
 function resizePhotoFile(file, cb){ resizePhotoFileSized(file, 480, 0.82, cb); }
-$("fPhotoFile").addEventListener("change", function(){
-  var file = this.files && this.files[0]; if (!file) return;
+/* FRONT photo: resize for saving, then OCR on a larger copy. */
+function handleFrontPhotoFile(file){
+  if (!file) return;
   formDirty = true;
   resizePhotoFile(file, function(dataUrl){
     $("photoPreview").src = dataUrl; $("photoPreview").style.display = "block";
@@ -723,19 +837,32 @@ $("fPhotoFile").addEventListener("change", function(){
       runOcr(dataUrl, ocrUrl);
     });
   });
+}
+$("fPhotoFile").addEventListener("change", function(){
+  var files = this.files; if (!files || !files.length) return;
+  handleFrontPhotoFile(files[0]);
+  /* Picked two photos together → the second one becomes the BACK. */
+  if (files.length > 1) handleBackPhotoFile(files[1]);
 });
+/* The two big photo boxes are the visible interface — tapping one opens
+   the picker for THAT photo. */
+$("photoBox1").addEventListener("click", function(){ $("fPhotoFile").click(); });
+$("photoBox2").addEventListener("click", function(){ $("fPhoto2File").click(); });
 $("fPhotoUrl").addEventListener("input", function(){
   var v = this.value.trim();
   if (v){ $("photoPreview").src = v; $("photoPreview").style.display = "block"; }
 });
 /* Photo 2 (back side): same resize pipeline, but OCR never runs on it. */
-$("fPhoto2File").addEventListener("change", function(){
-  var file = this.files && this.files[0]; if (!file) return;
+function handleBackPhotoFile(file){
+  if (!file) return;
   formDirty = true;
   resizePhotoFile(file, function(dataUrl){
     $("photo2Preview").src = dataUrl; $("photo2Preview").style.display = "block";
     $("fPhoto2Url").value = "";
   });
+}
+$("fPhoto2File").addEventListener("change", function(){
+  handleBackPhotoFile(this.files && this.files[0]);
 });
 $("fPhoto2Url").addEventListener("input", function(){
   var v = this.value.trim();
@@ -1153,7 +1280,7 @@ function quickAddSave(){
   }
   if (!nm.trim()){ showMsg(qMsg, "Please type the product name — or pick a clear photo of the packet so it fills in automatically.", "err"); return; }
   if (pr.trim() === "" || isNaN(Number(pr)) || Number(pr) < 0){ showMsg(qMsg, "Please type the price.", "err"); return; }
-  if (!token()){ showMsg(qMsg, "No token yet — do the one-time Setup in ⑧ at the bottom of this page first, then try again.", "err"); return; }
+  if (!token()){ showMsg(qMsg, "No token yet — do the one-time setup in the ⚙️ Setup tab first, then try again.", "err"); return; }
   var before = state.products.length;
   applyForm();
   if (state.products.length === before){
@@ -1167,21 +1294,21 @@ function quickAddSave(){
     showMsg(qMsg, "✅ Added and saved — it's live in the shop now.", "ok");
     clearQuick();
   }).catch(function(err){
-    showMsg(qMsg, "The product was added to the list, but saving failed (" + err.message + "). Press “💾 Save to shop” in ② Products to try again.", "err");
+    showMsg(qMsg, "The product was added to the list, but saving failed (" + err.message + "). Press “💾 Save to shop” in the 📦 Products tab to try again.", "err");
   }).finally(function(){ btn.disabled = false; });
 }
-$("qPhotoBtn").addEventListener("click", function(){ $("qPhotoFile").click(); });
+$("qPhotoBox1").addEventListener("click", function(){ $("qPhotoFile").click(); });
 $("qPhotoFile").addEventListener("change", function(){
-  var file = this.files && this.files[0]; if (!file) return;
+  if (!this.files || !this.files.length) return;
   try {
     var dt = new DataTransfer();
-    dt.items.add(file);
+    for (var i = 0; i < this.files.length; i++) dt.items.add(this.files[i]);
     $("fPhotoFile").files = dt.files;
   } catch (e) {}
   $("fPhotoFile").dispatchEvent(new Event("change"));
   startQuickSync();
 });
-$("qPhoto2Btn").addEventListener("click", function(){ $("qPhoto2File").click(); });
+$("qPhotoBox2").addEventListener("click", function(){ $("qPhoto2File").click(); });
 $("qPhoto2File").addEventListener("change", function(){
   var file = this.files && this.files[0]; if (!file) return;
   try {
@@ -1263,7 +1390,7 @@ function applyNotice(){
   hideMsg($("newsMsg"));
   var jp = $("nJp").value.trim(), en = $("nEn").value.trim(), idn = $("nIdn").value.trim();
   if (!jp && !en && !idn){ showMsg($("newsMsg"), "Please write the message in at least one language.", "err"); return; }
-  if (!token()){ showMsg($("newsMsg"), "No token — set it up in ⑨ Setup (bottom of this page) first.", "err"); return; }
+  if (!token()){ showMsg($("newsMsg"), "No token — set it up in the ⚙️ Setup tab first.", "err"); return; }
   var date = $("nDate").value || todayJstStr();
   var wasEdit = !!editingNoticeId;
   if (wasEdit){
@@ -1292,12 +1419,12 @@ $("newsSaveBtn").addEventListener("click", function(){
     showMsg($("newsMsg"), "✅ Saved! The shop updates in 1–2 minutes.", "ok");
   }).catch(function(err){
     showMsg($("newsMsg"), !token()
-      ? "No token — set it up in ⑨ Setup (bottom of this page) first."
+      ? "No token — set it up in the ⚙️ Setup tab first."
       : "Save failed (" + err.message + ") — please try again.", "err");
   }).finally(function(){ btn.disabled = false; });
 });
 
-/* ---------- 🎟️ Coupons & gift vouchers (panel ⑧ also holds the tax rate) ----------
+/* ---------- 🎟️ Coupons & gift vouchers (the Coupons & Tax tab also holds the tax rate) ----------
    Discount codes live in the "coupons" array at the root of
    products.json: { code, kind: "yen"|"pct", value, min, expiry, active }.
    A gift voucher is just a yen-kind coupon with a gift-style code
@@ -1372,7 +1499,7 @@ function applyCoupon(){
   if (dup && String(dup.code).trim().toUpperCase() !== editingCouponCode){
     showMsg($("couponMsg"), "That code is already used — please pick a different code.", "err"); return;
   }
-  if (!token()){ showMsg($("couponMsg"), "No token — set it up in ⑨ Setup (bottom of this page) first.", "err"); return; }
+  if (!token()){ showMsg($("couponMsg"), "No token — set it up in the ⚙️ Setup tab first.", "err"); return; }
   var wasEdit = !!editingCouponCode;
   if (wasEdit){
     var c = findCoupon(editingCouponCode);
@@ -1400,12 +1527,12 @@ $("couponSaveBtn").addEventListener("click", function(){
     showMsg($("couponMsg"), "✅ Saved! The shop updates in 1–2 minutes.", "ok");
   }).catch(function(err){
     showMsg($("couponMsg"), !token()
-      ? "No token — set it up in ⑨ Setup (bottom of this page) first."
+      ? "No token — set it up in the ⚙️ Setup tab first."
       : "Save failed (" + err.message + ") — please try again.", "err");
   }).finally(function(){ btn.disabled = false; });
 });
 
-/* ---------- 📊 Sales report (panel ⑥) ----------
+/* ---------- 📊 Sales report ----------
    Asks the shop's Apps Script endpoint (the same one the photo reader
    uses) for action "stats": the script totals the Orders sheet by JST
    day / Monday-start week / calendar month and answers with the figures
@@ -1480,10 +1607,123 @@ $("salesLoadBtn").addEventListener("click", function(){
   }).finally(function(){ btn.disabled = false; });
 });
 
+/* ---------- 👥 Customers ----------
+   Asks the same Apps Script endpoint (the one the sales report and the
+   photo reader use) for action "customers": the script reads the
+   spreadsheet's "Customers" tab and answers with everyone who has
+   ordered — { ok:true, customers:[{ phone, name, orders, totalSpent,
+   lastOrder }] }. Read-only. Until the script is updated with the
+   customers action, the endpoint answers an error and this panel says
+   the list is not switched on yet. */
+function customersApi(){
+  return fetchWithTimeout(ordersApiUrl(), {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },   /* simple request — no CORS preflight */
+    body: JSON.stringify({ action: "customers" })
+  }, 20000).then(function(r){
+    if (!r.ok) throw new Error("customers HTTP " + r.status);
+    return r.json();
+  }).then(function(j){
+    if (!j || j.ok !== true || !Array.isArray(j.customers)) throw new Error("customers bad response");
+    return j.customers;
+  });
+}
+function renderCustomers(list){
+  var sorted = list.slice().sort(function(a, b){ return (Number(b.totalSpent) || 0) - (Number(a.totalSpent) || 0); });
+  if (!sorted.length){
+    $("custResult").innerHTML = '<p class="hint" style="margin-top:10px;">No customers yet — they appear here after their first order.</p>';
+    return;
+  }
+  var rows = sorted.map(function(c){
+    var pts = "0 pt";
+    if (c._points){
+      pts = c._points.available + " pt";
+      if (c._points.pending > 0) pts += " (+" + c._points.pending + " pending)";
+    }
+    return '<tr><td>' + esc(c.name || "") + '</td><td>' + esc(c.phone || "") + '</td>'
+      + '<td class="num">' + salesCount(c.orders) + '</td>'
+      + '<td class="num">' + yen(c.totalSpent || 0) + '</td>'
+      + '<td class="num">' + pts + '</td>'
+      + '<td>' + esc(c.lastOrder || "") + '</td></tr>';
+  }).join("");
+  $("custResult").innerHTML = '<p style="margin-top:12px;"><strong>' + sorted.length + ' customers</strong></p>'
+    + '<table class="cust-table"><thead><tr><th>Name</th><th>Phone</th><th class="num">Orders</th><th class="num">Total spent</th><th class="num">Points</th><th>Last order</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+/* Points column data: points.json sits next to this page and is PUBLIC
+   (the shop front reads it the same way), so NO GitHub token is needed.
+   Each customer's phone digits are hashed (SHA-256 — the ledger's own
+   scheme, via sha256Hex + pointBalances below) and matched against the
+   ledger. ANY failure — fetch error, bad JSON, no record — just leaves
+   the customer without points (shown as "0 pt"); it never blocks or
+   breaks the customer list. */
+function custPointsFor(list){
+  return fetch("points.json", { cache: "no-store" }).then(function(r){
+    if (!r.ok) throw new Error("points.json " + r.status);
+    return r.json();
+  }).then(function(data){
+    var byHash = {};
+    (data.customers || []).forEach(function(c){ if (c && c.hash) byHash[c.hash] = c; });
+    return Promise.all(list.map(function(c){
+      var digits = normalizePhone(c.phone || "");
+      if (digits.indexOf("81") === 0 && digits.length >= 12) digits = "0" + digits.slice(2);
+      if (!digits) { c._points = null; return null; }
+      return sha256Hex(digits).then(function(hash){
+        var rec = byHash[hash] || null;
+        c._points = rec ? pointBalances(rec) : null;
+      }).catch(function(){ c._points = null; });
+    }));
+  }).catch(function(){
+    list.forEach(function(c){ c._points = null; });
+  });
+}
+function loadCustomers(){
+  var btn = $("custLoadBtn");
+  btn.disabled = true;
+  showMsg($("custMsg"), "Loading customers…", "info");
+  return customersApi().then(function(list){
+    return custPointsFor(list).then(function(){ return list; });
+  }).then(function(list){
+    renderCustomers(list);
+    showMsg($("custMsg"), "✅ Customer list loaded.", "ok");
+  }).catch(function(err){
+    $("custResult").innerHTML = "";
+    showMsg($("custMsg"), "Customer list is not switched on yet — the orders script needs the customers feature added (see the README).", "err");
+  }).finally(function(){ btn.disabled = false; });
+}
+$("custLoadBtn").addEventListener("click", loadCustomers);
+
+/* ---------- tabs: one section at a time ---------- */
+var ADMIN_TABS = ["products", "orders", "customers", "points", "sales", "news", "coupons", "templates", "setup"];
+var TAB_KEY = "madina_admin_tab";
+var currentTab = "products";
+function showTab(name){
+  if (ADMIN_TABS.indexOf(name) === -1) name = "products";
+  currentTab = name;
+  try { localStorage.setItem(TAB_KEY, name); } catch (e) {}
+  document.querySelectorAll("[data-tab-btn]").forEach(function(b){
+    var on = b.getAttribute("data-tab-btn") === name;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  document.querySelectorAll("[data-tabpage]").forEach(function(p){
+    p.hidden = p.getAttribute("data-tabpage") !== name;
+  });
+}
+document.querySelectorAll("[data-tab-btn]").forEach(function(b){
+  b.addEventListener("click", function(){ showTab(b.getAttribute("data-tab-btn")); });
+});
+
 /* ---------- token notice (top of page, only when no token is saved) ---------- */
+function syncProductsGate(){
+  /* The Products tab shows a "setup needed" panel while the product
+     panels themselves are hidden (no token saved on this device yet). */
+  var gate = $("productsNoToken");
+  if (gate) gate.hidden = !$("formPanel").hidden;
+}
 function updateTokenNotice(){
   if (token()){ hideMsg($("tokenNotice")); }
-  else { showMsg($("tokenNotice"), "Setup needed: paste your GitHub token — the Setup section is at the bottom of this page ↓", "info"); }
+  else { showMsg($("tokenNotice"), "Setup needed: paste your GitHub token — tap the ⚙️ Setup tab at the top of this page.", "info"); }
+  syncProductsGate();
 }
 
 /* ---------- events ---------- */
@@ -1495,6 +1735,7 @@ $("saveTokenBtn").addEventListener("click", function(){
   updateTokenNotice();
   loadFromGitHub();
   loadPoints();
+  showTab("products");
 });
 $("forgetTokenBtn").addEventListener("click", function(){
   localStorage.removeItem(TOKEN_KEY);
@@ -1510,7 +1751,18 @@ $("reloadDiscardBtn").addEventListener("click", function(){
   loadFromGitHub().then(function(){ clearForm(); clearQuick(); formDirty = false; });
 });
 $("saveBtn").addEventListener("click", function(){ saveToGitHub().catch(function(){}); });
-$("applyBtn").addEventListener("click", applyForm);
+/* The one big primary button: apply the form, then save to the shop in
+   the same press (the old two-step "Add, then press Save" confused the
+   owner). On a validation failure applyForm() returns false and its
+   message stays in the form. */
+$("applyBtn").addEventListener("click", function(){
+  if (!applyForm()) return;
+  saveToGitHub().then(function(){
+    showMsg($("formMsg"), "✅ Saved — it's live in the shop now.", "ok");
+  }).catch(function(err){
+    showMsg($("formMsg"), "The change is in the list, but saving failed (" + err.message + "). Press “💾 Save to shop” below to try again.", "err");
+  });
+});
 $("cancelEditBtn").addEventListener("click", clearForm);
 $("formResetBtn").addEventListener("click", function(){ resetForm(); });
 $("adminSearch").addEventListener("input", renderList);
@@ -1636,7 +1888,7 @@ function pointBalances(rec){
 }
 function markPointsDirty(){ pointsDirty = true; $("pointsDirty").style.display = "block"; hideMsg($("pointsMsg")); }
 function loadPoints(){
-  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ⑨ Setup first.", "err"); return Promise.resolve(false); }
+  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in the ⚙️ Setup tab first.", "err"); return Promise.resolve(false); }
   return fetch(POINTS_API, { headers: apiHeaders() })
     .then(function(r){
       if (r.status === 404){ pointsSha = null; pointsData = { customers: [] }; return true; }
@@ -1655,7 +1907,7 @@ function loadPoints(){
     });
 }
 function savePoints(){
-  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ⑨ Setup first.", "err"); return Promise.resolve(false); }
+  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in the ⚙️ Setup tab first.", "err"); return Promise.resolve(false); }
   var body = {
     message: "Update points via Madina Supershop admin panel",
     content: b64encodeUtf8(JSON.stringify(pointsData, null, 2))
@@ -1800,13 +2052,18 @@ window.__supershopAdmin = { getState: function(){ return state; }, buildPayload:
          isJunk: ocrIsJunkLine, detectSize: ocrDetectSize, linesFromTesseract: ocrLinesFromTesseract },
   form: { cats: function(){ return formCats.slice(); }, setCats: setFormCats, productCats: productCats,
           reset: resetForm, isDirty: function(){ return formDirty; }, isEdit: function(){ return !!editingId; } },
-  points: { data: function(){ return pointsData; }, balances: pointBalances, load: loadPoints, save: savePoints, sha256Hex: sha256Hex, addOneMonth: addOneMonth, normalizePhone: normalizePhone, todayStr: todayStr, cancelEarn: cancelEarn, addAdjust: addAdjust } };
+  points: { data: function(){ return pointsData; }, balances: pointBalances, load: loadPoints, save: savePoints, sha256Hex: sha256Hex, addOneMonth: addOneMonth, normalizePhone: normalizePhone, todayStr: todayStr, cancelEarn: cancelEarn, addAdjust: addAdjust },
+  tabs: { show: showTab, current: function(){ return currentTab; } },
+  customers: { load: loadCustomers, render: renderCustomers, pointsFor: custPointsFor } };
 
 /* ---------- init ---------- */
 $("nDate").value = todayJstStr();
 renderNoticeList();
 renderCouponList();
 updateTokenNotice();
+var savedTab = "products";
+try { savedTab = localStorage.getItem(TAB_KEY) || "products"; } catch (e) {}
+showTab(savedTab);
 if (token()){
   showMsg($("setupMsg"), "Token found on this device — loading…", "info");
   loadFromGitHub();
