@@ -44,10 +44,76 @@ inside the GitHub repository **goldfamilyjp/madina-supershop** (GitHub Pages hos
     (`yucho: "（ゆうちょ：未設定）"`, `bank: "（銀行：未設定）"`), are shown on the ticket only when a
     transfer method is chosen, and must be filled in with the owner's confirmed details (see Remaining steps).
 
+## Order confirmation email (optional, via FormSubmit)
+
+At checkout the customer may enter an email address (optional). If they do, pressing
+“Confirm Order” does two things:
+
+1. The normal WhatsApp order (unchanged — always the main channel).
+2. The order is also POSTed to **FormSubmit** (`formsubmit.co/ajax/goldfamilyjp@yahoo.com`).
+   FormSubmit emails the full order to the shop inbox **goldfamilyjp@yahoo.com**, and sends the
+   customer an **automatic confirmation email** (the `_autoresponse`) with their order summary,
+   the grand total, and payment instructions for their chosen method — transfer customers get the
+   `BANK_INFO` account details plus “we ship after the transfer is confirmed, delivery takes about
+   3 days”; COD customers are told to pay the courier; pickup customers are told to pay at the branch.
+
+Notes:
+
+- The POST is fire-and-forget: if it fails (offline, FormSubmit down), the WhatsApp order still
+  completes normally. The customer only sees a small “Confirmation email sent” note when it succeeds.
+- **Activation (one time):** the **first** real submission triggers a FormSubmit **activation email**
+  to goldfamilyjp@yahoo.com. The owner must click the link in that email **once** before any
+  confirmation emails flow. Until then, submissions are held by FormSubmit.
+- The confirmation email to the customer is sent **by FormSubmit's system** (from a FormSubmit
+  address), **not** from the Yahoo address itself — the shop's copy arrives in the Yahoo inbox.
+
+## Staff reply templates (admin panel)
+
+The bottom of `admin.html` has a **「返信テンプレート Reply templates」** section with three
+copy-and-send Japanese templates for replying to customers on WhatsApp / LINE / email:
+(a) transfer payment (shows the `BANK_INFO` account details), (b) cash on delivery,
+(c) shop pickup. Staff fill in the 【お名前】 / 【合計】 / 【受取店舗】 blanks after copying.
+The bank details in these templates come from a `BANK_INFO` constant at the top of `admin.html`'s
+script — **it must match `BANK_INFO` in `index.html`; when the real details are filled in, update both files.**
+
+## Points system (points.json)
+
+Customers earn points and spend them on later orders:
+
+- **Earn:** 1% of each purchase, rounded down (floor) — a ¥7,580 order earns 75 pt.
+- **Value:** 1 pt = ¥1.
+- **Maturity:** points become usable **1 month after the purchase date** (each earn entry has a
+  `matures` date = purchase date + 1 month). Until then they are “pending”.
+- The ledger is a second data file, **`points.json`**, in the same repo, managed only from the
+  admin panel's **「⑤ ポイント Points」** section through the same GitHub token flow as products.
+
+**Privacy design (important):** the repo is **public**, so raw phone numbers are **never** stored.
+Each customer record is keyed by the **SHA-256 hex hash of the digits-only phone number**
+(hyphens/spaces removed). Record shape:
+`{ hash, entries: [ { type: "earn"|"redeem", points, date: "YYYY-MM-DD", matures: "YYYY-MM-DD" (earn only), note } ] }`.
+Staff type the phone number into the admin; the page hashes it in the browser and finds the record.
+Balances are computed from the entries: **available = matured earns − redeems**,
+**pending = earns not yet matured**. (Hashing is not encryption — it stops casual reading of the
+public file; treat the file as a points ledger, not a customer database.)
+
+**Staff workflow:**
+
+1. Customer orders (WhatsApp). Shop confirms the order **and the payment** on WhatsApp first.
+2. Admin → ⑤ ポイント: enter the customer's phone number + the order amount → “Add points (1%)”.
+3. When the customer asks to use points: enter the phone number → “Check balance” shows the
+   **available** amount → enter the points → “Use points” (it refuses more than the available balance).
+4. Press **“💾 ポイントを保存する Save points”** after any change, or the change is lost.
+
+**Shop front:** the cart has optional points fields (phone number + points to use). If the customer
+fills them in, the WhatsApp message, the ticket and the confirmation email carry a
+「ポイント利用希望」 line. The site does **not** deduct points from the total — the shop confirms
+the real balance in the admin and applies the discount, exactly as the line says.
+
 ## Setup (one time, done by Manager)
 
 1. Create the public GitHub repo **goldfamilyjp/madina-supershop**.
 2. Put `index.html`, `admin.html`, `products.json` in the repo root; enable GitHub Pages (main branch, root).
+   (`points.json` does not need to be created by hand — the admin panel creates it on the first “Save points”.)
    Shop URL becomes `https://goldfamilyjp.github.io/madina-supershop/`,
    admin URL is the same + `admin.html`.
 3. Create a **fine-grained personal access token** on GitHub for this repo only:
@@ -58,10 +124,15 @@ inside the GitHub repository **goldfamilyjp/madina-supershop** (GitHub Pages hos
 
 ## Remaining steps (before launch)
 
-- **Fill in the bank details:** in `index.html`, replace the `BANK_INFO` placeholders
+- **Fill in the bank details:** replace the `BANK_INFO` placeholders
   (`（ゆうちょ：未設定）` / `（銀行：未設定）`) with the owner's confirmed ゆうちょ and bank account details
-  (bank name, branch, account type/number, account holder name). Until then, transfer customers see the
-  “未設定 (not set)” placeholder on their ticket.
+  (bank name, branch, account type/number, account holder name) in **both** `index.html` and
+  `admin.html` (each file has its own copy of the constant; the ticket, the confirmation email and
+  the staff reply templates all read from it). Until then, transfer customers see the
+  “未設定 (not set)” placeholder on their ticket and in the confirmation email.
+- **Activate FormSubmit (one click):** after the first real order placed with a customer email,
+  open the activation email FormSubmit sends to goldfamilyjp@yahoo.com and click its link once.
+  Confirmation emails only start flowing after this click.
 - Create the repo + token and do the first admin login (Setup steps 1–4 above).
 
 ## Notes

@@ -73,7 +73,7 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .seg button .en{display:block;}
 label.flabel{display:block; font-weight:700; font-size:.92rem; margin:12px 0 5px;}
 label.flabel .req{color:var(--red);}
-input[type=text],input[type=tel],textarea{width:100%; font-size:1rem; padding:11px 12px; border:2px solid var(--line); border-radius:10px; background:#fff;}
+input[type=text],input[type=tel],input[type=email],input[type=number],textarea{width:100%; font-size:1rem; padding:11px 12px; border:2px solid var(--line); border-radius:10px; background:#fff;}
 textarea{min-height:64px;}
 .form-error{display:none; background:#fbeae8; color:var(--red); border-radius:10px; padding:10px 12px; font-size:.9rem; margin:10px 0;}
 .form-error.show{display:block;}
@@ -85,6 +85,7 @@ textarea{min-height:64px;}
 .ticket-box{background:#fff; border:3px dashed var(--green); border-radius:14px; padding:18px 16px; margin-top:14px;}
 .ticket-box h3{color:var(--green); text-align:center; margin-bottom:8px;}
 .ticket-box pre{white-space:pre-wrap; word-break:break-word; font-size:.88rem; font-family:inherit;}
+.email-note{text-align:center; background:#e3efe6; color:var(--green-dark); border:1px solid var(--green); border-radius:10px; padding:10px 12px; font-size:.9rem; font-weight:700; margin-top:12px;}
 .wa-fallback{display:block; text-align:center; margin-top:12px; background:#25d366; color:#fff; text-decoration:none; font-weight:800; padding:13px; border-radius:10px;}
 .howto{background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-top:16px; font-size:.9rem;}
 .howto h3{color:var(--green); margin-bottom:6px; font-size:1rem;}
@@ -158,6 +159,8 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
     <input type="text" id="fName" autocomplete="name" placeholder="お名前 Name">
     <label class="flabel" for="fPhone">電話番号 <span class="en">Phone</span><span class="req">*</span></label>
     <input type="tel" id="fPhone" autocomplete="tel" placeholder="電話番号 Phone number">
+    <label class="flabel" for="fEmail">確認メールを受け取るメールアドレス（任意）<span class="en"> Email for order confirmation (optional)</span></label>
+    <input type="email" id="fEmail" autocomplete="email" placeholder="メールアドレス Email (optional)">
     <div id="addressField">
       <label class="flabel" for="fAddress">お届け先住所 <span class="en">Delivery Address</span><span class="req">*</span></label>
       <textarea id="fAddress" autocomplete="street-address" placeholder="宅配便のお届け先住所 Your delivery address"></textarea>
@@ -173,6 +176,11 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
     </div>
     <label class="flabel" for="fNote">メッセージ <span class="en">Message (optional)</span></label>
     <textarea id="fNote" placeholder="ご要望があればどうぞ Any requests"></textarea>
+    <label class="flabel" for="fPointsPhone">ポイント用 電話番号（任意）<span class="en"> Phone number for points (optional)</span></label>
+    <input type="tel" id="fPointsPhone" autocomplete="tel" placeholder="ポイント用電話番号 Phone number for points">
+    <label class="flabel" for="fPointsUse">使うポイント（任意）<span class="en"> Points to use (optional)</span></label>
+    <input type="number" id="fPointsUse" min="0" step="1" inputmode="numeric" placeholder="例：200 e.g. 200">
+    <p class="fee-note">ポイント：1ポイント = ¥1。ポイントは購入の1ヶ月後から使えます。使うポイントは店舗で残高を確認して割引します。<br>Points: 1 point = ¥1. Points become usable 1 month after purchase. The shop confirms your balance and applies the discount.</p>
 
     <div class="form-error" id="formError"></div>
     <div class="invoice-preview" id="invoicePreview"></div>
@@ -184,6 +192,7 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
   <div class="ticket-box" id="ticketBox" hidden>
     <h3>ご注文ありがとうございます！<br><span class="en">Thank you — your order ticket</span></h3>
     <pre id="ticketText"></pre>
+    <p class="email-note" id="emailSentNote" hidden>確認メールを送信しました<br><span class="en">Confirmation email sent</span></p>
     <a class="wa-fallback" id="waFallback" href="#" target="_blank" rel="noopener">WhatsAppが開かない場合はこちら — Open WhatsApp</a>
   </div>
 </aside>
@@ -345,11 +354,12 @@ function readForm(){
   return {
     name: document.getElementById("fName").value.trim(),
     phone: document.getElementById("fPhone").value.trim(),
+    email: document.getElementById("fEmail").value.trim(),
     address: document.getElementById("fAddress").value.trim(),
     note: document.getElementById("fNote").value.trim()
   };
 }
-["fName","fPhone","fAddress","fNote"].forEach(function(id){
+["fName","fPhone","fAddress","fNote","fPointsPhone","fPointsUse"].forEach(function(id){
   document.getElementById(id).addEventListener("input", function(){
     invoicePreviewEl.textContent = buildInvoiceText(readForm().name, readForm().phone, readForm().address, readForm().note, true);
   });
@@ -381,6 +391,20 @@ document.querySelectorAll("#fulfillSeg button").forEach(function(b){ b.addEventL
 document.querySelectorAll("#branchSeg button").forEach(function(b){ b.addEventListener("click", function(){ branch = this.getAttribute("data-branch"); syncFulfillmentUI(); }); });
 document.querySelectorAll("#paymentSeg button").forEach(function(b){ b.addEventListener("click", function(){ payment = this.getAttribute("data-pay"); syncFulfillmentUI(); }); });
 
+/* ---------- points request (optional; the shop confirms the balance) ---------- */
+function pointsRequest(){
+  var phEl = document.getElementById("fPointsPhone");
+  var useEl = document.getElementById("fPointsUse");
+  var use = parseInt(useEl && useEl.value, 10);
+  if (isNaN(use) || use < 0) use = 0;
+  return { phone: phEl ? phEl.value.trim() : "", use: use };
+}
+function pointsLine(phone){
+  var pr = pointsRequest();
+  if (pr.use <= 0) return "";
+  return "ポイント利用希望: " + pr.use + " pt（電話番号 " + (pr.phone || phone || "") + "）— 店舗確認後に割引適用";
+}
+
 /* ---------- invoice text (same format as the current shop) ---------- */
 function pad(n){ return (n<10?"0":"")+n; }
 function orderDateStr(){
@@ -400,6 +424,8 @@ function buildInvoiceText(name, phone, address, note, preview){
   lines.push("受取方法 / Fulfillment: " + fulfillmentText());
   if (isDelivery) lines.push("住所 / Address: " + (address || (preview ? "（未入力）" : "")));
   if (note) lines.push("メッセージ / Note: " + note);
+  var pLine = pointsLine(phone);
+  if (pLine) lines.push(pLine);
   if (!isDelivery){
     lines.push("支払い / Payment: 店頭払い（Pay at the shop）");
   } else {
@@ -432,6 +458,82 @@ function buildInvoiceText(name, phone, address, note, preview){
   return lines.join("\n");
 }
 
+/* ---------- confirmation email (FormSubmit, optional) ----------
+   If the customer entered an email, the order is also POSTed to FormSubmit,
+   which emails the order to the shop (goldfamilyjp@yahoo.com) and sends the
+   customer an automatic confirmation (the _autoresponse below). Bank details
+   come from the BANK_INFO constants at the top — fill those in once and both
+   the ticket and this email use them. Fire-and-forget: a failed POST never
+   blocks the WhatsApp order. */
+function buildAutoresponse(f){
+  var isDelivery = fulfill === "delivery";
+  var st = subtotal(), fee = deliveryFee(), total = st + fee;
+  var L = [];
+  L.push("ご注文ありがとうございます！ Thank you for your order!");
+  L.push("Madina Halal Supershop — ご注文確認 / Order Confirmation");
+  L.push("──────────");
+  sortedCartIds().forEach(function(id, i){
+    var p = productById(id); if (!p) return;
+    L.push((i+1) + ". " + p.en + "（" + (p.jp||"") + "）" + (p.size||"") + " — " + yen(p.price) + " × " + cart[id] + " = " + yen(p.price*cart[id]));
+  });
+  L.push("──────────");
+  L.push("小計 / Subtotal: " + yen(st));
+  if (isDelivery) L.push("送料 / Courier fee: " + yen(fee));
+  L.push("合計 / TOTAL: " + yen(total));
+  L.push("──────────");
+  if (!isDelivery){
+    L.push("お支払い / Payment: " + branchJp() + " " + branch + " にて、店頭でお支払い・お受け取りください。");
+    L.push("Please pay at the shop (" + branchJp() + " " + branch + ") when you pick up your order.");
+  } else if (payment === "cod"){
+    L.push("お支払い / Payment: 代引き Cash on Delivery");
+    L.push("商品到着時に配達員へ合計 " + yen(total) + " をお支払いください。");
+    L.push("Please pay the courier the total of " + yen(total) + " when your order arrives.");
+  } else {
+    L.push("お支払い / Payment: " + PAY_LABELS[payment]);
+    L.push("振込先 / Transfer to: " + (payment === "yucho" ? BANK_INFO.yucho : BANK_INFO.bank));
+    L.push("振込確認後に発送します。到着まで約3日かかります。");
+    L.push("We ship after your transfer is confirmed; delivery takes about 3 days.");
+  }
+  L.push("ご不明な点はお気軽にご連絡ください。 Questions? Anjo 0566-98-9995 / Toyota 0565-41-5616.");
+  return L.join("\n");
+}
+function sendConfirmationEmail(f){
+  var isDelivery = fulfill === "delivery";
+  var st = subtotal(), fee = deliveryFee(), total = st + fee;
+  var orderLines = sortedCartIds().map(function(id, i){
+    var p = productById(id);
+    return (i+1) + ". " + p.en + " (" + (p.jp||"") + ") " + (p.size||"") + " — " + yen(p.price) + " x " + cart[id] + " = " + yen(p.price*cart[id]);
+  }).join("\n");
+  var payload = {
+    "email": f.email,
+    "_replyto": f.email,
+    "_subject": "【Madina Supershop】ご注文確認 / Order Confirmation",
+    "_template": "table",
+    "_autoresponse": buildAutoresponse(f),
+    "お名前 Name": f.name,
+    "電話 Phone": f.phone,
+    "受取方法 Fulfillment": fulfillmentText(),
+    "注文内容 Order": orderLines,
+    "小計 Subtotal": yen(st),
+    "送料 Courier fee": isDelivery ? yen(fee) : "¥0",
+    "合計 Grand Total": yen(total)
+  };
+  if (isDelivery){
+    payload["住所 Address"] = f.address;
+    payload["お支払い Payment"] = PAY_LABELS[payment];
+  } else {
+    payload["お支払い Payment"] = "店頭払い Pay at the shop (" + branch + ")";
+  }
+  if (f.note) payload["メッセージ Note"] = f.note;
+  var pLine2 = pointsLine(f.phone);
+  if (pLine2) payload["ポイント利用希望 Points"] = pLine2;
+  return fetch("https://formsubmit.co/ajax/goldfamilyjp@yahoo.com", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
 /* ---------- sheet open/close ---------- */
 var overlay = document.getElementById("overlay");
 var sheet = document.getElementById("cartSheet");
@@ -461,6 +563,14 @@ document.getElementById("orderForm").addEventListener("submit", function(e){
   var ticketBox = document.getElementById("ticketBox");
   ticketBox.hidden = false;
   window.open(url, "_blank");
+  /* Optional confirmation email — fire-and-forget, never blocks the order. */
+  var emailNote = document.getElementById("emailSentNote");
+  emailNote.hidden = true;
+  if (f.email){
+    sendConfirmationEmail(f).then(function(r){
+      if (r && r.ok) emailNote.hidden = false;
+    }).catch(function(){ /* offline / service down: the WhatsApp order still stands */ });
+  }
   ticketBox.scrollIntoView({ block: "start" });
 });
 

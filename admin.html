@@ -49,6 +49,14 @@ label{display:block; font-weight:700; font-size:.95rem; margin-top:12px;}
 .photo-preview{max-width:180px; max-height:140px; border-radius:10px; margin-top:8px; display:none;}
 .dirty-note{color:var(--red); font-weight:700; font-size:.9rem; margin-top:8px; display:none;}
 code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
+.tpl-block{border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:12px; background:#fbfcf9;}
+.tpl-block h3{color:var(--green); font-size:1rem; margin-bottom:6px;}
+.tpl-text{white-space:pre-wrap; word-break:break-word; font-family:inherit; font-size:.92rem; background:#fff; border:1px dashed var(--line); border-radius:8px; padding:10px 12px; line-height:1.6;}
+.tpl-block .en-line{font-size:.82rem; color:var(--muted); margin-top:8px; line-height:1.5;}
+.copy-btn{margin-top:10px; background:var(--green); color:#fff; border:none; border-radius:10px; padding:12px 18px; font-size:1rem; font-weight:700; cursor:pointer; width:100%;}
+.copy-btn:active{opacity:.85;}
+.pt-bal{font-size:1.05rem; font-weight:800; color:var(--green); margin-top:6px; line-height:1.6;}
+.pt-entry{font-size:.85rem; color:var(--muted); padding:4px 0; border-bottom:1px dashed var(--line);}
 </style>
 </head>
 <body>
@@ -115,6 +123,37 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <p class="hint">追加・変更したあとは、上の「💾 保存する Save to shop」を押すとお店に反映されます。<br>After adding or changing, press “💾 Save to shop” above to publish.</p>
   </section>
 
+  <!-- ===== Staff quick-reply templates ===== -->
+  <section class="panel" id="templatePanel">
+    <h2>④ 返信テンプレート <span class="en">Reply templates</span></h2>
+    <p class="hint">お客様への返信にコピーして使ってください。【お名前】【合計】【受取店舗】の部分を書き換えてから送ってください。<br>
+    Copy a template, fill in the 【 】 blanks, and send it to the customer (WhatsApp / LINE / email).</p>
+    <div id="templateList"></div>
+  </section>
+
+  <!-- ===== Points ===== -->
+  <section class="panel" id="pointsPanel">
+    <h2>⑤ ポイント <span class="en">Points</span></h2>
+    <p class="hint">お客様は購入金額の<strong>1%</strong>のポイントが貯まります（1ポイント = ¥1）。ポイントは<strong>購入から1ヶ月後</strong>に使えるようになります。<br>
+    Customers earn <strong>1%</strong> back in points (1 pt = ¥1). Points become usable <strong>1 month after</strong> the purchase.<br>
+    ※ ポイントの追加・利用は、<strong>WhatsAppで注文とお支払いを確認してから</strong>行ってください。<br>
+    Add / use points only <strong>after</strong> the order and payment are confirmed on WhatsApp.<br>
+    電話番号はハッシュ化して保存されます。番号そのものは保存されません。Phone numbers are stored only as hashes — never as raw numbers.</p>
+    <label for="ptPhone">電話番号 <span class="en">Customer phone number</span></label>
+    <input type="tel" id="ptPhone" placeholder="090-…" autocomplete="off">
+    <button type="button" class="big-btn grey" id="ptLookupBtn">残高を見る <span style="font-size:.8em;">Check balance</span></button>
+    <div id="pointsResult"></div>
+    <label for="ptAmount">注文金額 ¥ <span class="en">Order amount (yen) — adds 1% as points</span></label>
+    <input type="number" id="ptAmount" min="0" step="1" inputmode="numeric" placeholder="e.g. 7580">
+    <button type="button" class="big-btn" id="ptAddBtn">ポイントを追加 <span style="font-size:.8em;">Add points (1%)</span></button>
+    <label for="ptUse">使うポイント <span class="en">Points to use</span></label>
+    <input type="number" id="ptUse" min="0" step="1" inputmode="numeric" placeholder="e.g. 200">
+    <button type="button" class="big-btn" id="ptUseBtn">ポイントを使う <span style="font-size:.8em;">Use points</span></button>
+    <p class="dirty-note" id="pointsDirty">● ポイントはまだ保存されていません — Points not saved yet. 下のボタンを押してください。</p>
+    <button type="button" class="big-btn gold" id="ptSaveBtn">💾 ポイントを保存する <span style="font-size:.8em;">Save points</span></button>
+    <div class="msg" id="pointsMsg"></div>
+  </section>
+
 </div>
 
 <script>
@@ -135,6 +174,14 @@ var DEFAULT_CATEGORIES = [
   { id: "drinks", en: "Drinks", jp: "飲み物" },
   { id: "other", en: "Other", jp: "その他" }
 ];
+
+/* Bank details used in the staff reply templates below.
+   MUST MATCH the BANK_INFO constants in index.html — when the owner fills in
+   the real account details, update BOTH files (index.html and admin.html). */
+var BANK_INFO = {
+  yucho: "（ゆうちょ：未設定）",
+  bank: "（銀行：未設定）"
+};
 
 var state = { categories: [], products: [] };
 var fileSha = null;
@@ -355,6 +402,7 @@ $("saveTokenBtn").addEventListener("click", function(){
   localStorage.setItem(TOKEN_KEY, t);
   $("tokenInput").value = "";
   loadFromGitHub();
+  loadPoints();
 });
 $("forgetTokenBtn").addEventListener("click", function(){
   localStorage.removeItem(TOKEN_KEY);
@@ -369,17 +417,240 @@ $("applyBtn").addEventListener("click", applyForm);
 $("cancelEditBtn").addEventListener("click", clearForm);
 $("adminSearch").addEventListener("input", renderList);
 
+/* ---------- staff quick-reply templates ---------- */
+var REPLY_TEMPLATES = [
+  {
+    id: "transfer",
+    title: "振込のご案内 Transfer payment",
+    en: "For bank / Japan Post transfer orders — we ship after the payment arrives (about 3 days).",
+    text:
+      "【お名前】様、ご注文ありがとうございます。\n" +
+      "マディナ ハラール スーパーショップでございます。ご注文を受け付けました。\n" +
+      "合計金額は【合計】円です。お振込先は下記の通りです。\n" +
+      "ゆうちょ銀行：" + BANK_INFO.yucho + "\n" +
+      "銀行振込：" + BANK_INFO.bank + "\n" +
+      "ご入金確認後に発送いたします。到着まで約3日かかります。\n" +
+      "よろしくお願いいたします。"
+  },
+  {
+    id: "cod",
+    title: "代引きのご案内 Cash on delivery",
+    en: "For cash-on-delivery orders — the customer pays the courier on arrival.",
+    text:
+      "【お名前】様、ご注文ありがとうございます。\n" +
+      "マディナ ハラール スーパーショップでございます。ご注文を受け付けました。\n" +
+      "代引きでのお支払いとなります。到着時に配達員へ【合計】円をお支払いください。\n" +
+      "到着まで約3日かかります。よろしくお願いいたします。"
+  },
+  {
+    id: "pickup",
+    title: "店頭受取のご案内 Shop pickup",
+    en: "For pickup orders — the customer pays and picks up at the branch.",
+    text:
+      "【お名前】様、ご注文ありがとうございます。\n" +
+      "マディナ ハラール スーパーショップでございます。ご注文を受け付けました。\n" +
+      "合計金額は【合計】円です。【受取店舗】にてお支払い・お受け取りください。\n" +
+      "ご来店をお待ちしております。"
+  }
+];
+function fallbackCopy(text){
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(ta);
+}
+function copyTemplate(idx, btn){
+  var text = REPLY_TEMPLATES[idx].text;
+  function done(){
+    var old = btn.textContent;
+    btn.textContent = "コピーしました Copied ✓";
+    setTimeout(function(){ btn.textContent = old; }, 2200);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(function(){ fallbackCopy(text); done(); });
+  } else {
+    fallbackCopy(text); done();
+  }
+}
+function renderTemplates(){
+  $("templateList").innerHTML = REPLY_TEMPLATES.map(function(t, i){
+    return '<div class="tpl-block" data-tpl="' + t.id + '"><h3>' + esc(t.title) + "</h3>"
+      + '<pre class="tpl-text">' + esc(t.text) + "</pre>"
+      + '<p class="en-line">' + esc(t.en) + "</p>"
+      + '<button type="button" class="copy-btn" data-copy="' + i + '">コピーする Copy</button></div>';
+  }).join("");
+  $("templateList").querySelectorAll("[data-copy]").forEach(function(b){
+    b.addEventListener("click", function(){ copyTemplate(Number(this.getAttribute("data-copy")), this); });
+  });
+}
+
+/* ---------- points (points.json, same GitHub token flow) ----------
+   PRIVACY: points.json lives in a PUBLIC repo, so raw phone numbers are
+   NEVER stored. Each customer record is keyed by the SHA-256 hex hash of
+   the digits-only phone number. Balances are computed from the entries:
+   available = matured earns (matures <= today) − redeems;
+   pending   = earns whose matures date is still in the future. */
+var POINTS_PATH = "points.json";
+var POINTS_API = "https://api.github.com/repos/" + REPO + "/contents/" + POINTS_PATH;
+var pointsData = { customers: [] };
+var pointsSha = null;
+var pointsLoaded = false;
+var pointsDirty = false;
+
+function pad2(n){ return (n < 10 ? "0" : "") + n; }
+function todayStr(){ var d = new Date(); return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
+function addOneMonth(dateStr){
+  var p = String(dateStr).split("-");
+  var y = Number(p[0]), m = Number(p[1]), d = Number(p[2]);
+  var nm = m + 1, ny = y;
+  if (nm > 12){ nm = 1; ny = y + 1; }
+  var lastDay = new Date(ny, nm, 0).getDate();
+  return ny + "-" + pad2(nm) + "-" + pad2(Math.min(d, lastDay));
+}
+function normalizePhone(s){ return String(s == null ? "" : s).replace(/\D/g, ""); }
+function sha256Hex(str){
+  return crypto.subtle.digest("SHA-256", new TextEncoder().encode(str)).then(function(buf){
+    return Array.prototype.map.call(new Uint8Array(buf), function(b){ return ("0" + b.toString(16)).slice(-2); }).join("");
+  });
+}
+function findCustomer(hash){
+  return pointsData.customers.filter(function(c){ return c.hash === hash; })[0] || null;
+}
+function pointBalances(rec){
+  var t = todayStr(), av = 0, pe = 0;
+  if (rec) rec.entries.forEach(function(e){
+    if (e.type === "earn"){ if (e.matures <= t) av += e.points; else pe += e.points; }
+    else if (e.type === "redeem"){ av -= e.points; }
+  });
+  return { available: av, pending: pe };
+}
+function markPointsDirty(){ pointsDirty = true; $("pointsDirty").style.display = "block"; hideMsg($("pointsMsg")); }
+function loadPoints(){
+  if (!token()){ showMsg($("pointsMsg"), "トークンがありません。上の①で設定してください。No token — set it up in ① first.", "err"); return Promise.resolve(false); }
+  return fetch(POINTS_API, { headers: apiHeaders() })
+    .then(function(r){
+      if (r.status === 404){ pointsSha = null; pointsData = { customers: [] }; return true; }
+      if (!r.ok) throw new Error("GitHub error " + r.status);
+      return r.json().then(function(j){
+        pointsSha = j.sha;
+        var data = JSON.parse(b64decodeUtf8(j.content));
+        pointsData = { customers: data.customers || [] };
+        return true;
+      });
+    })
+    .then(function(){ pointsLoaded = true; pointsDirty = false; $("pointsDirty").style.display = "none"; return true; })
+    .catch(function(err){
+      showMsg($("pointsMsg"), "ポイントの読み込みに失敗しました（" + err.message + "）。Load of points failed.", "err");
+      return false;
+    });
+}
+function savePoints(){
+  if (!token()){ showMsg($("pointsMsg"), "トークンがありません。No token — set it up in ① first.", "err"); return Promise.resolve(false); }
+  var body = {
+    message: "Update points via Madina Supershop admin panel",
+    content: b64encodeUtf8(JSON.stringify(pointsData, null, 2))
+  };
+  if (pointsSha) body.sha = pointsSha;
+  var btn = $("ptSaveBtn"); btn.disabled = true;
+  return fetch(POINTS_API, { method: "PUT", headers: Object.assign({ "Content-Type": "application/json" }, apiHeaders()), body: JSON.stringify(body) })
+    .then(function(r){
+      if (!r.ok) return r.text().then(function(t){ throw new Error("GitHub error " + r.status + " " + t.slice(0, 120)); });
+      return r.json();
+    })
+    .then(function(j){
+      if (j && j.content && j.content.sha) pointsSha = j.content.sha;
+      pointsLoaded = true; pointsDirty = false; $("pointsDirty").style.display = "none";
+      showMsg($("pointsMsg"), "✅ ポイントを保存しました。Points saved.", "ok");
+      return true;
+    })
+    .catch(function(err){
+      showMsg($("pointsMsg"), "ポイントの保存に失敗しました（" + err.message + "）。Save failed — please try again.", "err");
+      return false;
+    })
+    .finally(function(){ btn.disabled = false; });
+}
+function withCustomer(fn){
+  var digits = normalizePhone($("ptPhone").value);
+  if (!digits){ showMsg($("pointsMsg"), "電話番号を入力してください。Please enter the customer's phone number.", "err"); return; }
+  hideMsg($("pointsMsg"));
+  var ready = pointsLoaded ? Promise.resolve(true) : loadPoints();
+  ready.then(function(ok){
+    if (!ok) return;
+    return sha256Hex(digits).then(function(hash){ fn(hash, digits); });
+  }).catch(function(err){ showMsg($("pointsMsg"), "エラー（" + err.message + "）", "err"); });
+}
+function renderPointsResult(rec, digits){
+  var el = $("pointsResult");
+  if (!rec){
+    el.innerHTML = '<p class="hint">この番号（' + esc(digits) + '）のポイント記録はまだありません。No points record for this number yet.</p>';
+    return;
+  }
+  var b = pointBalances(rec);
+  var rows = rec.entries.slice(-10).reverse().map(function(e){
+    var txt = e.type === "earn"
+      ? "+" + e.points + " pt — " + e.date + " 購入 / earned" + (e.matures ? "（" + e.matures + " から利用可 / usable from " + e.matures + "）" : "")
+      : "−" + e.points + " pt — " + e.date + " 利用 / used";
+    return '<div class="pt-entry">' + esc(txt) + (e.note ? " ・ " + esc(e.note) : "") + "</div>";
+  }).join("");
+  el.innerHTML = '<p class="pt-bal">利用可能 Available: ' + b.available + ' pt<br>利用待ち Pending（1ヶ月後）: ' + b.pending + " pt</p>" + rows;
+}
+function lookupPoints(){
+  withCustomer(function(hash, digits){ renderPointsResult(findCustomer(hash), digits); });
+}
+function addPoints(){
+  var amount = Number($("ptAmount").value);
+  if (!$("ptPhone").value.trim()){ showMsg($("pointsMsg"), "電話番号を入力してください。Please enter the customer's phone number.", "err"); return; }
+  if (!amount || isNaN(amount) || amount <= 0){ showMsg($("pointsMsg"), "注文金額を入力してください。Please enter the order amount.", "err"); return; }
+  var pts = Math.floor(amount * 0.01);
+  if (pts <= 0){ showMsg($("pointsMsg"), "1ポイント未満です（¥100以上の注文で貯まります）。Less than 1 point — orders of ¥100+ earn points.", "err"); return; }
+  withCustomer(function(hash, digits){
+    var rec = findCustomer(hash);
+    if (!rec){ rec = { hash: hash, entries: [] }; pointsData.customers.push(rec); }
+    var t = todayStr();
+    rec.entries.push({ type: "earn", points: pts, date: t, matures: addOneMonth(t), note: "注文 ¥" + Math.round(amount).toLocaleString("ja-JP") });
+    markPointsDirty(); renderPointsResult(rec, digits);
+    showMsg($("pointsMsg"), pts + " ポイントを追加しました（" + addOneMonth(t) + " から利用可）。下の「ポイントを保存する」を押してください。Added " + pts + " pt — now press Save points.", "ok");
+  });
+}
+function usePoints(){
+  var want = Math.floor(Number($("ptUse").value));
+  if (!$("ptPhone").value.trim()){ showMsg($("pointsMsg"), "電話番号を入力してください。Please enter the customer's phone number.", "err"); return; }
+  if (!want || isNaN(want) || want <= 0){ showMsg($("pointsMsg"), "使うポイント数を入力してください。Please enter the points to use.", "err"); return; }
+  withCustomer(function(hash, digits){
+    var rec = findCustomer(hash);
+    var bal = pointBalances(rec);
+    if (!rec || want > bal.available){
+      showMsg($("pointsMsg"), "使えるポイントが足りません（利用可能: " + bal.available + " pt）。Not enough available points (available: " + bal.available + " pt).", "err");
+      renderPointsResult(rec, digits);
+      return;
+    }
+    rec.entries.push({ type: "redeem", points: want, date: todayStr(), note: "ポイント利用" });
+    markPointsDirty(); renderPointsResult(rec, digits);
+    showMsg($("pointsMsg"), want + " ポイントを使いました。下の「ポイントを保存する」を押してください。Used " + want + " pt — now press Save points.", "ok");
+  });
+}
+$("ptLookupBtn").addEventListener("click", lookupPoints);
+$("ptAddBtn").addEventListener("click", addPoints);
+$("ptUseBtn").addEventListener("click", usePoints);
+$("ptSaveBtn").addEventListener("click", function(){ savePoints(); });
+
 /* expose for testing */
-window.__supershopAdmin = { getState: function(){ return state; }, buildPayload: buildPayload, saveToGitHub: saveToGitHub, loadFromGitHub: loadFromGitHub };
+window.__supershopAdmin = { getState: function(){ return state; }, buildPayload: buildPayload, saveToGitHub: saveToGitHub, loadFromGitHub: loadFromGitHub, templates: REPLY_TEMPLATES, bankInfo: BANK_INFO,
+  points: { data: function(){ return pointsData; }, balances: pointBalances, load: loadPoints, save: savePoints, sha256Hex: sha256Hex, addOneMonth: addOneMonth, normalizePhone: normalizePhone, todayStr: todayStr } };
 
 /* ---------- init ---------- */
 if (token()){
   showMsg($("setupMsg"), "トークンは保存済みです。読み込んでいます… Token found on this device — loading…", "info");
   loadFromGitHub();
+  loadPoints();
 } else {
   showMsg($("setupMsg"), "まずトークンを貼ってください。Setup: paste your GitHub token to begin.", "info");
 }
 updateLastSavedNote();
+renderTemplates();
 </script>
 </body>
 </html>
