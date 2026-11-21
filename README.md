@@ -34,6 +34,12 @@ inside the GitHub repository **goldfamilyjp/madina-supershop** (GitHub Pages hos
   Photo 1 only). On the shop front, a product with both photos shows a small “1 / 2” badge on the photo —
   the customer taps the photo to switch to the back (“2 / 2”) and taps again to return. Products with a
   single photo (or none) look and behave exactly as before.
+- **Photo zoom (lightbox):** every product card with a photo has a small 🔍 button on the photo. Tapping
+  it opens the photo full-screen: pinch to zoom (or double-tap / double-click to toggle between fit and
+  2×, then drag to pan; the mouse wheel zooms on desktop). With two photos, ‹ › buttons switch front/back
+  inside the overlay with the same “1 / 2” indicator. ✕, a tap on the dark backdrop, or the Escape key
+  closes it, and the page scrolls again afterwards. Tapping the card photo itself still only switches
+  front/back — the 🔍 button is the only way into the zoom view.
 
 ## Business rules
 

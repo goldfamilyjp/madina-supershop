@@ -50,6 +50,18 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .card .photo img{width:100%; height:100%; object-fit:cover;}
 .card .photo.two{cursor:pointer;}
 .card .photo .ph-badge{position:absolute; right:8px; bottom:8px; background:rgba(7,48,31,.85); color:#fff; font-size:.78rem; font-weight:700; border-radius:999px; padding:2px 9px; pointer-events:none;}
+.card .photo .zoom-btn{position:absolute; left:8px; top:8px; width:40px; height:40px; border:none; border-radius:50%; background:rgba(7,48,31,.85); color:#fff; font-size:1.05rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2;}
+.card .photo .zoom-btn:active{background:var(--green);}
+/* photo zoom lightbox */
+.lb-overlay{position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:120; display:none;}
+.lb-overlay.show{display:block;}
+.lb-stage{position:absolute; inset:0; overflow:hidden; touch-action:none; display:flex; align-items:center; justify-content:center;}
+.lb-stage img{max-width:100%; max-height:100%; object-fit:contain; user-select:none; -webkit-user-select:none; will-change:transform;}
+.lb-close{position:absolute; top:10px; right:10px; width:52px; height:52px; border:none; border-radius:50%; background:rgba(255,255,255,.16); color:#fff; font-size:1.5rem; cursor:pointer; z-index:3; line-height:1; padding:0;}
+.lb-nav{position:absolute; top:50%; transform:translateY(-50%); width:52px; height:64px; border:none; border-radius:12px; background:rgba(255,255,255,.16); color:#fff; font-size:2rem; cursor:pointer; z-index:3; line-height:1; padding:0;}
+.lb-prev{left:8px;}
+.lb-next{right:8px;}
+.lb-count{position:absolute; left:50%; bottom:16px; transform:translateX(-50%); background:rgba(255,255,255,.16); color:#fff; font-size:.9rem; font-weight:700; border-radius:999px; padding:3px 12px; z-index:3; pointer-events:none;}
 .card .ph-tile{width:100%; height:100%; background:linear-gradient(135deg,var(--green) 0%,#146344 100%); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:800;}
 .card .body{padding:10px 12px 12px; display:flex; flex-direction:column; gap:3px; flex:1;}
 .card .jp{font-weight:700; font-size:1rem; line-height:1.3;}
@@ -316,6 +328,15 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
   </div>
 </aside>
 
+<!-- photo zoom lightbox -->
+<div class="lb-overlay" id="lbOverlay">
+  <div class="lb-stage" id="lbStage"><img id="lbImg" alt="" draggable="false"></div>
+  <button type="button" class="lb-close" id="lbClose" aria-label="Close">✕</button>
+  <button type="button" class="lb-nav lb-prev" id="lbPrev" aria-label="Previous photo">‹</button>
+  <button type="button" class="lb-nav lb-next" id="lbNext" aria-label="Next photo">›</button>
+  <div class="lb-count" id="lbCount">1 / 2</div>
+</div>
+
 <script>
 var WA_NUMBER = "819065842039";
 var FREE_THRESHOLD = 10000;
@@ -414,6 +435,7 @@ function cardHTML(p){
     ? '<img src="' + esc(mainPhoto) + '" alt="' + esc(p.en) + '" loading="lazy"'
       + (hasTwo ? ' data-front="' + esc(p.photo) + '" data-back="' + esc(p.photo2) + '"' : '') + '>'
       + (hasTwo ? '<span class="ph-badge">1 / 2</span>' : '')
+      + '<button type="button" class="zoom-btn" data-zoom="' + esc(p.id) + '" aria-label="Zoom">🔍</button>'
     : '<div class="ph-tile">' + esc((p.en || p.jp || "?").trim().charAt(0).toUpperCase()) + '</div>';
   var action;
   if (soldOut){
@@ -456,10 +478,174 @@ function bindGridButtons(){
       else { img.setAttribute("src", back); if (badge) badge.textContent = "2 / 2"; }
     });
   });
+  /* Zoom button: opens the photo lightbox (stopPropagation so a two-photo
+     card does NOT also toggle front/back on the same tap). */
+  gridEl.querySelectorAll("[data-zoom]").forEach(function(b){ b.addEventListener("click", function(e){ e.stopPropagation(); openLightboxFor(this.getAttribute("data-zoom"), this); }); });
   gridEl.querySelectorAll("[data-add]").forEach(function(b){ b.addEventListener("click", function(){ setQty(this.getAttribute("data-add"), 1); }); });
   gridEl.querySelectorAll("[data-inc]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-inc"); setQty(id, (cart[id]||0)+1); }); });
   gridEl.querySelectorAll("[data-dec]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-dec"); setQty(id, (cart[id]||0)-1); }); });
 }
+/* ---------- photo zoom lightbox ----------
+   Dependency-free: CSS transform on the image. Pinch with two pointers
+   zooms/pans; a double-tap (or double-click) toggles fit <-> 2x zoomed at
+   the tapped point; when zoomed, one pointer drags to pan; the mouse wheel
+   zooms on desktop. Body scroll is locked while the overlay is open. */
+var lbOverlay = document.getElementById("lbOverlay");
+var lbStage = document.getElementById("lbStage");
+var lbImg = document.getElementById("lbImg");
+var lbCount = document.getElementById("lbCount");
+var lbPrevBtn = document.getElementById("lbPrev");
+var lbNextBtn = document.getElementById("lbNext");
+var lbPhotos = [], lbIdx = 0;
+var lbScale = 1, lbTx = 0, lbTy = 0;
+var lbPointers = {};        /* pointerId -> {x, y} */
+var lbPinchDist = 0;
+var lbDragMoved = false;
+var lbLastTap = 0, lbLastTapX = 0, lbLastTapY = 0;
+var lbSavedBodyOverflow = "", lbSavedHtmlOverflow = "";
+
+function lbApply(){
+  lbImg.style.transform = "translate(" + lbTx + "px," + lbTy + "px) scale(" + lbScale + ")";
+  lbOverlay.classList.toggle("zoomed", lbScale > 1);
+}
+function lbClamp(){
+  if (lbScale <= 1){ lbTx = 0; lbTy = 0; return; }
+  var maxX = lbImg.clientWidth * (lbScale - 1) / 2;
+  var maxY = lbImg.clientHeight * (lbScale - 1) / 2;
+  if (lbTx > maxX) lbTx = maxX; if (lbTx < -maxX) lbTx = -maxX;
+  if (lbTy > maxY) lbTy = maxY; if (lbTy < -maxY) lbTy = -maxY;
+}
+function lbResetZoom(){ lbScale = 1; lbTx = 0; lbTy = 0; lbApply(); }
+function lbZoomAt(cx, cy, newScale){
+  newScale = Math.max(1, Math.min(4, newScale));
+  if (newScale === lbScale){ lbClamp(); lbApply(); return; }
+  /* Keep the image point under (cx, cy) fixed. The image box is flex-centred
+     in the stage, so its layout centre is the stage centre. */
+  var sr = lbStage.getBoundingClientRect();
+  var px = cx - (sr.left + sr.width / 2);
+  var py = cy - (sr.top + sr.height / 2);
+  var ratio = newScale / lbScale;
+  lbTx = px - (px - lbTx) * ratio;
+  lbTy = py - (py - lbTy) * ratio;
+  lbScale = newScale;
+  lbClamp(); lbApply();
+}
+function lbToggleZoom(cx, cy){
+  if (lbScale > 1) lbResetZoom(); else lbZoomAt(cx, cy, 2);
+}
+function lbSetPhoto(i){
+  if (!lbPhotos.length) return;
+  lbIdx = ((i % lbPhotos.length) + lbPhotos.length) % lbPhotos.length;
+  lbImg.src = lbPhotos[lbIdx];
+  lbCount.textContent = (lbIdx + 1) + " / " + lbPhotos.length;
+  lbResetZoom();
+}
+function lbSyncNav(){
+  var multi = lbPhotos.length > 1;
+  lbPrevBtn.style.display = multi ? "" : "none";
+  lbNextBtn.style.display = multi ? "" : "none";
+  lbCount.style.display = multi ? "" : "none";
+}
+function openLightbox(photos, startIdx){
+  lbPhotos = photos; lbPointers = {}; lbPinchDist = 0;
+  lbSavedBodyOverflow = document.body.style.overflow || "";
+  lbSavedHtmlOverflow = document.documentElement.style.overflow || "";
+  document.body.style.overflow = "hidden";
+  document.documentElement.style.overflow = "hidden";
+  lbOverlay.classList.add("show");
+  lbSyncNav();
+  lbSetPhoto(startIdx || 0);
+}
+function closeLightbox(){
+  lbOverlay.classList.remove("show");
+  document.body.style.overflow = lbSavedBodyOverflow;
+  document.documentElement.style.overflow = lbSavedHtmlOverflow;
+  lbPointers = {}; lbPinchDist = 0;
+  lbResetZoom();
+}
+function openLightboxFor(id, btn){
+  var p = productById(id); if (!p) return;
+  var photos = [];
+  if (p.photo) photos.push(p.photo);
+  if (p.photo2) photos.push(p.photo2);
+  if (!photos.length) return;
+  var start = 0;
+  if (photos.length > 1 && btn){
+    var card = btn.closest ? btn.closest(".card") : null;
+    var img = card ? card.querySelector(".photo img") : null;
+    if (img && img.getAttribute("src") === photos[1]) start = 1;
+  }
+  openLightbox(photos, start);
+}
+lbStage.addEventListener("pointerdown", function(e){
+  lbPointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+  lbDragMoved = false;
+  var ids = Object.keys(lbPointers);
+  if (ids.length === 2){
+    var a = lbPointers[ids[0]], b = lbPointers[ids[1]];
+    lbPinchDist = Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+  }
+  try { lbStage.setPointerCapture(e.pointerId); } catch (err) {}
+});
+lbStage.addEventListener("pointermove", function(e){
+  var prev = lbPointers[e.pointerId];
+  if (!prev) return;
+  var dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+  lbPointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+  var ids = Object.keys(lbPointers);
+  if (ids.length === 2){
+    var a = lbPointers[ids[0]], b = lbPointers[ids[1]];
+    var d = Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+    if (lbPinchDist > 0 && d > 0) lbZoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, lbScale * d / lbPinchDist);
+    lbPinchDist = d;
+    lbDragMoved = true;
+  } else if (ids.length === 1){
+    if (Math.abs(dx) + Math.abs(dy) > 2) lbDragMoved = true;
+    if (lbScale > 1 && lbDragMoved){ lbTx += dx; lbTy += dy; lbClamp(); lbApply(); }
+  }
+});
+function lbPointerUp(e){
+  var wasSingle = !!lbPointers[e.pointerId] && Object.keys(lbPointers).length === 1;
+  var wasDrag = lbDragMoved;
+  delete lbPointers[e.pointerId];
+  if (!Object.keys(lbPointers).length) lbPinchDist = 0;
+  if (wasSingle && !wasDrag){
+    var now = Date.now();
+    if (now - lbLastTap < 350 && Math.abs(e.clientX - lbLastTapX) < 48 && Math.abs(e.clientY - lbLastTapY) < 48){
+      lbToggleZoom(e.clientX, e.clientY);
+      lbLastTap = 0;
+    } else {
+      lbLastTap = now; lbLastTapX = e.clientX; lbLastTapY = e.clientY;
+    }
+  }
+}
+lbStage.addEventListener("pointerup", lbPointerUp);
+lbStage.addEventListener("pointercancel", function(e){ delete lbPointers[e.pointerId]; if (!Object.keys(lbPointers).length) lbPinchDist = 0; });
+lbStage.addEventListener("wheel", function(e){
+  e.preventDefault();
+  lbZoomAt(e.clientX, e.clientY, lbScale * (e.deltaY < 0 ? 1.15 : 1 / 1.15));
+}, { passive: false });
+lbOverlay.addEventListener("click", function(e){
+  if (lbDragMoved) return;
+  if (e.target === lbOverlay){ closeLightbox(); return; }
+  if (e.target === lbStage || e.target === lbImg){
+    /* Backdrop = anywhere outside the image box. (Pointer capture retargets
+       clicks from the image to the stage, so compare coordinates, not just
+       the event target.) */
+    var r = lbImg.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeLightbox();
+  }
+});
+document.getElementById("lbClose").addEventListener("click", closeLightbox);
+lbPrevBtn.addEventListener("click", function(){ lbSetPhoto(lbIdx - 1); });
+lbNextBtn.addEventListener("click", function(){ lbSetPhoto(lbIdx + 1); });
+document.addEventListener("keydown", function(e){
+  if (!lbOverlay.classList.contains("show")) return;
+  if (e.key === "Escape") closeLightbox();
+  else if (e.key === "ArrowLeft" && lbPhotos.length > 1) lbSetPhoto(lbIdx - 1);
+  else if (e.key === "ArrowRight" && lbPhotos.length > 1) lbSetPhoto(lbIdx + 1);
+});
+
 showMoreBtn.addEventListener("click", function(){ shownCount += PAGE_SIZE; renderGrid(); });
 document.getElementById("searchInput").addEventListener("input", function(){ searchQuery = this.value; shownCount = PAGE_SIZE; renderGrid(); });
 
