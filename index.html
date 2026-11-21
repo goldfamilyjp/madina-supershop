@@ -2073,9 +2073,19 @@ document.getElementById("pcBtn").addEventListener("click", function(){
       var rec = (data.customers || []).filter(function(c){ return c.hash === hash; })[0] || null;
       if (!rec){ box.innerHTML = PC_NOT_FOUND; return; }
       var b = computePointBalances(rec);
-      box.innerHTML = '<span class="pc-bal">利用可能ポイント Available points / Poin tersedia: ' + b.available + ' pt</span><br>'
-        + '<span class="pc-bal">利用待ちポイント Pending points / Poin menunggu: ' + b.pending + ' pt</span><br>'
-        + 'ポイントは購入の1ヶ月後から使えます。Points become usable 1 month after purchase. Poin bisa dipakai 1 bulan setelah pembelian.';
+      var h = '<div class="points-bal-card" style="margin:0;">'
+        + '<div class="pbc-row"><span class="pbc-label">利用可能ポイント <span class="en">Available points</span> <span class="idn">Poin tersedia</span></span>'
+        + '<span class="pbc-val">' + b.available + ' pt <span class="pbc-yen">(= ¥' + b.available + ')</span></span></div>';
+      if (b.pending > 0){
+        h += '<div class="pbc-row"><span class="pbc-label">利用待ちポイント <span class="en">Pending points</span> <span class="idn">Poin menunggu</span></span>'
+          + '<span class="pbc-val">' + b.pending + ' pt</span></div>';
+        var mt = pointsMaturesText(earliestPendingMatures(rec));
+        if (mt){
+          h += '<p class="pbc-note">このポイントは' + mt.jp + 'ごろから使えます<br><span class="en">These pending points are usable from ' + mt.en + '</span><br><span class="idn">Poin menunggu ini bisa dipakai mulai ' + mt.idn + '</span></p>';
+        }
+      }
+      h += '</div>';
+      box.innerHTML = h;
     });
   }).catch(function(){ box.innerHTML = PC_NOT_FOUND; });
 });
