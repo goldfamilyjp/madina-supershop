@@ -35,12 +35,14 @@ inside the GitHub repository **goldfamilyjp/madina-supershop** (GitHub Pages hos
   file inputs under Photo 1 in the Add/Edit form, and the ⚡ Quick Add card has a smaller
   “＋ Add back photo (optional)” button; photo files go through the same resize pipeline (OCR reads
   Photo 1 only). On the shop front, a product with both photos shows a small “1 / 2” badge on the photo —
-  the customer taps the photo to switch to the back (“2 / 2”) and taps again to return. Products with a
+  the customer taps the photo — or swipes it sideways — to switch to the back (“2 / 2”) and taps or
+  swipes again to return. (A vertical swipe still scrolls the page as usual.) Products with a
   single photo (or none) look and behave exactly as before.
 - **Photo zoom (lightbox):** every product card with a photo has a small 🔍 button on the photo. Tapping
   it opens the photo full-screen: pinch to zoom (or double-tap / double-click to toggle between fit and
   2×, then drag to pan; the mouse wheel zooms on desktop). With two photos, ‹ › buttons switch front/back
-  inside the overlay with the same “1 / 2” indicator. ✕, a tap on the dark backdrop, or the Escape key
+  inside the overlay with the same “1 / 2” indicator — and so does a sideways swipe while the photo is
+  at fit size (when zoomed in, a drag pans instead, never switches). ✕, a tap on the dark backdrop, or the Escape key
   closes it, and the page scrolls again afterwards. Tapping the card photo itself still only switches
   front/back — the 🔍 button is the only way into the zoom view.
 - **⭐ Popular flag:** each product has an optional `popular` boolean (absent/false = not popular).
@@ -655,7 +657,9 @@ and that the key elements stay visible and usable.
 - **Where it shows:** directly under the shop's search bar, above the category chips, with the
   trilingual heading “⭐ 人気商品 / Popular / Populer”. One product at a time — large photo, name,
   size, price and a working Add button (same cart, stock and sold-out rules as the grid cards).
-  Tapping the slide photo opens the photo zoom lightbox.
+  Tapping the slide photo opens the photo zoom lightbox. On a product with two photos, the slide
+  photo also carries the “1 / 2” badge, and swiping it sideways switches between the front and back
+  photo (the tap still opens the lightbox).
 - **Behaviour:** auto-advances every ~4 seconds with a fade; dots and ‹ › arrows jump between
   slides; it pauses while the customer touches or hovers it and while the browser tab is hidden.
 - **How many:** about **10** starred products is best. Only starred **and** visible products appear
