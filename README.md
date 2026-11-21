@@ -264,6 +264,14 @@ the phone digits and totalled with the ledger's own `pointBalances` rule
 `points.json` cannot be loaded, the customer list still renders with
 “0 pt” everywhere — points never block the list.
 
+A big search box sits over the list: typing filters it live by phone
+number (or name), and the **“🔍 Find customer”** button loads the list
+first if needed, applies the search, then scrolls to the first match and
+opens its detail. Tapping a customer opens that detail: their points as
+two summary boxes (**Available** / **Pending**) over a colourful history
+**table** (Date · What · Points · Status chip), plus an add-points form —
+the same renderer as the Points tab's card.
+
 Pressing **“👥 Load customers”** POSTs `{ "action": "customers" }` to the
 same Apps Script endpoint as the sales report, and the script answers:
 `{ ok: true, customers: [ { phone, name, orders, totalSpent, lastOrder } ] }`
@@ -367,15 +375,22 @@ public file; treat the file as a points ledger, not a customer database.)
 2. Admin → 🪙 Points tab: enter the customer's phone number + the order amount → “Add points (1%)”.
 3. When the customer asks to use points: enter the phone number → “Check balance” shows the
    **available** amount → enter the points → “Use points” (it refuses more than the available balance).
-4. Press **“💾 Save points”** after any change, or the change is lost.
+4. Every change **saves at once** — one press writes the entry and saves it, then a green banner
+   confirms it with the amount and the new balance (the “💾 Save points” button remains as a
+   manual fallback). The add banner carries an **“↩ Undo”** button that cancels exactly the
+   entry just added. The customer's history shows as two summary boxes (**Available** /
+   **Pending**) over a colourful table (Date · What · Points · Status chip) — the same
+   renderer in the Points tab card and in the Customers tab's expanded row.
 
 **Cancelling / fixing points (admin):** if an order is cancelled or points were added by mistake,
 staff can fix the ledger in the same 🪙 Points tab:
 
-- **Cancel an earn:** each earn entry in the customer's history has a “Cancel” button. It asks
-  for confirmation, then marks the entry `"cancelled": true`. Cancelled entries are **excluded from
-  every balance computation** (admin and the shop-front balance check alike). If a cancellation makes
-  the available balance negative, a warning is shown but the cancellation still goes through.
+- **Cancel an entry:** each **earn** and **hand-added (adjust)** entry in the history table has a
+  “Cancel” button (“Used”/redeem entries have none). It asks for confirmation, marks the entry
+  `"cancelled": true` and saves at once. Cancelled entries are **excluded from every balance
+  computation** (admin and the shop-front balance check alike) and show greyed with a
+  “Cancelled” chip. If a cancellation makes the available balance negative, a warning is shown
+  but the cancellation still goes through.
 - **Manual adjustment:** enter a signed amount (+ or −) **and a reason (required, e.g. 注文キャンセル）**
   → an `{type:"adjust"}` entry is added. Adjustments apply to the available balance **immediately**.
 - Balance formula: **available = matured, uncancelled earns − redeems + adjustments**;
