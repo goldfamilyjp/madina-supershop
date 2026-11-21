@@ -108,6 +108,41 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 .cust-history{margin-top:6px;}
 .cust-add-form{margin-top:12px; border-top:1px dashed var(--line); padding-top:6px;}
 .pt-entry .st{font-weight:700; color:var(--green-dark);}
+/* ---------- points summary stat boxes + colourful history table ---------- */
+.pt-stats{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;}
+.pt-stat{flex:1 1 150px; border-radius:12px; padding:12px 14px;}
+.pt-stat.avail{background:var(--green); color:#fff;}
+.pt-stat.pend{background:var(--gold); color:var(--green-dark);}
+.pt-stat .ps-label{font-size:.78rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase;}
+.pt-stat .ps-num{font-size:1.7rem; font-weight:800; line-height:1.25;}
+.pt-stat .ps-sub{font-size:.9rem; font-weight:700;}
+.pt-table-card{border:2px solid var(--gold); border-radius:14px; overflow:hidden; margin-top:10px; background:#fff;}
+.pt-table-scroll{overflow-x:auto;}
+.pt-table{width:100%; border-collapse:collapse; font-size:.92rem; min-width:430px;}
+.pt-table th{background:#0b4530; color:#fff; font-weight:800; text-align:left; padding:9px 10px; font-size:.8rem; letter-spacing:.05em; text-transform:uppercase;}
+.pt-table td{padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
+.pt-table tbody tr:nth-child(even){background:#eef6ef;}
+.pt-table td.pts,.pt-table th.pts{text-align:right; white-space:nowrap; font-weight:800;}
+.pt-plus{color:#1a7f37;}
+.pt-minus{color:var(--red);}
+.pt-chip{display:inline-block; border-radius:999px; padding:2px 10px; font-size:.78rem; font-weight:800; white-space:nowrap;}
+.pt-chip.ok{background:#dcefe0; color:var(--green-dark); border:1px solid var(--green);}
+.pt-chip.wait{background:var(--gold-soft); color:#4a3d08; border:1px solid var(--gold);}
+.pt-chip.grey{background:#eef0ee; color:var(--muted); border:1px solid var(--line);}
+.pt-chip.cancelled{background:#e8e8e8; color:#777; border:1px solid #c9c9c9;}
+/* "What" column: one colour per entry type, readable at a glance */
+.pt-what{display:inline-block; border-radius:999px; padding:2px 10px; font-size:.82rem; font-weight:800; white-space:nowrap;}
+.pt-what.earn{background:#dcefe0; color:#0b5a30; border:1px solid var(--green);}
+.pt-what.redeem{background:#dbeafe; color:#1e40af; border:1px solid #3b82f6;}
+.pt-what.adjust{background:#ede9fe; color:#5b21b6; border:1px solid #8b5cf6;}
+.pt-what.adjust-neg{background:#ccfbf1; color:#0f766e; border:1px solid #14b8a6;}
+.pt-what.cancelled{background:#e8e8e8; color:#777; border:1px solid #c9c9c9;}
+.pt-table tr.cancelled td{color:#9aa79c;}
+.pt-table .mini{border:none; border-radius:8px; padding:8px 12px; font-size:.85rem; font-weight:700; cursor:pointer; min-height:40px;}
+.pt-cancel-btn{display:block; margin-top:6px;}
+.mini.undo{background:#fff; color:var(--green-dark); border:2px solid var(--green); border-radius:8px; padding:8px 14px; font-size:.9rem; font-weight:800; cursor:pointer; min-height:40px; margin-left:8px;}
+.mini.undo:disabled{opacity:.5; cursor:default;}
+.search-row .find-btn{flex:0 0 auto; width:auto; margin-top:0; padding:12px 20px; font-size:1.05rem;}
 /* BIG highlighted phone-number inputs (Customers search + Points find) —
    the first thing the eye lands on: thick green frame, soft gold ring. */
 .phone-input{width:100%; border:3px solid var(--green); border-radius:16px; padding:14px 18px; background:#fffdf4; font-size:1.2rem; font-weight:700; margin-top:4px; box-shadow:0 0 0 4px var(--gold-soft);}
@@ -324,7 +359,7 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
       <h3 class="card-sub">＋ Add points by hand — usable right away</h3>
       <label for="ptAdjust">Points (+ to add, − to take off)</label>
       <input type="number" id="ptAdjust" step="1" inputmode="numeric" placeholder="e.g. 50 or -30">
-      <label for="ptAdjustNote">Reason (optional — write one if you can)</label>
+      <label for="ptAdjustNote">Reason (required for hand adjustments)</label>
       <input type="text" id="ptAdjustNote" placeholder="e.g. order cancelled">
       <button type="button" class="big-btn gold" id="ptAdjustBtn">＋ Add points — usable right away</button>
 
@@ -339,7 +374,7 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
       <label for="ptAmount">Order amount ¥ (yen) — adds 1% as points</label>
       <input type="number" id="ptAmount" min="0" step="1" inputmode="numeric" placeholder="e.g. 7580">
       <button type="button" class="big-btn" id="ptAddBtn">Add points (1%)</button>
-      <p class="hint">Uses the phone number in the card above. These points become usable <strong>1 month later</strong>. Afterwards press “💾 Save points” below.</p>
+      <p class="hint">Uses the phone number in the card above. These points become usable <strong>1 month later</strong>. They are saved straight away — no extra Save press needed.</p>
     </details>
 
     <p class="hint">If an order is cancelled or a mistake happens, cancel the earn entry from the history in the card above, or fix the points with “Add points by hand” (use a − number to take points off).</p>
@@ -366,9 +401,11 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
   <section class="panel" id="customersPanel">
     <h2>Customers</h2>
     <div class="help-box">👥 <strong>Customers and their points, in one place:</strong> tap a customer (or their <strong>＋ Add points</strong> button) to see their points history.<br>
+    To find someone fast: type their phone number (or name) in the big box below and tap <strong>🔍 Find customer</strong>.<br>
     Points from orders are worth <strong>1% of the order</strong> and can be used <strong>1 month later</strong>; points you add by hand can be used <strong>right away</strong>.</div>
     <div class="search-row">
       <input type="tel" id="custSearch" class="phone-input" placeholder="Phone number — e.g. 09012345678" autocomplete="off">
+      <button type="button" class="big-btn find-btn" id="custFindBtn">🔍 Find customer</button>
       <button type="button" class="mini edit" id="custSearchClear" hidden>✕ Clear</button>
     </div>
     <p class="hint">Everyone who has ordered, saved under their phone number in the spreadsheet's <strong>“Customers”</strong> tab — biggest spenders first. Press the button to load the latest list.</p>
@@ -1765,27 +1802,58 @@ function openCustDetail(idx){
   row.hidden = false;
   fillCustDetail(idx);
 }
-/* The expanded area under a customer row: their points history in plain
-   words, plus a one-step "add points by hand" form (saved at once via
+/* The expanded area under a customer row: the shared points renderer
+   (stat boxes + history table, with per-row Cancel buttons), plus a
+   one-step "add points by hand" form (saved at once via
    pointsAddAdjust — the same adjust entry + save the Points tab uses). */
 function fillCustDetail(idx){
   var c = custShownList[idx];
   if (!c) return;
   var box = document.querySelector('[data-cust-detail="' + idx + '"] .cust-detail-box');
   if (!box) return;
-  var b = c._points || (c._rec ? pointBalances(c._rec) : null);
-  var balLine = b
-    ? '<p class="pt-bal">Available: ' + b.available + ' pt (= ' + yen(b.available) + ')'
-      + (b.pending > 0 ? ' · Pending: ' + b.pending + ' pt' : '') + '</p>'
-    : '<p class="pt-bal">Available: 0 pt</p>';
-  box.innerHTML = '<strong>Points history</strong>' + balLine
-    + '<div class="cust-history">' + pointsHistoryHtml(c._rec, false) + '</div>'
+  box.innerHTML = '<strong>Points history</strong>'
+    + pointsHistoryHtml(c._rec, true)
     + '<div class="cust-add-form">'
     + '<label>Points to add<input type="number" class="cust-add-pts" min="1" step="1" inputmode="numeric" placeholder="e.g. 100"></label>'
     + '<label>Reason (optional)<input type="text" class="cust-add-note" placeholder="e.g. birthday gift"></label>'
     + '<button type="button" class="big-btn gold cust-add-btn">＋ Add points — usable right away</button>'
     + '</div>';
   box.querySelector(".cust-add-btn").addEventListener("click", function(){ custRowAddPoints(idx, box); });
+  bindCancelEarn(box, function(entryIdx){ custCancelEntry(idx, entryIdx); });
+}
+/* Per-row Cancel in the Customers tab. The row's record (c._rec) is a
+   read-only copy from the public points.json; the cancel itself is
+   written through the real ledger: load it (token-gated), find the
+   record by the customer's hash, verify the entry at that index is the
+   same one, mark it cancelled, save, then refresh the row. */
+function custCancelEntry(rowIdx, entryIdx){
+  var c = custShownList[rowIdx];
+  if (!c || !c._rec) return;
+  var e = c._rec.entries[entryIdx];
+  if (!e || (e.type !== "earn" && e.type !== "adjust") || e.cancelled) return;
+  var amtTxt = signedPtsText(e);
+  if (!window.confirm("Cancel this " + amtTxt + " entry? The points will be removed.")) return;
+  if (!token()){ showMsg($("custMsg"), "No token — set it up in the ⚙️ Setup tab first.", "err"); return; }
+  var ready = pointsLoaded ? Promise.resolve(true) : loadPoints();
+  ready.then(function(ok){
+    if (!ok){ showMsg($("custMsg"), "Could not load the points list — check the connection and try again.", "err"); return; }
+    return sha256Hex(c._digits || custDigits(c.phone || "")).then(function(hash){
+      var rec = findCustomer(hash);
+      var le = rec && rec.entries[entryIdx];
+      if (!le || le.type !== e.type || Number(le.points) !== Number(e.points) || String(le.date || "") !== String(e.date || "")){
+        showMsg($("custMsg"), "Could not find that entry — reload the customer list and try again.", "err");
+        return;
+      }
+      le.cancelled = true;
+      return savePoints().then(function(saved){
+        if (!saved) return; /* savePoints already showed the error */
+        c._rec = rec;
+        c._points = pointBalances(rec);
+        renderCustomers(custAllList);   /* custOpenPhone keeps this row expanded */
+        showMsg($("custMsg"), "✅ Cancelled the " + amtTxt + " entry for " + (c.name || c.phone || "the customer") + " — new balance: Available " + c._points.available + " pt.", "ok");
+      });
+    });
+  }).catch(function(err){ showMsg($("custMsg"), "Error (" + err.message + ")", "err"); });
 }
 function custRowAddPoints(idx, box){
   var c = custShownList[idx];
@@ -1795,11 +1863,19 @@ function custRowAddPoints(idx, box){
   var note = box.querySelector(".cust-add-note").value.trim();
   var btn = box.querySelector(".cust-add-btn");
   btn.disabled = true;
-  pointsAddAdjust(c._digits || custDigits(c.phone || ""), pts, note, $("custMsg"), function(rec){
+  pointsAddAdjust(c._digits || custDigits(c.phone || ""), pts, note, $("custMsg"), function(rec, entryIdx){
     c._rec = rec;
     c._points = pointBalances(rec);
-    showMsg($("custMsg"), "✅ Added " + pts + " pt for " + (c.name || c.phone || "the customer") + " — usable right away.", "ok");
     renderCustomers(custAllList);   /* custOpenPhone keeps this row expanded */
+    showUndoBanner($("custMsg"),
+      "✅ " + pts + " pt added to " + fmtPhone(c._digits || custDigits(c.phone || "")) + " — new balance: Available " + c._points.available + " pt (usable right away).",
+      function(){
+        undoLastAdd(rec, entryIdx, $("custMsg"), function(){
+          c._rec = rec;
+          c._points = pointBalances(rec);
+          renderCustomers(custAllList);
+        });
+      });
   }).then(function(ok){ if (!ok) btn.disabled = false; });
 }
 /* Points column data: points.json sits next to this page and is PUBLIC
@@ -1878,6 +1954,29 @@ $("custSearchClear").addEventListener("click", function(){
   syncCustSearchClear();
   if (custLoadedOnce) renderCustomers(custAllList);
 });
+/* 🔍 Find customer: load the list first if needed, apply the typed
+   search as the filter, then jump to the first match — scroll its row
+   into view and open its points detail. */
+$("custFindBtn").addEventListener("click", function(){
+  custFilter = $("custSearch").value;
+  syncCustSearchClear();
+  if (!custLoadedOnce){
+    custLoadTriggered = true;
+    loadCustomers().then(function(){
+      custLoadTriggered = false;
+      if (custLoadedOnce) openFirstCustMatch();
+    });
+    return;
+  }
+  renderCustomers(custAllList);
+  openFirstCustMatch();
+});
+function openFirstCustMatch(){
+  if (!custShownList.length) return;
+  openCustDetail(0);
+  var row = document.querySelector('[data-cust-idx="0"]');
+  if (row && row.scrollIntoView) row.scrollIntoView({ block: "center" });
+}
 
 /* ---------- tabs: one section at a time ---------- */
 var ADMIN_TABS = ["products", "orders", "customers", "points", "sales", "news", "coupons", "templates", "setup"];
@@ -2135,39 +2234,101 @@ function entryText(e){
   if (e.type === "adjust") return (e.points >= 0 ? "+" : "−") + Math.abs(e.points) + " pt — " + e.date + " adjustment";
   return e.points + " pt — " + e.date;
 }
-/* One customer's points history in plain words — one line per entry:
-   date · what happened · +/− points · status. Used by the Points tab's
-   customer card (with Cancel buttons on earn entries) and by the
-   Customers tab's expanded row (view only). Newest first. */
+/* Phone digits in the familiar 090-1234-5678 shape (11-digit mobiles);
+   anything else is shown as typed. Used in the points banners. */
+function fmtPhone(digits){
+  var d = String(digits || "");
+  return /^\d{11}$/.test(d) ? d.slice(0, 3) + "-" + d.slice(3, 7) + "-" + d.slice(7) : d;
+}
+/* Signed point value of an entry: redeem entries store a positive
+   amount but take points OFF; earn/adjust carry their own sign. */
+function signedPts(e){
+  var p = Number(e && e.points) || 0;
+  return (e && e.type === "redeem") ? -Math.abs(p) : p;
+}
+function signedPtsText(e){
+  var sp = signedPts(e);
+  return (sp >= 0 ? "+" : "−") + Math.abs(sp) + " pt";
+}
+/* The two summary stat boxes over the history table: Available (deep
+   green) and — only when there are any — Pending (amber/gold). */
+function pointsSummaryHtml(b){
+  var pend = b.pending > 0
+    ? '<div class="pt-stat pend"><div class="ps-label">Pending — usable after 1 month</div><div class="ps-num">' + b.pending + ' pt</div><div class="ps-sub">= ' + yen(b.pending) + "</div></div>" : "";
+  return '<div class="pt-stats"><div class="pt-stat avail"><div class="ps-label">Available</div><div class="ps-num">' + b.available + ' pt</div><div class="ps-sub">= ' + yen(b.available) + "</div></div>" + pend + "</div>";
+}
+/* ONE shared renderer for a customer's points, used by BOTH the Points
+   tab's customer card and the Customers tab's expanded row: the summary
+   stat boxes on top, then the history as a colourful table (Date · What
+   · Points · Status chip) inside a gold-bordered card. Earn and adjust
+   entries carry a Cancel button (withCancel) so a wrong entry can be
+   undone; redeem entries never do; cancelled entries show greyed with
+   a "Cancelled" chip. Newest first, last 15 entries. Balances always
+   come from pointBalances() — this function only RENDERS. */
 function pointsHistoryHtml(rec, withCancel){
-  if (!rec || !rec.entries || !rec.entries.length) return '<p class="hint">No points yet.</p>';
+  var head = pointsSummaryHtml(rec ? pointBalances(rec) : { available: 0, pending: 0 });
+  var tableHead = '<div class="pt-table-card"><div class="pt-table-scroll"><table class="pt-table"><thead><tr><th>Date</th><th>What</th><th class="pts">Points</th><th>Status</th></tr></thead><tbody>';
+  var tableTail = "</tbody></table></div></div>";
+  if (!rec || !rec.entries || !rec.entries.length)
+    return head + tableHead + '<tr><td colspan="4">No points yet.</td></tr>' + tableTail;
   var t = todayStr();
   var indexed = rec.entries.map(function(e, i){ return { e: e, i: i }; }).slice(-15).reverse();
-  return indexed.map(function(x){
-    var e = x.e, word, status, amt;
-    if (e.cancelled){ word = "Cancelled"; status = "does not count"; }
+  var rows = indexed.map(function(x){
+    var e = x.e, word, chip;
+    if (e.cancelled){ word = '<span class="pt-what cancelled">Cancelled</span>'; chip = '<span class="pt-chip cancelled">Cancelled</span>'; }
     else if (e.type === "earn"){
-      word = "Earned from order";
-      status = (e.matures && e.matures > t) ? "waiting — usable from " + e.matures : "usable now";
+      word = '<span class="pt-what earn">Earned from order</span>';
+      chip = (e.matures && e.matures > t)
+        ? '<span class="pt-chip wait">Waiting — from ' + esc(e.matures) + "</span>"
+        : '<span class="pt-chip ok">Usable now</span>';
     }
-    else if (e.type === "redeem"){ word = "Used"; status = "done"; }
+    else if (e.type === "redeem"){ word = '<span class="pt-what redeem">Used</span>'; chip = '<span class="pt-chip grey">Done</span>'; }
     else if (e.type === "adjust"){
-      word = e.points >= 0 ? "Added by hand" : "Taken off by hand";
-      status = e.points >= 0 ? "usable now" : "done";
+      word = e.points >= 0 ? '<span class="pt-what adjust">Added by hand</span>' : '<span class="pt-what adjust-neg">Taken off by hand</span>';
+      chip = e.points >= 0 ? '<span class="pt-chip ok">Usable now</span>' : '<span class="pt-chip grey">Done</span>';
     }
-    else { word = String(e.type || ""); status = ""; }
-    amt = (e.type === "redeem" ? "−" + e.points : (e.points >= 0 ? "+" : "−") + Math.abs(e.points)) + " pt";
-    var btn = (withCancel && e.type === "earn" && !e.cancelled)
-      ? ' <button type="button" class="mini del" data-cancel-earn="' + x.i + '">Cancel</button>' : "";
-    var note = e.note ? ' <span class="en">' + esc(e.note) + "</span>" : "";
-    return '<div class="pt-entry">' + esc(e.date || "") + " · " + word + " · <strong>" + amt + "</strong>"
-      + (status ? ' · <span class="st">' + esc(status) + "</span>" : "") + note + btn + "</div>";
+    else { word = esc(String(e.type || "")); chip = ""; }
+    var btn = (withCancel && !e.cancelled && (e.type === "earn" || e.type === "adjust"))
+      ? ' <button type="button" class="mini del pt-cancel-btn" data-cancel-earn="' + x.i + '">Cancel</button>' : "";
+    var note = e.note ? '<div class="en">' + esc(e.note) + "</div>" : "";
+    return '<tr' + (e.cancelled ? ' class="cancelled"' : "") + "><td>" + esc(e.date || "") + "</td><td>" + word + note
+      + '</td><td class="pts ' + (e.cancelled ? "" : (signedPts(e) >= 0 ? "pt-plus" : "pt-minus")) + '">' + signedPtsText(e)
+      + "</td><td>" + chip + btn + "</td></tr>";
   }).join("");
+  return head + tableHead + rows + tableTail;
 }
-function bindCancelEarn(container, rec){
+function bindCancelEarn(container, handler){
   if (!container) return;
   container.querySelectorAll("[data-cancel-earn]").forEach(function(btn){
-    btn.addEventListener("click", function(){ cancelEarn(rec, Number(this.getAttribute("data-cancel-earn"))); });
+    btn.addEventListener("click", function(){ handler(Number(this.getAttribute("data-cancel-earn"))); });
+  });
+}
+/* A success banner that carries its own ↩ Undo button: one tap cancels
+   exactly the entry that was just added (same cancelled-flag + save
+   path as the per-row Cancel buttons). */
+function showUndoBanner(msgEl, text, onUndo){
+  msgEl.className = "msg show ok";
+  msgEl.innerHTML = "";
+  var span = document.createElement("span");
+  span.textContent = text;
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "mini undo";
+  btn.textContent = "↩ Undo";
+  btn.addEventListener("click", function(){ btn.disabled = true; onUndo(); });
+  msgEl.appendChild(span);
+  msgEl.appendChild(document.createTextNode(" "));
+  msgEl.appendChild(btn);
+}
+function undoLastAdd(rec, idx, msgEl, after){
+  var e = rec.entries[idx];
+  if (!e || e.cancelled) return;
+  var amtTxt = signedPtsText(e);
+  e.cancelled = true;
+  savePoints().then(function(saved){
+    if (!saved) return; /* savePoints already showed the error */
+    if (after) after();
+    showMsg(msgEl, "Undone — the " + amtTxt + " entry was cancelled.", "ok");
   });
 }
 /* The one-step "add points by hand" write path, shared by the Customers
@@ -2184,9 +2345,10 @@ function pointsAddAdjust(digits, pts, note, msgEl, onOk){
     return sha256Hex(digits).then(function(hash){
       var rec = findCustomer(hash);
       if (!rec){ rec = { hash: hash, entries: [] }; pointsData.customers.push(rec); }
+      var newIdx = rec.entries.length;
       rec.entries.push({ type: "adjust", points: pts, date: todayStr(), note: note || "Added by hand" });
       return savePoints().then(function(saved){
-        if (saved && onOk) onOk(rec);
+        if (saved && onOk) onOk(rec, newIdx);
         return saved;
       });
     });
@@ -2205,39 +2367,52 @@ function renderPointsResult(rec, digits){
     ? '<p style="font-weight:800; font-size:1.05rem; margin-top:12px;">' + esc(name) + ' <span class="en">' + esc(digits) + "</span></p>" : "";
   var warn = b.available < 0
     ? '<p class="hint" style="color:var(--red); font-weight:700;">⚠ Warning: available points are negative (' + b.available + ' pt) after a cancellation — fix with an adjustment if needed.</p>' : "";
-  el.innerHTML = head
-    + '<p class="pt-bal">Available: ' + b.available + ' pt (= ' + yen(b.available) + ')<br>Pending (usable after 1 month): ' + b.pending + " pt</p>"
-    + warn
-    + '<div style="margin-top:8px;">' + pointsHistoryHtml(rec, true) + "</div>";
-  bindCancelEarn(el, rec);
+  el.innerHTML = head + warn + pointsHistoryHtml(rec, true);
+  bindCancelEarn(el, function(idx){ cancelEarn(rec, idx); });
 }
+/* Per-row Cancel (Points tab): confirm, mark the entry cancelled, save
+   at once through the normal save path, re-render, and say so. Works
+   for earn and hand-added (adjust) entries; redeem entries have no
+   Cancel button and never reach here. */
 function cancelEarn(rec, idx){
   var e = rec.entries[idx];
-  if (!e || e.type !== "earn" || e.cancelled) return;
-  if (!window.confirm("Cancel this earn entry?\n+" + e.points + " pt — " + e.date + " earned" + (e.note ? " ・ " + e.note : ""))) return;
+  if (!e || (e.type !== "earn" && e.type !== "adjust") || e.cancelled) return;
+  var amtTxt = signedPtsText(e);
+  if (!window.confirm("Cancel this " + amtTxt + " entry? The points will be removed.")) return;
   e.cancelled = true;
-  markPointsDirty();
   renderPointsResult(rec, lastPointsDigits);
-  var b = pointBalances(rec);
-  if (b.available < 0){
-    showMsg($("pointsMsg"), "⚠ Cancelled — available points are now NEGATIVE (" + b.available + " pt). Press Save points.", "err");
-  } else {
-    showMsg($("pointsMsg"), "Cancelled — now press Save points.", "ok");
-  }
+  savePoints().then(function(saved){
+    if (!saved) return; /* savePoints already showed the error */
+    var b = pointBalances(rec);
+    if (b.available < 0){
+      showMsg($("pointsMsg"), "✅ Cancelled the " + amtTxt + " entry — but available points are now NEGATIVE (" + b.available + " pt). Fix with an adjustment if needed.", "err");
+    } else {
+      showMsg($("pointsMsg"), "✅ Cancelled the " + amtTxt + " entry — new balance: Available " + b.available + " pt.", "ok");
+    }
+  });
 }
 function addAdjust(){
   if (!$("ptPhone").value.trim()){ showMsg($("pointsMsg"), "Please enter the customer's phone number.", "err"); return; }
   var raw = $("ptAdjust").value.trim();
   var pts = Math.floor(Number(raw));
   if (raw === "" || isNaN(pts) || pts === 0){ showMsg($("pointsMsg"), "Please enter an adjustment amount (not 0).", "err"); return; }
-  var note = $("ptAdjustNote").value.trim() || (pts > 0 ? "Added by hand" : "Taken off by hand");
+  var note = $("ptAdjustNote").value.trim();
+  if (!note){ showMsg($("pointsMsg"), "A reason is required for hand adjustments — please write why (e.g. order cancelled).", "err"); return; }
   withCustomer(function(hash, digits){
     var rec = findCustomer(hash);
     if (!rec){ rec = { hash: hash, entries: [] }; pointsData.customers.push(rec); }
     rec.entries.push({ type: "adjust", points: pts, date: todayStr(), note: note });
-    markPointsDirty(); renderPointsResult(rec, digits);
+    var idx = rec.entries.length - 1;
+    renderPointsResult(rec, digits);
     $("ptAdjust").value = ""; $("ptAdjustNote").value = "";
-    showMsg($("pointsMsg"), "Adjusted (" + (pts > 0 ? "+" : "") + pts + " pt) — now press Save points.", "ok");
+    savePoints().then(function(saved){
+      if (!saved) return; /* savePoints already showed the error */
+      var b = pointBalances(rec);
+      showUndoBanner($("pointsMsg"),
+        "✅ " + Math.abs(pts) + " pt " + (pts >= 0 ? "added to " : "taken off ") + fmtPhone(digits)
+          + " — new balance: Available " + b.available + " pt" + (pts >= 0 ? " (usable right away)" : "") + ".",
+        function(){ undoLastAdd(rec, idx, $("pointsMsg"), function(){ renderPointsResult(rec, digits); }); });
+    });
   });
 }
 function lookupPoints(){
@@ -2254,8 +2429,14 @@ function addPoints(){
     if (!rec){ rec = { hash: hash, entries: [] }; pointsData.customers.push(rec); }
     var t = todayStr();
     rec.entries.push({ type: "earn", points: pts, date: t, matures: addOneMonth(t), note: "Order ¥" + Math.round(amount).toLocaleString("en-US") });
-    markPointsDirty(); renderPointsResult(rec, digits);
-    showMsg($("pointsMsg"), "Added " + pts + " pt (usable from " + addOneMonth(t) + ") — now press Save points.", "ok");
+    var idx = rec.entries.length - 1;
+    renderPointsResult(rec, digits);
+    savePoints().then(function(saved){
+      if (!saved) return; /* savePoints already showed the error */
+      showUndoBanner($("pointsMsg"),
+        "✅ " + pts + " pt added to " + fmtPhone(digits) + " — new balance: Available " + pointBalances(rec).available + " pt (usable from " + addOneMonth(t) + ").",
+        function(){ undoLastAdd(rec, idx, $("pointsMsg"), function(){ renderPointsResult(rec, digits); }); });
+    });
   });
 }
 function usePoints(){
@@ -2271,8 +2452,11 @@ function usePoints(){
       return;
     }
     rec.entries.push({ type: "redeem", points: want, date: todayStr(), note: "Points used" });
-    markPointsDirty(); renderPointsResult(rec, digits);
-    showMsg($("pointsMsg"), "Used " + want + " pt — now press Save points.", "ok");
+    renderPointsResult(rec, digits);
+    savePoints().then(function(saved){
+      if (!saved) return; /* savePoints already showed the error */
+      showMsg($("pointsMsg"), "✅ Used " + want + " pt for " + fmtPhone(digits) + " — new balance: Available " + pointBalances(rec).available + " pt.", "ok");
+    });
   });
 }
 $("ptLookupBtn").addEventListener("click", lookupPoints);
