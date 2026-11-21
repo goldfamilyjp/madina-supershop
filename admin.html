@@ -70,6 +70,12 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 .qa-photo-btn{font-size:1.15rem; padding:18px;}
 .qa-photo2-btn{font-size:.95rem; padding:11px;}
 .qa-card input.qa-price{font-size:1.3rem; font-weight:700; padding:14px;}
+.cat-chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;}
+.cat-chip{display:inline-flex; align-items:center; gap:7px; border:2px solid var(--line); background:#fff; border-radius:999px; padding:9px 14px; font-size:.95rem; font-weight:700; cursor:pointer; margin-top:0;}
+.cat-chip input{width:20px; height:20px; margin:0; flex:0 0 auto; accent-color:var(--green);}
+.cat-chip.on{border-color:var(--green); background:#e3efe6;}
+.cat-chip .primary-tag{font-size:.72rem; color:var(--gold); background:var(--green); border-radius:6px; padding:1px 6px; display:none;}
+.cat-chip.on.first .primary-tag{display:inline-block;}
 #tokenNotice{margin-bottom:16px;}
 /* small phones: panels and product rows stack into a single column */
 @media(max-width:560px){
@@ -119,6 +125,7 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
       </label>
       <div class="msg" id="qMsg"></div>
       <button type="button" class="big-btn gold" id="qAddSaveBtn">⚡ Add &amp; Save — goes live now</button>
+      <button type="button" class="big-btn grey" id="qResetBtn">↺ Reset</button>
       <p class="hint">This adds the product and saves it to the shop in one press. The full form below still works for stock, Japanese / Indonesian names and editing.</p>
     </div>
 
@@ -136,8 +143,8 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <label for="fStock">Stock — blank = no stock tracking</label>
     <input type="number" id="fStock" min="0" step="1" inputmode="numeric" placeholder="Blank = not tracked">
     <p class="hint">Stock is NOT cut automatically at order time — adjust it when an order is confirmed, so cancelled or unpaid orders never corrupt the stock count.</p>
-    <label for="fCat">Category</label>
-    <select id="fCat"></select>
+    <label>Categories — tick all that apply (the first one ticked is the main category)</label>
+    <div class="cat-chips" id="fCats"></div>
     <label for="fNewCat">New category name (only if you need a new one)</label>
     <input type="text" id="fNewCat" placeholder="e.g. Frozen">
     <label for="fPhotoUrl">Photo URL</label>
@@ -162,6 +169,7 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <div class="msg" id="formMsg"></div>
     <button type="button" class="big-btn" id="applyBtn">Add / Update product</button>
     <button type="button" class="big-btn grey" id="cancelEditBtn" hidden>Cancel edit</button>
+    <button type="button" class="big-btn grey" id="formResetBtn">↺ Reset form</button>
     <p class="hint">After adding or changing, press "💾 Save to shop" below to publish.</p>
   </section>
 
@@ -170,13 +178,14 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <h2>② Products <span id="prodCount" class="en"></span></h2>
     <div class="search-row">
       <input type="text" id="adminSearch" placeholder="Search products…">
-      <button type="button" class="mini edit" id="reloadBtn" style="font-size:1rem;">Reload</button>
+      <button type="button" class="mini edit" id="reloadBtn" style="font-size:1rem;">↺ Reload</button>
     </div>
     <div id="productList"></div>
     <p class="hint">Stock can also be adjusted with the −1 / +1 buttons on each product. Adjust stock when an order is confirmed — it is never cut automatically.</p>
     <p class="hint">Tap ⭐ to put a product in the shop's top slideshow. About 10 is best.</p>
     <p class="dirty-note" id="dirtyNote">● Unsaved changes — press "Save to shop" below.</p>
     <button type="button" class="big-btn gold" id="saveBtn">💾 Save to shop</button>
+    <button type="button" class="big-btn grey" id="reloadDiscardBtn">↺ Reload from shop — discard unsaved changes</button>
     <p class="hint" id="lastSaved">Last saved: —</p>
     <div class="msg" id="saveMsg"></div>
   </section>
@@ -319,7 +328,16 @@ var extraRoot = {}; /* any other root fields found in products.json — carried 
 var fileSha = null;
 var dirty = false;
 var editingId = null;
-var catTouched = false; /* true once the owner picks a category by hand (or edits a saved product) — photo OCR then leaves the category alone */
+var catTouched = false; /* true once the owner picks a category by hand (or edits a saved product) */
+var formCats = []; /* ordered category ids ticked in the Add/Edit form — formCats[0] is the PRIMARY category */
+var formDirty = false; /* true when the Add/Edit form (or its Quick Add mirror) holds un-applied input */
+/* The shop's own Google Apps Script endpoint (orders + customer ID). Photo
+   text reading also goes through it (server-side OCR — any API key lives in
+   the script's own properties, never in this page). This URL is already
+   public in the shop page; it is not a secret. A test may override it via
+   window.__ORDERS_API_URL. */
+var ORDERS_API_URL = "https://script.google.com/macros/s/AKfycby_-upjOI-USCbrD8b9wjcnYC7APdUrcIOVKY8S3zcB_r0ptbMgxAU-5k6hji53bDOhYA/exec";
+function ordersApiUrl(){ return (typeof window !== "undefined" && window.__ORDERS_API_URL) || ORDERS_API_URL; }
 
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -345,6 +363,26 @@ function catLabel(id){
 function normalizeActive(p){
   if (typeof p.active === "undefined") p.active = (p.on !== false);
   if ("on" in p) delete p.on;
+}
+/* Products may belong to SEVERAL categories: the optional "cats" array of
+   category ids. The legacy single "cat" is the PRIMARY category (the first
+   entry of cats) and is always written alongside cats on save, so older
+   shop versions keep working. A product loaded without "cats" is treated
+   as [cat]. */
+function productCats(p){
+  var raw = (p && Array.isArray(p.cats) && p.cats.length) ? p.cats : (p && p.cat ? [p.cat] : []);
+  var out = [];
+  raw.forEach(function(c){
+    var id = String(c == null ? "" : c).trim();
+    if (id && out.indexOf(id) === -1) out.push(id);
+  });
+  return out;
+}
+function normalizeCats(p){
+  var cats = productCats(p);
+  if (!cats.length) cats = [state.categories.length ? state.categories[0].id : "other"];
+  p.cats = cats;
+  p.cat = cats[0];
 }
 
 /* ---------- GitHub API layer ---------- */
@@ -374,6 +412,7 @@ function loadFromGitHub(){
     })
     .then(function(how){
       state.products.forEach(normalizeActive);
+      state.products.forEach(normalizeCats);
       dirty = false; editingId = null;
       $("mainPanel").hidden = false; $("formPanel").hidden = false;
       renderAll(); clearNoticeForm(); clearCouponForm(); updateLastSavedNote();
@@ -434,9 +473,41 @@ function updateLastSavedNote(){
 /* ---------- rendering ---------- */
 function renderCatOptions(){
   var html = state.categories.map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.en) + "</option>"; }).join("");
-  $("fCat").innerHTML = html;
   var q = $("qCat");
   if (q){ var cur = q.value; q.innerHTML = html; if (cur) q.value = cur; }
+  renderCatChips();
+}
+/* The Add/Edit form's category picker: one checkbox chip per category.
+   formCats (ordered) is the source of truth — the first ticked chip is
+   the primary category and is badged "MAIN". */
+function renderCatChips(){
+  var box = $("fCats");
+  if (!box) return;
+  box.innerHTML = state.categories.map(function(c){
+    var on = formCats.indexOf(c.id) !== -1;
+    var first = on && formCats[0] === c.id;
+    return '<label class="cat-chip' + (on ? " on" : "") + (first ? " first" : "") + '">'
+      + '<input type="checkbox" data-cat-chip="' + esc(c.id) + '"' + (on ? " checked" : "") + "> "
+      + esc(c.en) + ' <span class="primary-tag">MAIN</span></label>';
+  }).join("");
+  box.querySelectorAll("[data-cat-chip]").forEach(function(cb){
+    cb.addEventListener("change", function(){
+      var id = this.getAttribute("data-cat-chip");
+      if (this.checked){ if (formCats.indexOf(id) === -1) formCats.push(id); }
+      else { formCats = formCats.filter(function(c){ return c !== id; }); }
+      catTouched = true; formDirty = true;
+      renderCatChips();
+    });
+  });
+}
+function setFormCats(ids){
+  var out = [];
+  (ids || []).forEach(function(c){
+    var id = String(c == null ? "" : c).trim();
+    if (id && out.indexOf(id) === -1) out.push(id);
+  });
+  formCats = out;
+  renderCatChips();
 }
 function renderList(){
   var q = $("adminSearch").value.trim().toLowerCase();
@@ -455,7 +526,7 @@ function renderList(){
       : '<div class="d">No stock tracking</div>';
     return '<div class="prow' + (p.active === false ? " off-row" : "") + '" data-row="' + esc(p.id) + '">' + thumb
       + '<div class="info"><div class="n">' + esc(p.jp || p.en) + ' <span class="en">' + esc(p.en) + '</span></div>'
-      + '<div class="d">' + yen(p.price) + (p.size ? " ・ " + esc(p.size) : "") + " ・ " + esc(catLabel(p.cat)) + (p.active === false ? " ・ Hidden (OFF)" : "") + "</div>"
+      + '<div class="d">' + yen(p.price) + (p.size ? " ・ " + esc(p.size) : "") + " ・ " + esc(productCats(p).map(catLabel).join(", ")) + (p.active === false ? " ・ Hidden (OFF)" : "") + "</div>"
       + stockHtml + "</div>"
       + '<button type="button" class="mini star' + (p.popular ? " on" : "") + '" data-star="' + esc(p.id) + '" title="Popular — show in the top slideshow">' + (p.popular ? "⭐" : "☆") + '</button>'
       + '<label class="switch" title="Show / Hide in shop"><input type="checkbox" data-toggle="' + esc(p.id) + '"' + (p.active === false ? "" : " checked") + '><span class="sl"></span></label>'
@@ -505,6 +576,8 @@ function markDirty(){ dirty = true; $("dirtyNote").style.display = "block"; hide
 function clearForm(){
   editingId = null;
   catTouched = false;
+  formCats = [];
+  renderCatChips();
   ["fId","fEn","fJp","fIdn","fPrice","fSize","fStock","fNewCat","fPhotoUrl","fPhoto2Url"].forEach(function(id){ $(id).value = ""; });
   $("fPhotoFile").value = ""; $("fPhoto2File").value = ""; $("fOn").checked = true; $("fPopular").checked = false;
   $("photoPreview").style.display = "none"; $("photoPreview").src = "";
@@ -512,6 +585,18 @@ function clearForm(){
   $("formTitle").innerHTML = '① Add product';
   $("applyBtn").innerHTML = 'Add product';
   $("cancelEditBtn").hidden = true; hideMsg($("formMsg")); hideMsg($("ocrMsg"));
+  formDirty = false;
+}
+/* ↺ Reset: abandon everything typed/picked in the form (and its Quick
+   Add mirror) and go back to a clean "add new product" state. Asks first
+   when the form holds un-applied input. */
+function resetForm(){
+  if (formDirty && !window.confirm("Reset the form? Everything typed or picked in the form will be cleared.")) return false;
+  stopQuickSync();
+  clearForm();
+  clearQuick();
+  formDirty = false;
+  return true;
 }
 function startEdit(id){
   var p = findProduct(id); if (!p) return;
@@ -521,7 +606,8 @@ function startEdit(id){
   $("fIdn").value = p.idn || "";
   $("fPrice").value = p.price; $("fSize").value = p.size || "";
   $("fStock").value = (typeof p.stock === "number") ? p.stock : "";
-  renderCatOptions(); $("fCat").value = p.cat || "other";
+  formCats = productCats(p);
+  renderCatOptions();
   $("fNewCat").value = ""; $("fPhotoUrl").value = p.photo && p.photo.indexOf("data:") !== 0 ? p.photo : "";
   $("fPhoto2Url").value = p.photo2 && p.photo2.indexOf("data:") !== 0 ? p.photo2 : "";
   $("fOn").checked = p.active !== false;
@@ -531,6 +617,7 @@ function startEdit(id){
   $("formTitle").innerHTML = '① Edit product';
   $("applyBtn").innerHTML = 'Update product';
   $("cancelEditBtn").hidden = false; hideMsg($("formMsg"));
+  formDirty = false;
   $("formPanel").scrollIntoView({ block: "start" });
 }
 function currentPhotoValue(){
@@ -550,12 +637,15 @@ function applyForm(){
   var price = Number(priceRaw);
   if (!en){ showMsg($("formMsg"), "Please enter the product name (English).", "err"); return; }
   if (priceRaw === "" || isNaN(price) || price < 0){ showMsg($("formMsg"), "Please enter a valid price.", "err"); return; }
-  var cat = $("fCat").value || "other";
+  var cats = formCats.slice();
   var newCat = $("fNewCat").value.trim();
   if (newCat){
-    cat = slugify(newCat);
-    if (!state.categories.some(function(c){ return c.id === cat; })) state.categories.push({ id: cat, en: newCat, jp: newCat });
+    var newCatId = slugify(newCat);
+    if (!state.categories.some(function(c){ return c.id === newCatId; })) state.categories.push({ id: newCatId, en: newCat, jp: newCat });
+    cats = [newCatId].concat(cats.filter(function(c){ return c !== newCatId; })); /* the brand-new category is added, ticked, and becomes the main one */
   }
+  if (!cats.length) cats = [state.categories.length ? state.categories[0].id : "other"]; /* nothing ticked → the first category */
+  var cat = cats[0];
   var stockRaw = $("fStock").value.trim();
   var stockVal = null;
   if (stockRaw !== ""){
@@ -564,7 +654,7 @@ function applyForm(){
   }
   var data = {
     en: en, jp: $("fJp").value.trim(), idn: $("fIdn").value.trim(), price: Math.round(price),
-    size: $("fSize").value.trim(), stock: stockVal, cat: cat, photo: currentPhotoValue(), photo2: currentPhoto2Value(), active: $("fOn").checked, popular: $("fPopular").checked
+    size: $("fSize").value.trim(), stock: stockVal, cat: cat, cats: cats, photo: currentPhotoValue(), photo2: currentPhoto2Value(), active: $("fOn").checked, popular: $("fPopular").checked
   };
   if (editingId){
     var p = findProduct(editingId);
@@ -585,27 +675,34 @@ function deleteProduct(id){
   markDirty(); renderAll();
 }
 
-/* ---------- photo upload: resize to max 480px wide JPEG data-URI ---------- */
-function resizePhotoFile(file, cb){
+/* ---------- photo upload: resize to a max dimension, JPEG data-URI ---------- */
+function resizePhotoFileSized(file, maxDim, quality, cb){
   var url = URL.createObjectURL(file);
   var img = new Image();
   img.onload = function(){
-    var scale = Math.min(1, 480 / img.width);
+    var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
     var canvas = document.createElement("canvas");
     canvas.width = Math.round(img.width * scale);
     canvas.height = Math.round(img.height * scale);
     canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
     URL.revokeObjectURL(url);
-    cb(canvas.toDataURL("image/jpeg", 0.82));
+    cb(canvas.toDataURL("image/jpeg", quality));
   };
   img.src = url;
 }
+/* The photo SAVED with the product stays small: max 480px wide, q0.82. */
+function resizePhotoFile(file, cb){ resizePhotoFileSized(file, 480, 0.82, cb); }
 $("fPhotoFile").addEventListener("change", function(){
   var file = this.files && this.files[0]; if (!file) return;
+  formDirty = true;
   resizePhotoFile(file, function(dataUrl){
     $("photoPreview").src = dataUrl; $("photoPreview").style.display = "block";
     $("fPhotoUrl").value = "";
-    runOcr(dataUrl);
+    /* The online reader gets a larger version (up to ~1000px) than the
+       480px photo that gets saved with the product — better accuracy. */
+    resizePhotoFileSized(file, 1000, 0.85, function(ocrUrl){
+      runOcr(dataUrl, ocrUrl);
+    });
   });
 });
 $("fPhotoUrl").addEventListener("input", function(){
@@ -615,6 +712,7 @@ $("fPhotoUrl").addEventListener("input", function(){
 /* Photo 2 (back side): same resize pipeline, but OCR never runs on it. */
 $("fPhoto2File").addEventListener("change", function(){
   var file = this.files && this.files[0]; if (!file) return;
+  formDirty = true;
   resizePhotoFile(file, function(dataUrl){
     $("photo2Preview").src = dataUrl; $("photo2Preview").style.display = "block";
     $("fPhoto2Url").value = "";
@@ -626,13 +724,15 @@ $("fPhoto2Url").addEventListener("input", function(){
 });
 
 /* ---------- photo text reading (OCR pre-fill) ----------
-   After the owner picks a packet photo, read its printed text with
-   Tesseract.js (English + Japanese, loaded from CDN) and pre-fill the
-   form fields that are still EMPTY — text the owner typed is never
-   overwritten, and the category is only set when the owner has not
-   picked one by hand. OCR is a helper only: it never blocks saving,
-   and the owner is always told to check what was filled. The price is
-   never read from the photo — the owner types it himself. */
+   After the owner picks a packet photo, read its printed text and
+   pre-fill the form fields that are still EMPTY — text the owner typed
+   is never overwritten. The guessed category becomes the primary ticked
+   category; categories ticked by hand are kept. Two engines, in order:
+   the shop's own online reader (Apps Script endpoint, server-side), then
+   the built-in Tesseract.js reader as a silent fallback. OCR is a helper
+   only: it never blocks saving, and the owner is always told to check
+   what was filled. The price is never read from the photo — the owner
+   types it himself. */
 var OCR_CAT_KEYWORDS = [
   ["fish",   ["fish", "rui", "hilsa", "ilish", "pangas", "prawn", "shrimp"]],
   ["tea",    ["tea", "chai"]],
@@ -651,8 +751,13 @@ function ocrHasWord(text, kw){
 function ocrFmtUnit(u){ return u.toLowerCase() === "l" ? "L" : u.toLowerCase(); }
 function ocrDetectSize(text){
   var flat = " " + String(text).replace(/\s+/g, " ") + " ";
+  /* multipack first: "100g x 20", "500ml×12", "NET WT 450g x 6" */
   var m = flat.match(/(\d+(?:[.,]\d+)?)\s*(kg|g|ml|l)\s*[x×]\s*(\d+)/i);
   if (m) return m[1].replace(",", ".") + ocrFmtUnit(m[2]) + " x " + m[3];
+  /* Japanese sheet/piece counter: "100枚", "20枚入り" */
+  m = flat.match(/(\d+)\s*枚/);
+  if (m) return m[1] + "枚";
+  /* plain weight/volume — also catches "NET WT 450g", "450 g", "1.5kg", "内容量 500ml" */
   m = flat.match(/(\d+(?:[.,]\d+)?)\s*(kg|g|ml|l)\b/i);
   if (m) return m[1].replace(",", ".") + ocrFmtUnit(m[2]);
   m = flat.match(/(\d+)\s*(bags|bag|pcs|pieces|packs|pack)\b/i);
@@ -669,36 +774,79 @@ function ocrCleanNameLine(line, size){
     s = s.replace(new RegExp(core.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), " ");
   }
   s = s.replace(/(\d+(?:[.,]\d+)?)\s*(kg|g|ml|l)\b/gi, " ");
+  s = s.replace(/(\d+)\s*(bags|bag|pcs|pieces|packs|pack)\b/gi, " ");
+  s = s.replace(/(\d+)\s*枚/g, " ");
   s = s.replace(/[¥￥$€£]|[0-9]+(?:[.,][0-9]+)?\s*(円|yen)/gi, " ");
+  s = s.replace(/\bnet\s*wt\.?\b/gi, " ").replace(/\bwt\.?\b/gi, " "); /* "NET WT" labels are not part of a name */
   s = s.replace(/[^A-Za-z0-9&'’\-\/ ]+/g, " ").replace(/\s+/g, " ").trim();
   s = s.replace(/^[\-\/ ]+|[\-\/ ]+$/g, "");
   return s;
+}
+/* A line is junk for name purposes when it is mostly symbols or digit
+   noise, carries a long run of digits, or has almost no letters at all —
+   such lines come from barcodes, prices and packet clutter, and must
+   never end up in a name field. */
+function ocrIsJunkLine(line){
+  var s = String(line == null ? "" : line).replace(/\s+/g, "");
+  if (!s) return true;
+  var letters = (s.match(/[A-Za-z぀-ヿ一-鿿]/g) || []).length;
+  var digits = (s.match(/[0-9]/g) || []).length;
+  var others = s.length - letters - digits;
+  if (letters === 0) return true;
+  if (others > letters) return true;
+  if (digits >= letters) return true;
+  if (/\d{4,}/.test(s)) return true;
+  if (/[|~^`]/.test(s) && letters < 4) return true;
+  return false;
 }
 function parseOcrText(text){
   var out = { name: "", jp: "", size: "", cat: "" };
   if (!text) return out;
   out.size = ocrDetectSize(text);
   var lines = String(text).split(/\r?\n/).map(function(l){ return l.trim(); }).filter(function(l){ return l.length >= 2; });
-  /* English name: the printed line with the most Latin letters wins;
-     a lone brand word on one line is joined with the next name-like line. */
+  /* English name: the printed line with the most Latin letters wins —
+     junk lines (barcodes, prices, symbol noise) are never candidates.
+     A lone ALL-CAPS brand line just above the winner is kept, in caps,
+     in front of it (e.g. "SHAN" + "Chicken Tikka Masala"); a lone brand
+     word on the winning line itself is joined with the next clean line. */
   var bestIdx = -1, bestScore = 0;
   lines.forEach(function(line, i){
     if (/[぀-ヿ一-鿿]/.test(line)) return;
+    if (ocrIsJunkLine(line)) return;
     var letters = (line.match(/[A-Za-z]/g) || []).length;
     var cleaned = ocrCleanNameLine(line, out.size);
     var cleanLetters = (cleaned.match(/[A-Za-z]/g) || []).length;
+    var cleanDigits = (cleaned.match(/[0-9]/g) || []).length;
+    if (cleanDigits >= cleanLetters) return;   /* mostly digits after cleaning — not a name */
     if (letters >= 3 && cleanLetters >= 2 && letters > bestScore){ bestScore = letters; bestIdx = i; }
   });
   if (bestIdx >= 0){
     var name = ocrCleanNameLine(lines[bestIdx], out.size);
-    if (name && name.indexOf(" ") === -1 && bestIdx + 1 < lines.length && !/[぀-ヿ一-鿿]/.test(lines[bestIdx + 1])){
+    if (name && name.indexOf(" ") === -1 && bestIdx + 1 < lines.length && !/[぀-ヿ一-鿿]/.test(lines[bestIdx + 1]) && !ocrIsJunkLine(lines[bestIdx + 1])){
       var next = ocrCleanNameLine(lines[bestIdx + 1], out.size);
       if (next && (next.match(/[A-Za-z]/g) || []).length >= 3 && (name + " " + next).length <= 42) name = name + " " + next;
     }
-    if ((name.match(/[A-Za-z]/g) || []).length >= 2) out.name = ocrTitleCase(name);
+    if ((name.match(/[A-Za-z]/g) || []).length >= 2){
+      name = ocrTitleCase(name);
+      /* brand line directly above the winner: a single ALL-CAPS word,
+         kept in its printed caps */
+      if (bestIdx > 0){
+        var above = lines[bestIdx - 1];
+        if (!/[぀-ヿ一-鿿]/.test(above) && !ocrIsJunkLine(above) && above.indexOf(" ") === -1
+            && /^[A-Za-z][A-Za-z&'’.\-]*$/.test(above) && above === above.toUpperCase() && above.length >= 2 && above.length <= 14){
+          var brand = ocrCleanNameLine(above, out.size);
+          if (brand && (brand.match(/[A-Za-z]/g) || []).length >= 2 && name.toUpperCase().indexOf(brand.toUpperCase()) !== 0){
+            name = brand.toUpperCase() + " " + name;
+          }
+        }
+      }
+      /* final safety: never hand back symbol junk or long digit runs */
+      if (!/[|~^`]/.test(name) && !/\d{4,}/.test(name)) out.name = name;
+    }
   }
-  /* Japanese name: first mostly-Japanese line. */
+  /* Japanese name: first mostly-Japanese line that is not junk. */
   for (var i = 0; i < lines.length; i++){
+    if (ocrIsJunkLine(lines[i])) continue;
     var jpChars = (lines[i].match(/[぀-ヿ一-鿿]/g) || []).length;
     var latChars = (lines[i].match(/[A-Za-z]/g) || []).length;
     if (jpChars >= 2 && latChars <= 2){ out.jp = lines[i].replace(/\s+/g, " ").slice(0, 40); break; }
@@ -714,7 +862,7 @@ function parseOcrText(text){
   }
   return out;
 }
-function applyOcrResult(text){
+function applyOcrResult(text, engine){
   var note = $("ocrMsg");
   if (!text || !String(text).trim()){
     showMsg(note, "Could not read any text from this photo — please fill in the details by hand.", "info");
@@ -725,14 +873,104 @@ function applyOcrResult(text){
   if (r.name && !$("fEn").value.trim()){ $("fEn").value = r.name; filled.push("name"); }
   if (r.jp && !$("fJp").value.trim()){ $("fJp").value = r.jp; filled.push("Japanese name"); }
   if (r.size && !$("fSize").value.trim()){ $("fSize").value = r.size; filled.push("size"); }
-  if (r.cat && !catTouched && state.categories.some(function(c){ return c.id === r.cat; })){ $("fCat").value = r.cat; filled.push("category"); }
+  /* the guessed category becomes the PRIMARY tick — categories the owner
+     already ticked by hand are kept, never cleared */
+  if (r.cat && state.categories.some(function(c){ return c.id === r.cat; }) && formCats[0] !== r.cat){
+    formCats = [r.cat].concat(formCats.filter(function(c){ return c !== r.cat; }));
+    renderCatChips();
+    filled.push("category");
+  }
+  var engineNote = engine ? " (Read by " + engine + ")" : "";
   if (filled.length){
-    showMsg(note, "Auto-filled from photo: " + filled.join(", ") + " — please check before saving. You still need to type the price.", "info");
+    formDirty = true;
+    showMsg(note, "Auto-filled from photo: " + filled.join(", ") + " — please check before saving. You still need to type the price." + engineNote, "info");
   } else {
-    showMsg(note, "Photo read, but nothing new to fill in — the fields were already filled, or no clear name/size was found.", "info");
+    showMsg(note, "Photo read, but nothing new to fill in — the fields were already filled, or no clear name/size was found." + engineNote, "info");
   }
 }
-function runOcr(dataUrl){
+/* ---------- the two reading engines ----------
+   1) ONLINE reader (preferred): the photo is sent to the shop's own Apps
+      Script endpoint, which reads it server-side (accurate on packet
+      names/weights). Any failure or a ~20s timeout falls back silently.
+   2) BUILT-IN reader: Tesseract.js in the browser, on a pre-processed
+      (upscaled, grayscale, contrast-boosted, sharpened) copy of the
+      photo. Works offline and when the online reader is down. */
+/* fetch() with a hard timeout (AbortController where available) */
+function fetchWithTimeout(url, options, ms){
+  if (window.AbortController){
+    var ctl = new AbortController();
+    var timer = setTimeout(function(){ try { ctl.abort(); } catch (e) {} }, ms);
+    var opts = {};
+    Object.keys(options || {}).forEach(function(k){ opts[k] = options[k]; });
+    opts.signal = ctl.signal;
+    return fetch(url, opts).finally(function(){ clearTimeout(timer); });
+  }
+  return Promise.race([
+    fetch(url, options || {}),
+    new Promise(function(_, reject){ setTimeout(function(){ reject(new Error("timeout")); }, ms); })
+  ]);
+}
+function ordersApiOcr(dataUrl){
+  var body = JSON.stringify({ action: "ocr", image: dataUrl, lang: "eng" });
+  return fetchWithTimeout(ordersApiUrl(), {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },   /* simple request — no CORS preflight */
+    body: body
+  }, 20000).then(function(r){
+    if (!r.ok) throw new Error("online reader HTTP " + r.status);
+    return r.json();
+  }).then(function(j){
+    if (!j || j.ok !== true || typeof j.text !== "string") throw new Error("online reader bad response");
+    return j.text;
+  });
+}
+/* Pre-process a photo for the built-in reader: upscale 2× (capped),
+   grayscale, contrast boost, a light sharpen, and clamp the extremes
+   (a mild threshold) — packet print reads far better this way. Any
+   failure returns the original image untouched. */
+function preprocessForOcr(dataUrl){
+  return new Promise(function(resolve){
+    var img = new Image();
+    img.onload = function(){
+      try {
+        var scale = Math.min(2, 1600 / Math.max(1, img.width));
+        var w = Math.max(1, Math.round(img.width * scale));
+        var h = Math.max(1, Math.round(img.height * scale));
+        var canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        var idata = ctx.getImageData(0, 0, w, h);
+        var d = idata.data;
+        var gray = new Float32Array(w * h);
+        var i, p;
+        for (i = 0, p = 0; i < d.length; i += 4, p++){
+          var g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+          var c = (g - 128) * 1.4 + 128;                 /* contrast boost */
+          gray[p] = c < 0 ? 0 : (c > 255 ? 255 : c);
+        }
+        for (var y = 0; y < h; y++){
+          for (var x = 0; x < w; x++){
+            p = y * w + x;
+            var v = gray[p];
+            if (x > 0 && x < w - 1 && y > 0 && y < h - 1){
+              v = v * 1.9 - 0.225 * (gray[p - 1] + gray[p + 1] + gray[p - w] + gray[p + w]);  /* light sharpen */
+            }
+            if (v < 55) v = 0; else if (v > 200) v = 255;  /* mild threshold at the extremes */
+            var o = p * 4;
+            d[o] = d[o + 1] = d[o + 2] = (v < 0 ? 0 : (v > 255 ? 255 : v));
+            d[o + 3] = 255;
+          }
+        }
+        ctx.putImageData(idata, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      } catch (e) { resolve(dataUrl); }
+    };
+    img.onerror = function(){ resolve(dataUrl); };
+    img.src = dataUrl;
+  });
+}
+function runTesseractOcr(dataUrl){
   var note = $("ocrMsg");
   if (!window.Tesseract){
     showMsg(note, "Photo text reading is not available right now (the reading library did not load) — please fill in the details by hand.", "info");
@@ -741,10 +979,13 @@ function runOcr(dataUrl){
   showMsg(note, "Reading text from the photo…", "info");
   var opts = (window.__OCR_CONFIG && typeof window.__OCR_CONFIG === "object") ? window.__OCR_CONFIG : {};
   var worker = null;
-  return Tesseract.createWorker(["eng", "jpn"], 1, opts)
-    .then(function(w){ worker = w; return worker.recognize(dataUrl); })
+  return preprocessForOcr(dataUrl)
+    .then(function(procUrl){
+      return Tesseract.createWorker(["eng", "jpn"], 1, opts)
+        .then(function(w){ worker = w; return worker.recognize(procUrl); });
+    })
     .then(function(res){
-      applyOcrResult(res && res.data ? res.data.text : "");
+      applyOcrResult(res && res.data ? res.data.text : "", "built-in reader");
       return true;
     })
     .catch(function(){
@@ -752,6 +993,18 @@ function runOcr(dataUrl){
       return false;
     })
     .finally(function(){ if (worker){ try { var tp = worker.terminate(); if (tp && tp.catch) tp.catch(function(){}); } catch (e) {} } });
+}
+function runOcr(dataUrl, ocrDataUrl){
+  var note = $("ocrMsg");
+  showMsg(note, "Reading text from the photo…", "info");
+  return ordersApiOcr(ocrDataUrl || dataUrl)
+    .then(function(text){
+      if (text && String(text).trim()){ applyOcrResult(text, "online reader"); return true; }
+      return runTesseractOcr(dataUrl);   /* online reader found nothing — try the built-in one */
+    })
+    .catch(function(){
+      return runTesseractOcr(dataUrl);   /* online reader failed/timed out — silent fallback */
+    });
 }
 
 /* ---------- Quick Add ----------
@@ -772,7 +1025,7 @@ function syncQuickFromForm(){
   var om = $("ocrMsg");
   if (om.textContent){ showMsg($("qOcrMsg"), om.textContent, om.className.indexOf("err") !== -1 ? "err" : "info"); }
   if (document.activeElement !== $("qEn") && $("fEn").value) $("qEn").value = $("fEn").value;
-  if ($("fCat").value) $("qCat").value = $("fCat").value;
+  if (formCats.length) $("qCat").value = formCats[0];   /* the card shows the form's PRIMARY category */
 }
 function startQuickSync(){
   stopQuickSync();
@@ -797,7 +1050,7 @@ function quickAddSave(){
   if (editingId) clearForm(); /* Quick Add always adds a NEW product */
   $("fEn").value = nm; $("fPrice").value = pr; $("fNewCat").value = nc;
   $("fPopular").checked = $("qPopular").checked;
-  if (ct){ $("fCat").value = ct; catTouched = true; }
+  if (ct){ setFormCats([ct]); catTouched = true; } /* Quick Add is add-only: cats = [the card's selected category] */
   if (photo){
     if (photo.indexOf("data:") === 0){ $("photoPreview").src = photo; $("photoPreview").style.display = "block"; }
     else { $("fPhotoUrl").value = photo; }
@@ -847,12 +1100,13 @@ $("qPhoto2File").addEventListener("change", function(){
   $("fPhoto2File").dispatchEvent(new Event("change"));
   startQuickSync();
 });
-$("qEn").addEventListener("input", function(){ $("fEn").value = this.value; });
-$("qPrice").addEventListener("input", function(){ $("fPrice").value = this.value; });
-$("qNewCat").addEventListener("input", function(){ $("fNewCat").value = this.value; });
-$("qCat").addEventListener("change", function(){ $("fCat").value = this.value; catTouched = true; });
-$("qPopular").addEventListener("change", function(){ $("fPopular").checked = this.checked; });
+$("qEn").addEventListener("input", function(){ $("fEn").value = this.value; formDirty = true; });
+$("qPrice").addEventListener("input", function(){ $("fPrice").value = this.value; formDirty = true; });
+$("qNewCat").addEventListener("input", function(){ $("fNewCat").value = this.value; formDirty = true; });
+$("qCat").addEventListener("change", function(){ setFormCats([this.value]); catTouched = true; formDirty = true; });
+$("qPopular").addEventListener("change", function(){ $("fPopular").checked = this.checked; formDirty = true; });
 $("qAddSaveBtn").addEventListener("click", quickAddSave);
+$("qResetBtn").addEventListener("click", function(){ resetForm(); });
 
 /* ---------- 📢 News board (notices) ----------
    Owner announcements live in the "notices" array at the root of
@@ -1084,11 +1338,22 @@ $("reloadBtn").addEventListener("click", function(){
   if (dirty && !window.confirm("Unsaved changes will be lost. Reload anyway?")) return;
   loadFromGitHub();
 });
+$("reloadDiscardBtn").addEventListener("click", function(){
+  if ((dirty || formDirty) && !window.confirm("Discard ALL unsaved changes and reload the product list from the shop?")) return;
+  loadFromGitHub().then(function(){ clearForm(); clearQuick(); formDirty = false; });
+});
 $("saveBtn").addEventListener("click", function(){ saveToGitHub().catch(function(){}); });
 $("applyBtn").addEventListener("click", applyForm);
 $("cancelEditBtn").addEventListener("click", clearForm);
+$("formResetBtn").addEventListener("click", function(){ resetForm(); });
 $("adminSearch").addEventListener("input", renderList);
-$("fCat").addEventListener("change", function(){ catTouched = true; });
+/* any typing/picking in the form (or its Quick Add mirror) marks it dirty,
+   so ↺ Reset can ask before clearing */
+["fEn","fJp","fIdn","fPrice","fSize","fStock","fNewCat","fPhotoUrl","fPhoto2Url"].forEach(function(id){
+  $(id).addEventListener("input", function(){ formDirty = true; });
+});
+$("fOn").addEventListener("change", function(){ formDirty = true; });
+$("fPopular").addEventListener("change", function(){ formDirty = true; });
 
 /* ---------- staff quick-reply templates ---------- */
 var REPLY_TEMPLATES = [
@@ -1364,7 +1629,10 @@ window.__supershopAdmin = { getState: function(){ return state; }, buildPayload:
   coupons: { list: function(){ return state.coupons; }, apply: applyCoupon, summary: couponSummary, find: findCoupon },
   tax: { rate: function(){ return state.taxRate; }, syncFromInput: syncTaxFromInput, parse: parseTaxRate },
   quick: { addSave: quickAddSave, sync: syncQuickFromForm, updateTokenNotice: updateTokenNotice },
-  ocr: { parse: parseOcrText, run: runOcr, apply: applyOcrResult },
+  ocr: { parse: parseOcrText, run: runOcr, apply: applyOcrResult, online: ordersApiOcr, preprocess: preprocessForOcr, apiUrl: ordersApiUrl,
+         isJunk: ocrIsJunkLine, detectSize: ocrDetectSize },
+  form: { cats: function(){ return formCats.slice(); }, setCats: setFormCats, productCats: productCats,
+          reset: resetForm, isDirty: function(){ return formDirty; }, isEdit: function(){ return !!editingId; } },
   points: { data: function(){ return pointsData; }, balances: pointBalances, load: loadPoints, save: savePoints, sha256Hex: sha256Hex, addOneMonth: addOneMonth, normalizePhone: normalizePhone, todayStr: todayStr, cancelEarn: cancelEarn, addAdjust: addAdjust } };
 
 /* ---------- init ---------- */
