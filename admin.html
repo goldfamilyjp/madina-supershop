@@ -20,6 +20,16 @@ header .s{color:var(--gold); font-size:.9rem;}
 .wrap{max-width:860px; margin:0 auto; padding:16px 12px;}
 .panel{background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:16px;}
 .panel h2{color:var(--green); font-size:1.1rem; margin-bottom:8px;}
+.sales-cards{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;}
+.sales-card{flex:1 1 140px; border:1px solid var(--line); border-radius:12px; padding:12px; background:#fbfaf5;}
+.sales-card .sc-title{font-size:.85rem; font-weight:700; color:var(--muted); letter-spacing:.04em;}
+.sales-card .sc-sales{font-size:1.45rem; font-weight:800; color:var(--green); margin:2px 0;}
+.sales-card .sc-sub{font-size:.85rem; color:var(--ink);}
+.sales-growth{margin-top:12px; font-size:.95rem;}
+.sales-growth .up{color:#1a7f37; font-weight:700;}
+.sales-growth .down{color:var(--red); font-weight:700;}
+.sales-top{margin-top:12px;}
+.sales-top li{margin:4px 0 4px 20px;}
 .big-btn{display:block; width:100%; background:var(--green); color:#fff; border:none; border-radius:12px; padding:16px; font-size:1.1rem; font-weight:800; cursor:pointer; margin-top:10px;}
 .big-btn.gold{background:var(--gold); color:var(--green-dark);}
 .big-btn.grey{background:#eef3ee; color:var(--ink); border:2px solid var(--line);}
@@ -234,9 +244,18 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <a class="big-btn gold" style="text-align:center; text-decoration:none;" href="https://docs.google.com/spreadsheets/d/1NYooZTu01gP6cmp5k8we60Uhz4KKhgU4993zGIgt5Hw/edit" target="_blank" rel="noopener">📋 Open orders sheet</a>
   </section>
 
+  <!-- ===== Sales report (from the Orders sheet, via the Apps Script) ===== -->
+  <section class="panel" id="salesPanel">
+    <h2>⑥ Sales report</h2>
+    <p class="hint">Sales totals worked out from the orders recorded in the Google Sheet's <strong>“Orders”</strong> tab (see ⑤ Orders) — today, this week and this month, how they compare with the period before, the best-selling products, and how many customers came back. Press the button to load the latest figures.</p>
+    <button type="button" class="big-btn" id="salesLoadBtn">📊 Load sales report</button>
+    <div class="msg" id="salesMsg"></div>
+    <div id="salesResult"></div>
+  </section>
+
   <!-- ===== News board (owner announcements) ===== -->
   <section class="panel" id="newsPanel">
-    <h2>⑥ News board</h2>
+    <h2>⑦ News board</h2>
     <p class="hint">Post a message or offer here — for example a courier-delay warning or a rice special offer. It appears at the top of the shop in an animated gold banner, and in the shop's News board under the banner photo. Write it in any language (or all three) — the shop shows each customer the matching language, falling back to the first one filled in. The newest message shows first. Press "💾 Save to shop" to publish.</p>
     <label for="nJp">Message — Japanese</label>
     <textarea id="nJp" rows="2" placeholder="例：年末は宅配便が遅れる場合があります"></textarea>
@@ -256,7 +275,7 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 
   <!-- ===== Coupons, vouchers & tax ===== -->
   <section class="panel" id="couponPanel">
-    <h2>⑦ Coupons, vouchers &amp; tax</h2>
+    <h2>⑧ Coupons, vouchers &amp; tax</h2>
     <h3 style="color:var(--green); font-size:1rem; margin:10px 0 2px;">🧾 Consumption tax</h3>
     <label for="taxRate">Consumption tax rate %</label>
     <input type="number" id="taxRate" min="0" max="30" step="0.1" value="8">
@@ -285,7 +304,7 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 
   <!-- ===== Setup / token ===== -->
   <section class="panel" id="setupPanel">
-    <h2>⑧ Setup — GitHub Token</h2>
+    <h2>⑨ Setup — GitHub Token</h2>
     <p class="hint">A GitHub token (a password-like string) is needed once so this page can save products. Paste it below — it is stored <strong>only on this device</strong> (in this browser), never in any file.</p>
     <label for="tokenInput">Paste token</label>
     <input type="password" id="tokenInput" placeholder="github_pat_…" autocomplete="off">
@@ -439,7 +458,7 @@ function buildPayload(){
 }
 function saveToGitHub(){
   syncTaxFromInput();   /* the tax field rides along with every save, whichever button is pressed */
-  if (!token()){ showMsg($("saveMsg"), "No token — set it up in ⑧ Setup (bottom of this page) first.", "err"); return Promise.reject(new Error("no token")); }
+  if (!token()){ showMsg($("saveMsg"), "No token — set it up in ⑨ Setup (bottom of this page) first.", "err"); return Promise.reject(new Error("no token")); }
   var body = {
     message: "Update products via Madina Supershop admin panel",
     content: b64encodeUtf8(JSON.stringify(buildPayload(), null, 2))
@@ -1171,7 +1190,7 @@ function applyNotice(){
   hideMsg($("newsMsg"));
   var jp = $("nJp").value.trim(), en = $("nEn").value.trim(), idn = $("nIdn").value.trim();
   if (!jp && !en && !idn){ showMsg($("newsMsg"), "Please write the message in at least one language.", "err"); return; }
-  if (!token()){ showMsg($("newsMsg"), "No token — set it up in ⑧ Setup (bottom of this page) first.", "err"); return; }
+  if (!token()){ showMsg($("newsMsg"), "No token — set it up in ⑨ Setup (bottom of this page) first.", "err"); return; }
   var date = $("nDate").value || todayJstStr();
   var wasEdit = !!editingNoticeId;
   if (wasEdit){
@@ -1200,12 +1219,12 @@ $("newsSaveBtn").addEventListener("click", function(){
     showMsg($("newsMsg"), "✅ Saved! The shop updates in 1–2 minutes.", "ok");
   }).catch(function(err){
     showMsg($("newsMsg"), !token()
-      ? "No token — set it up in ⑧ Setup (bottom of this page) first."
+      ? "No token — set it up in ⑨ Setup (bottom of this page) first."
       : "Save failed (" + err.message + ") — please try again.", "err");
   }).finally(function(){ btn.disabled = false; });
 });
 
-/* ---------- 🎟️ Coupons & gift vouchers (panel ⑦ also holds the tax rate) ----------
+/* ---------- 🎟️ Coupons & gift vouchers (panel ⑧ also holds the tax rate) ----------
    Discount codes live in the "coupons" array at the root of
    products.json: { code, kind: "yen"|"pct", value, min, expiry, active }.
    A gift voucher is just a yen-kind coupon with a gift-style code
@@ -1280,7 +1299,7 @@ function applyCoupon(){
   if (dup && String(dup.code).trim().toUpperCase() !== editingCouponCode){
     showMsg($("couponMsg"), "That code is already used — please pick a different code.", "err"); return;
   }
-  if (!token()){ showMsg($("couponMsg"), "No token — set it up in ⑧ Setup (bottom of this page) first.", "err"); return; }
+  if (!token()){ showMsg($("couponMsg"), "No token — set it up in ⑨ Setup (bottom of this page) first.", "err"); return; }
   var wasEdit = !!editingCouponCode;
   if (wasEdit){
     var c = findCoupon(editingCouponCode);
@@ -1308,8 +1327,83 @@ $("couponSaveBtn").addEventListener("click", function(){
     showMsg($("couponMsg"), "✅ Saved! The shop updates in 1–2 minutes.", "ok");
   }).catch(function(err){
     showMsg($("couponMsg"), !token()
-      ? "No token — set it up in ⑧ Setup (bottom of this page) first."
+      ? "No token — set it up in ⑨ Setup (bottom of this page) first."
       : "Save failed (" + err.message + ") — please try again.", "err");
+  }).finally(function(){ btn.disabled = false; });
+});
+
+/* ---------- 📊 Sales report (panel ⑥) ----------
+   Asks the shop's Apps Script endpoint (the same one the photo reader
+   uses) for action "stats": the script totals the Orders sheet by JST
+   day / Monday-start week / calendar month and answers with the figures
+   as JSON. Read-only — loading the report never changes anything. */
+function statsApi(){
+  return fetchWithTimeout(ordersApiUrl(), {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },   /* simple request — no CORS preflight */
+    body: JSON.stringify({ action: "stats" })
+  }, 30000).then(function(r){
+    if (!r.ok) throw new Error("sales report HTTP " + r.status);
+    return r.json();
+  }).then(function(j){
+    if (!j || j.ok !== true) throw new Error("sales report bad response");
+    return j;
+  });
+}
+function salesCount(n){ return Number(n || 0).toLocaleString("ja-JP"); }
+function salesCardHtml(title, b){
+  b = b || {};
+  return '<div class="sales-card"><div class="sc-title">' + title + '</div>'
+    + '<div class="sc-sales">' + yen(b.sales || 0) + '</div>'
+    + '<div class="sc-sub">' + salesCount(b.orders) + ' orders · avg ' + yen(b.avg || 0) + '</div></div>';
+}
+function salesGrowthHtml(label, pct, vsLabel){
+  if (pct === null || pct === undefined || isNaN(Number(pct)))
+    return '<div>' + label + ': <strong>—</strong> <span class="hint">(no sales ' + vsLabel + ' to compare)</span></div>';
+  var v = Number(pct);
+  var arrow = v >= 0
+    ? '<span class="up">▲ ' + Math.abs(v).toLocaleString("ja-JP") + '%</span>'
+    : '<span class="down">▼ ' + Math.abs(v).toLocaleString("ja-JP") + '%</span>';
+  return '<div>' + label + ': ' + arrow + ' <span class="hint">vs ' + vsLabel + '</span></div>';
+}
+function renderSalesReport(s){
+  var html = '<div class="sales-cards">'
+    + salesCardHtml("TODAY", s.today)
+    + salesCardHtml("THIS WEEK", s.thisWeek)
+    + salesCardHtml("THIS MONTH", s.thisMonth)
+    + '</div>';
+  html += '<p class="hint" style="margin-top:10px;">Yesterday: ' + yen((s.yesterday || {}).sales || 0)
+    + ' (' + salesCount((s.yesterday || {}).orders) + ' orders)</p>';
+  html += '<div class="sales-growth">'
+    + salesGrowthHtml("Week growth", s.weekGrowthPct, "last week")
+    + salesGrowthHtml("Month growth", s.monthGrowthPct, "last month")
+    + '</div>';
+  var tops = Array.isArray(s.topProducts) ? s.topProducts : [];
+  if (tops.length){
+    html += '<div class="sales-top"><strong>Top products (by quantity sold)</strong><ol>'
+      + tops.map(function(t){
+          return '<li>' + esc(t.name) + ' — ×' + salesCount(t.qty)
+            + (Number(t.amount) > 0 ? ' — ' + yen(t.amount) : '') + '</li>';
+        }).join("")
+      + '</ol></div>';
+  } else {
+    html += '<p class="hint" style="margin-top:10px;">No product sales recorded yet.</p>';
+  }
+  var cu = s.customers || {};
+  html += '<p style="margin-top:12px;">Customers: <strong>' + salesCount(cu.total) + ' total · '
+    + salesCount(cu.repeat) + ' repeat</strong> <span class="hint">(repeat = ordered 2 or more times)</span></p>';
+  $("salesResult").innerHTML = html;
+}
+$("salesLoadBtn").addEventListener("click", function(){
+  var btn = this;
+  btn.disabled = true;
+  showMsg($("salesMsg"), "Loading the sales report…", "info");
+  statsApi().then(function(s){
+    renderSalesReport(s);
+    showMsg($("salesMsg"), "✅ Sales report loaded" + (s.generatedAt ? " (" + esc(s.generatedAt) + ")" : "") + ".", "ok");
+  }).catch(function(err){
+    $("salesResult").innerHTML = "";
+    showMsg($("salesMsg"), "Could not load the sales report (" + err.message + ") — check the connection and try again.", "err");
   }).finally(function(){ btn.disabled = false; });
 });
 
@@ -1469,7 +1563,7 @@ function pointBalances(rec){
 }
 function markPointsDirty(){ pointsDirty = true; $("pointsDirty").style.display = "block"; hideMsg($("pointsMsg")); }
 function loadPoints(){
-  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ⑧ Setup first.", "err"); return Promise.resolve(false); }
+  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ⑨ Setup first.", "err"); return Promise.resolve(false); }
   return fetch(POINTS_API, { headers: apiHeaders() })
     .then(function(r){
       if (r.status === 404){ pointsSha = null; pointsData = { customers: [] }; return true; }
@@ -1488,7 +1582,7 @@ function loadPoints(){
     });
 }
 function savePoints(){
-  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ⑧ Setup first.", "err"); return Promise.resolve(false); }
+  if (!token()){ showMsg($("pointsMsg"), "No token — set it up in ⑨ Setup first.", "err"); return Promise.resolve(false); }
   var body = {
     message: "Update points via Madina Supershop admin panel",
     content: b64encodeUtf8(JSON.stringify(pointsData, null, 2))
