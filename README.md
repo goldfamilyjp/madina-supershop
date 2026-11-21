@@ -11,7 +11,7 @@ where it belongs — branch / pickup names, the logo, contact lines.)
 
 **Admin panel layout:** the daily-use sections come first — ① Add product
 (with the ⚡ Quick Add card at the top), ② Products, ③ Reply templates, ④ Points, ⑤ Orders,
-⑥ News board, ⑦ Coupons & gift vouchers — and ⑧ Setup (GitHub token) sits at the very bottom, because the token is a one-time setup.
+⑥ News board, ⑦ Coupons, vouchers & tax — and ⑧ Setup (GitHub token) sits at the very bottom, because the token is a one-time setup.
 If no token is saved on the device, a slim notice at the top of the page points down to Setup.
 
 ## How saving works (GitHub is the database)
@@ -399,7 +399,7 @@ discount comes off the order. A **gift voucher** is not a separate system — it
   `min` is the minimum **product subtotal** (0 = no minimum); `expiry` blank = never expires.
   Like notices, coupons ride through the admin's load/save flow untouched by other saves, so a
   product-only save never loses them.
-- **Creating codes (admin → ⑦ Coupons & gift vouchers):** type the code (it is stored
+- **Creating codes (admin → ⑦ Coupons, vouchers & tax):** type the code (it is stored
   upper-cased), choose ¥ off or % off, the value, an optional minimum subtotal and an optional
   expiry date, press “Add coupon” (or Edit an existing one), then “💾 Save to shop”. Codes must
   be **unique** (case-insensitive), the value must be above 0, and a % coupon is capped at 90%.
@@ -411,15 +411,37 @@ discount comes off the order. A **gift voucher** is not a separate system — it
   code per order.** A ¥ coupon takes `min(value, subtotal)` off; a % coupon takes
   `floor(subtotal × value ÷ 100)` off. The green “割引 / Discount / Diskon −¥X” line appears in
   the totals, and an applied code shows as a chip with a ✕ to remove it.
-- **Totals rule:** grand total = **subtotal − discount + courier fee**. The free-courier
-  threshold (¥10,000) is judged on the **pre-discount** subtotal, and the courier fee itself is
-  never discounted — a ¥10,500 order with a ¥500 coupon still ships free and totals ¥10,000.
+- **Totals rule:** grand total = **subtotal − discount + consumption tax + courier fee** (see
+  the Tax section below). The free-courier threshold (¥10,000) is judged on the **pre-discount**
+  subtotal, and the courier fee itself is never discounted — a ¥10,500 order with a ¥500 coupon
+  still ships free (at the default 8% tax it totals ¥10,800).
 - **Changing the cart:** if the subtotal drops below the applied coupon's minimum, the discount
   **pauses** (a trilingual note says so) and resumes by itself if the subtotal recovers —
   the same behaviour as the restaurant menu site.
 - **Order records:** the discount appears on the on-screen ticket, in the WhatsApp order text,
   and in the Google Form / Sheet order details (a line like “クーポン COUPON500: −¥500”), and
   the confirmation email's totals include it too — every record shows the same grand total.
+
+## 🧾 Tax (consumption tax)
+
+Checkout adds consumption tax on top of the discounted product subtotal.
+
+- **Data:** an optional `taxRate` number (percent) at the root of `products.json`. **Absent =
+  default 8.** Like coupons and notices, it is handled explicitly by the admin's data layer, so
+  every save writes it back and no other save can drop it.
+- **Changing it (admin → ⑦ Coupons, vouchers & tax):** the “Consumption tax rate %” field at the
+  top of the panel is prefilled with the current rate (0–30, decimals like 8.5 allowed). Type
+  the new rate and press any “💾 Save to shop” — the value rides along with every save. **Set 0
+  for no tax** (a saved 0 is kept as 0, not treated as absent).
+- **Math:** taxable = product subtotal − coupon discount (never below 0);
+  tax = `floor(taxable × taxRate ÷ 100)`; grand total = **taxable + tax + courier fee**. The
+  **courier fee is not taxed**, and the ¥10,000 free-courier threshold is still judged on the
+  pre-discount subtotal, unchanged.
+- **Display:** when the computed tax is above 0, a “消費税（8%） / Tax (8%) / Pajak (8%)” line
+  (with the current rate interpolated) appears in the checkout totals, and the cart bar total
+  includes the tax. The same tax line and the corrected grand total appear on the on-screen
+  ticket, in the WhatsApp order text, in the Google Form / Sheet order details and its total,
+  and in the confirmation email. When the tax computes to 0, no tax line is shown anywhere.
 
 ## Responsive design (phones, tablets, desktops)
 

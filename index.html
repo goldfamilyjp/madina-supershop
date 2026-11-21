@@ -516,6 +516,7 @@ var CATEGORIES = [];
 var PRODUCTS = [];
 var NOTICES = [];
 var COUPONS = [];
+var TAX_RATE = 8;   /* consumption tax % — from products.json "taxRate"; absent = default 8 */
 var cart = {};
 var activeCat = "all";
 var searchQuery = "";
@@ -1059,8 +1060,9 @@ function deliveryFee(){
    voucher is a yen-kind coupon (e.g. GIFT1000). ONE code per order.
    The discount comes off the product subtotal only; the free-courier
    threshold (¥10,000) is judged on the PRE-discount subtotal and the
-   courier fee is never discounted, so:
-     grand total = subtotal − discount + courier fee.
+   courier fee is never discounted. Consumption tax (below) is charged
+   on the discounted subtotal, so:
+     grand total = subtotal − discount + tax + courier fee.
    If the subtotal later drops below the coupon's minimum, the discount
    pauses (and resumes if the subtotal recovers) — same behaviour as
    the restaurant menu site. */
@@ -1085,7 +1087,21 @@ function couponDiscount(){
 function couponPaused(){
   return !!appliedCoupon && subtotal() < (Number(appliedCoupon.min) || 0);
 }
-function grandTotal(){ return subtotal() - couponDiscount() + deliveryFee(); }
+/* ---------- 🧾 consumption tax ----------
+   The rate comes from the "taxRate" number (percent) at the root of
+   products.json — absent means the default 8; the owner changes it in
+   the admin panel (⑦ Coupons, vouchers & tax) or sets it to 0 for no
+   tax. Tax is charged on the product subtotal AFTER any coupon
+   discount (never below 0), rounded down; the courier fee is NOT
+   taxed. When the computed tax is 0 the tax line is hidden. */
+function taxAmount(){
+  var taxable = Math.max(0, subtotal() - couponDiscount());
+  return Math.floor(taxable * TAX_RATE / 100);
+}
+function taxRateText(){ return String(Number(TAX_RATE)); }   /* "8", "10", "8.5" */
+function taxLabel(){ return "消費税（" + taxRateText() + "%） / Tax (" + taxRateText() + "%) / Pajak (" + taxRateText() + "%)"; }
+function taxLineText(){ return "消費税（" + taxRateText() + "%） / Tax (" + taxRateText() + "%): " + yen(taxAmount()); }
+function grandTotal(){ return subtotal() - couponDiscount() + taxAmount() + deliveryFee(); }
 function couponError(html){
   var m = document.getElementById("couponMsg");
   m.innerHTML = html; m.hidden = false;
@@ -1166,10 +1182,11 @@ function renderCart(){
     cartItemsEl.querySelectorAll("[data-cinc]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-cinc"); setQty(id, cart[id]+1); }); });
     cartItemsEl.querySelectorAll("[data-cdec]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-cdec"); setQty(id, cart[id]-1); }); });
   }
-  var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), grand = st - disc + fee;
+  var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount(), grand = st - disc + tax + fee;
   totalsEl.innerHTML =
     '<div class="t-row"><span>小計 Subtotal</span><span>' + yen(st) + '</span></div>'
     + (disc > 0 ? '<div class="t-row t-discount"><span>割引 / Discount / Diskon（' + esc(appliedCoupon.code) + '）</span><span>−' + yen(disc) + '</span></div>' : '')
+    + (tax > 0 ? '<div class="t-row"><span>' + taxLabel() + '</span><span>' + yen(tax) + '</span></div>' : '')
     + '<div class="t-row"><span>送料 Courier fee / Ongkir</span><span>' + (fulfill==="pickup" ? "¥0（店頭受取 Pickup）" : (fee===0 && st>0 ? "¥0 — 無料 FREE" : yen(fee))) + '</span></div>'
     + '<div class="t-row t-grand"><span>合計 Total</span><span>' + yen(grand) + '</span></div>';
   if (fulfill === "pickup") feeLineEl.textContent = "店頭受取：送料 ¥0（無料） / Pickup: fee ¥0 — FREE / Ambil di toko: gratis ・ 合計 Total: " + yen(grand);
@@ -1408,8 +1425,10 @@ function buildInvoiceText(name, phone, address, note, preview){
   lines.push(sep);
   var fee = deliveryFee();
   var disc = couponDiscount();
+  var tax = taxAmount();
   lines.push("小計 / Subtotal: " + yen(st));
   if (disc > 0 && appliedCoupon) lines.push("クーポン " + appliedCoupon.code + ": −" + yen(disc));
+  if (tax > 0) lines.push(taxLineText());
   if (isDelivery){
     if (fee === 0 && st >= FREE_THRESHOLD) lines.push("送料 / Courier fee: ¥0 — 無料 FREE（¥10,000以上のご注文 / orders ¥10,000+）");
     else if (payment === "cod") lines.push("送料 / Courier fee: " + yen(fee) + "（代引き COD・¥10,000未満 / COD, orders under ¥10,000）");
@@ -1417,7 +1436,7 @@ function buildInvoiceText(name, phone, address, note, preview){
   } else {
     lines.push("送料 / Courier fee: ¥0 — 店頭受取無料 / Pickup free");
   }
-  lines.push("合計 / TOTAL: " + yen(st - disc + fee));
+  lines.push("合計 / TOTAL: " + yen(st - disc + tax + fee));
   lines.push("ありがとうございます / Thank you for your order.");
   return lines.join("\n");
 }
@@ -1431,7 +1450,7 @@ function buildInvoiceText(name, phone, address, note, preview){
    blocks the WhatsApp order. */
 function buildAutoresponse(f){
   var isDelivery = fulfill === "delivery";
-  var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), total = st - disc + fee;
+  var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount(), total = st - disc + tax + fee;
   var L = [];
   L.push("ご注文ありがとうございます！ Thank you for your order!");
   L.push("MADINA HALAL SUPER — ご注文確認 / Order Confirmation");
@@ -1443,6 +1462,7 @@ function buildAutoresponse(f){
   L.push("──────────");
   L.push("小計 / Subtotal: " + yen(st));
   if (disc > 0 && appliedCoupon) L.push("クーポン " + appliedCoupon.code + ": −" + yen(disc));
+  if (tax > 0) L.push(taxLineText());
   if (isDelivery) L.push("送料 / Courier fee: " + yen(fee));
   L.push("合計 / TOTAL: " + yen(total));
   L.push("──────────");
@@ -1464,7 +1484,7 @@ function buildAutoresponse(f){
 }
 function sendConfirmationEmail(f){
   var isDelivery = fulfill === "delivery";
-  var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), total = st - disc + fee;
+  var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount(), total = st - disc + tax + fee;
   var orderLines = sortedCartIds().map(function(id, i){
     var p = productById(id);
     return (i+1) + ". " + p.en + " (" + (p.jp||"") + ") " + (p.size||"") + " — " + yen(p.price) + " x " + cart[id] + " = " + yen(p.price*cart[id]);
@@ -1484,6 +1504,7 @@ function sendConfirmationEmail(f){
     "合計 Grand Total": yen(total)
   };
   if (disc > 0 && appliedCoupon) payload["クーポン割引 Coupon discount"] = appliedCoupon.code + ": −" + yen(disc);
+  if (tax > 0) payload["消費税 Tax"] = "(" + taxRateText() + "%) " + yen(tax);
   if (isDelivery){
     payload["住所 Address"] = f.address;
     payload["お支払い Payment"] = PAY_LABELS[payment];
@@ -1511,12 +1532,13 @@ var GFORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSenr_nuMWAbwOuqgvo5Nuj
 function sendOrderToSheet(f){
   try {
     var isDelivery = fulfill === "delivery";
-    var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), total = st - disc + fee;
+    var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount(), total = st - disc + tax + fee;
     var itemLines = sortedCartIds().map(function(id){
       var p = productById(id); if (!p) return "";
       return p.en + (p.jp ? "（" + p.jp + "）" : "") + (p.size ? " " + p.size : "") + " × " + cart[id] + " — " + yen(p.price * cart[id]);
     }).filter(function(s){ return s; });
     if (disc > 0 && appliedCoupon) itemLines.push("クーポン " + appliedCoupon.code + ": −" + yen(disc));
+    if (tax > 0) itemLines.push(taxLineText());
     if (isDelivery) itemLines.push("配送料： " + yen(fee));
     var pr = pointsRequest();
     var phone = f.phone || pr.phone || "";
@@ -1728,7 +1750,8 @@ document.getElementById("shareCopy").addEventListener("click", function(){
 
 /* expose for testing */
 window.__supershopShop = { deliveryFee: deliveryFee, pointBalances: computePointBalances, getCart: function(){ return cart; }, setQty: setQty, faqItems: FAQ_ITEMS, siteUrl: SITE_URL,
-  coupon: { list: function(){ return COUPONS; }, applied: function(){ return appliedCoupon; }, discount: couponDiscount, paused: couponPaused, grandTotal: grandTotal, apply: applyCoupon } };
+  coupon: { list: function(){ return COUPONS; }, applied: function(){ return appliedCoupon; }, discount: couponDiscount, paused: couponPaused, grandTotal: grandTotal, apply: applyCoupon },
+  tax: { rate: function(){ return TAX_RATE; }, amount: taxAmount, label: taxLabel } };
 
 /* ---------- load products ---------- */
 fetch("products.json", { cache: "no-store" })
@@ -1738,6 +1761,7 @@ fetch("products.json", { cache: "no-store" })
     PRODUCTS = data.products || [];
     NOTICES = data.notices || [];
     COUPONS = data.coupons || [];
+    TAX_RATE = (typeof data.taxRate === "number" && isFinite(data.taxRate) && data.taxRate >= 0) ? data.taxRate : 8;
     renderChips(); renderGrid(); renderSlideshow(); renderNews(); syncFulfillmentUI(); applySavedDetails();
   })
   .catch(function(err){
