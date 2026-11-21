@@ -218,7 +218,12 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .phone-hint{font-size:.85rem; color:var(--muted); margin:5px 0 0; line-height:1.5;}
 .lookup-msg{background:#e8f5e9; color:#1e7d32; border:1px solid #1e7d32; border-radius:10px; padding:9px 12px; font-size:.9rem; font-weight:700; margin:8px 0 0;}
 #lookupMsg[hidden]{display:none;}
-.points-bal-line{background:#fffdf4; border:1px solid var(--gold); color:var(--green-dark); border-radius:10px; padding:9px 12px; font-size:.9rem; font-weight:700; margin:8px 0 0;}
+.points-bal-card{background:#fffdf4; border:1.5px solid var(--gold); color:var(--green-dark); border-radius:12px; padding:10px 12px; margin:8px 0 0;}
+.pbc-row{display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:2px 0;}
+.pbc-label{font-weight:700;}
+.pbc-val{font-weight:800; white-space:nowrap;}
+.pbc-yen{font-weight:700;}
+.pbc-note{margin:6px 0 0; padding-top:6px; border-top:1px dashed var(--gold); font-size:.88rem; line-height:1.5;}
 #checkoutPointsLine[hidden]{display:none;}
 /* "remember my details" note inside the checkout form */
 .saved-note{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; background:#eef6f0; border:1px solid var(--green); border-radius:10px; padding:8px 10px; margin-bottom:6px; font-size:.85rem;}
@@ -426,7 +431,10 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
     <input type="tel" id="fPhone" autocomplete="tel" placeholder="電話番号 Phone / Telepon">
     <p class="phone-hint">前回ご注文の方は、番号を入れると住所などが自動で入ります<br><span class="en">If you ordered before, enter your number and your details will fill in automatically</span><br><span class="idn">Jika pernah memesan, masukkan nomor Anda dan data akan terisi otomatis</span></p>
     <p class="lookup-msg" id="lookupMsg" hidden>お客様情報を見つけました <span class="en">Found your details</span> <span class="idn">Data Anda ditemukan</span></p>
-    <p class="points-bal-line" id="checkoutPointsLine" hidden></p>
+    <div class="points-bal-card" id="checkoutPointsLine" hidden></div>
+    <label class="flabel" for="fPointsUse">使うポイント（任意）<span class="en"> Points to use (optional)</span> <span class="idn">Poin yang dipakai (opsional)</span></label>
+    <input type="number" id="fPointsUse" min="0" step="1" inputmode="numeric" placeholder="例：200 e.g. 200">
+    <p class="addr-warn" id="pointsUseWarn" hidden>使うポイントが残高を超えています — 店舗で残高を確認します。このまま注文する場合は、もう一度「注文を確定する」を押してください。<br><span class="en">That is more points than your available balance — the shop will confirm. To order anyway, press Confirm Order once more.</span><br><span class="idn">Poin melebihi saldo tersedia — toko akan memeriksa. Untuk tetap memesan, tekan Konfirmasi Pesanan sekali lagi.</span></p>
     <p class="addr-warn" id="phoneWarn" hidden>電話番号の形式が正しくないようです — 確認してください<br><span class="en">This phone number looks incorrect — please check it</span><br><span class="idn">Nomor telepon tampaknya tidak valid — silakan periksa kembali</span></p>
     <label class="flabel" for="fName">お名前 <span class="en">Name</span> <span class="idn">Nama</span><span class="req">*</span></label>
     <input type="text" id="fName" autocomplete="name" placeholder="お名前 Name / Nama">
@@ -463,9 +471,6 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
     <label class="flabel" for="fPointsPhone">ポイント用電話番号（任意）<span class="en"> Phone for points (optional)</span> <span class="idn">Nomor telepon poin (opsional)</span></label>
     <input type="tel" id="fPointsPhone" autocomplete="tel" placeholder="ポイント用電話番号 Phone for points">
     <p class="addr-warn" id="pointsPhoneWarn" hidden>電話番号の形式が正しくないようです — 確認してください<br><span class="en">This phone number looks incorrect — please check it</span><br><span class="idn">Nomor telepon tampaknya tidak valid — silakan periksa kembali</span></p>
-    <label class="flabel" for="fPointsUse">使うポイント（任意）<span class="en"> Points to use (optional)</span> <span class="idn">Poin yang dipakai (opsional)</span></label>
-    <input type="number" id="fPointsUse" min="0" step="1" inputmode="numeric" placeholder="例：200 e.g. 200">
-    <p class="addr-warn" id="pointsUseWarn" hidden>使うポイントが残高を超えています — 店舗で残高を確認します。このまま注文する場合は、もう一度「注文を確定する」を押してください。<br><span class="en">That is more points than your available balance — the shop will confirm. To order anyway, press Confirm Order once more.</span><br><span class="idn">Poin melebihi saldo tersedia — toko akan memeriksa. Untuk tetap memesan, tekan Konfirmasi Pesanan sekali lagi.</span></p>
     <p class="fee-note">ポイント：1pt = ¥1。購入の1ヶ月後から使えます。店舗で残高を確認して割引します。<br>Points: 1 pt = ¥1, usable 1 month after purchase. The shop confirms your balance and applies the discount.<br>Poin: 1 poin = ¥1, bisa dipakai 1 bulan setelah pembelian. Toko akan memeriksa saldo dan memberi diskon.<br><a href="#pointsCheck" id="pointsCheckLink">ポイント残高を確認する Check points balance / Cek saldo poin →</a></p>
 
     <div class="form-error" id="formError"></div>
@@ -1508,17 +1513,46 @@ document.getElementById("fZip").addEventListener("input", function(){
    then may proceed — the shop still confirms the balance by hand. */
 var checkoutPoints = null;        /* { available, pending } for checkoutPointsPhone */
 var checkoutPointsPhone = "";     /* the digits that balance belongs to */
+var checkoutPointsFrom = "";      /* earliest "matures" date among the pending earns ("" = none) */
+/* Earliest date the pending points start becoming usable: the smallest
+   "matures" date among earn entries that have not matured yet — the same
+   field computePointBalances() compares against today. "" when there is
+   no pending earn or no date stored (the card then omits the date). */
+function earliestPendingMatures(rec){
+  var t = shopTodayStr(), best = "";
+  if (rec) (rec.entries || []).forEach(function(e){
+    if (e.cancelled || e.type !== "earn") return;
+    if (e.matures && e.matures > t && (!best || e.matures < best)) best = e.matures;
+  });
+  return best;
+}
+var PBC_MONTHS_EN = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var PBC_MONTHS_IDN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+function pointsMaturesText(iso){
+  var p = String(iso || "").split("-");
+  var m = parseInt(p[1], 10), d = parseInt(p[2], 10);
+  if (!m || !d || m < 1 || m > 12) return null;
+  return { jp: m + "月" + d + "日", en: "~" + d + " " + PBC_MONTHS_EN[m - 1], idn: "~" + d + " " + PBC_MONTHS_IDN[m - 1] };
+}
 function renderCheckoutPoints(){
   var el = document.getElementById("checkoutPointsLine");
   if (!el) return;
   if (checkoutPoints && checkoutPointsPhone === phoneDigitsForLookup()){
-    var t = "利用可能ポイント / Available points / Poin tersedia: " + checkoutPoints.available + " pt";
-    if (checkoutPoints.pending > 0) t += "（利用待ち / pending / menunggu: " + checkoutPoints.pending + " pt）";
-    el.textContent = t;
+    var h = '<div class="pbc-row"><span class="pbc-label">利用可能ポイント <span class="en">Available points</span> <span class="idn">Poin tersedia</span></span>'
+      + '<span class="pbc-val">' + checkoutPoints.available + ' pt <span class="pbc-yen">(= ¥' + checkoutPoints.available + ')</span></span></div>';
+    if (checkoutPoints.pending > 0){
+      h += '<div class="pbc-row"><span class="pbc-label">利用待ちポイント <span class="en">Pending points</span> <span class="idn">Poin menunggu</span></span>'
+        + '<span class="pbc-val">' + checkoutPoints.pending + ' pt</span></div>';
+      var mt = pointsMaturesText(checkoutPointsFrom);
+      if (mt){
+        h += '<p class="pbc-note">このポイントは' + mt.jp + 'ごろから使えます<br><span class="en">These pending points are usable from ' + mt.en + '</span><br><span class="idn">Poin menunggu ini bisa dipakai mulai ' + mt.idn + '</span></p>';
+      }
+    }
+    el.innerHTML = h;
     el.hidden = false;
   } else {
     el.hidden = true;
-    el.textContent = "";
+    el.innerHTML = "";
   }
   refreshPointsUseWarn();
 }
@@ -1531,7 +1565,7 @@ function checkoutPointsLookup(){
   }
   var digits = phoneDigitsForLookup();
   if (digits.length < 10 || digits.length > 11){
-    checkoutPoints = null; checkoutPointsPhone = "";
+    checkoutPoints = null; checkoutPointsPhone = ""; checkoutPointsFrom = "";
     renderCheckoutPoints();
     return Promise.resolve(false);
   }
@@ -1543,13 +1577,14 @@ function checkoutPointsLookup(){
       if (phoneDigitsForLookup() !== digits) return false;   /* number changed meanwhile */
       var rec = (data.customers || []).filter(function(c){ return c.hash === hash; })[0] || null;
       checkoutPoints = rec ? computePointBalances(rec) : null;
+      checkoutPointsFrom = rec ? earliestPendingMatures(rec) : "";
       checkoutPointsPhone = digits;
       renderCheckoutPoints();
       return !!rec;
     });
   }).catch(function(){
     if (phoneDigitsForLookup() === digits){
-      checkoutPoints = null; checkoutPointsPhone = digits;
+      checkoutPoints = null; checkoutPointsPhone = digits; checkoutPointsFrom = "";
       renderCheckoutPoints();
     }
     return false;   /* silent — never block checkout */
