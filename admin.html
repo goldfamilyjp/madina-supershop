@@ -96,6 +96,24 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 .cust-table th,.cust-table td{border-bottom:1px solid var(--line); padding:8px 6px; text-align:left; vertical-align:top;}
 .cust-table th{color:var(--green-dark); font-size:.82rem; text-transform:uppercase; letter-spacing:.04em;}
 .cust-table td.num,.cust-table th.num{text-align:right; white-space:nowrap;}
+/* ---------- plain help strips + one-place customer/points card ---------- */
+.help-box{background:var(--gold-soft); border:1px solid var(--gold); border-radius:12px; padding:12px 14px; margin:10px 0 12px; font-size:.95rem; line-height:1.6;}
+.cust-card{border:2px solid var(--green); border-radius:14px; padding:14px; margin-top:12px; background:#fbfcf9;}
+.cust-card h3{color:var(--green); font-size:1.05rem;}
+.card-sub{color:var(--green); font-size:1rem; margin:18px 0 2px; border-top:1px dashed var(--line); padding-top:12px;}
+.mini.addpts{background:var(--green); color:#fff; white-space:nowrap;}
+.cust-row{cursor:pointer;}
+.cust-detail td{background:#f4f9f4;}
+.cust-detail-box{padding:6px 2px 10px;}
+.cust-history{margin-top:6px;}
+.cust-add-form{margin-top:12px; border-top:1px dashed var(--line); padding-top:6px;}
+.pt-entry .st{font-weight:700; color:var(--green-dark);}
+/* BIG highlighted phone-number inputs (Customers search + Points find) —
+   the first thing the eye lands on: thick green frame, soft gold ring. */
+.phone-input{width:100%; border:3px solid var(--green); border-radius:16px; padding:14px 18px; background:#fffdf4; font-size:1.2rem; font-weight:700; margin-top:4px; box-shadow:0 0 0 4px var(--gold-soft);}
+.phone-input::placeholder{font-weight:700; color:#8a947f; opacity:1;}
+.phone-input:focus{outline:none; box-shadow:0 0 0 5px var(--gold);}
+#ptPhone{box-shadow:0 0 0 5px var(--gold-soft), 0 2px 10px rgba(11,69,48,.18);}
 /* ---------- big photo boxes (Add form + Quick Add) ---------- */
 .photo-boxes{display:flex; gap:12px; margin-top:6px;}
 .photo-box{position:relative; flex:1 1 0; min-height:150px; border:2px dashed var(--green); border-radius:14px; background:#f2f7f3; color:var(--green-dark); cursor:pointer; overflow:hidden; padding:0; font:inherit;}
@@ -291,25 +309,40 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
   <!-- ===== Points ===== -->
   <section class="panel" id="pointsPanel">
     <h2>Points</h2>
-    <p class="hint">Customers earn <strong>1%</strong> back in points (1 pt = ¥1). Points become usable <strong>1 month after</strong> the purchase.<br>
-    Add / use points only <strong>after</strong> the order and payment are confirmed on WhatsApp.<br>
-    Phone numbers are stored only as hashes — the raw number is never saved.</p>
-    <label for="ptPhone">Customer phone number</label>
-    <input type="tel" id="ptPhone" placeholder="090-…" autocomplete="off">
-    <button type="button" class="big-btn grey" id="ptLookupBtn">Check balance</button>
-    <div id="pointsResult"></div>
-    <label for="ptAmount">Order amount ¥ (yen) — adds 1% as points</label>
-    <input type="number" id="ptAmount" min="0" step="1" inputmode="numeric" placeholder="e.g. 7580">
-    <button type="button" class="big-btn" id="ptAddBtn">Add points (1%)</button>
-    <label for="ptUse">Points to use</label>
-    <input type="number" id="ptUse" min="0" step="1" inputmode="numeric" placeholder="e.g. 200">
-    <button type="button" class="big-btn" id="ptUseBtn">Use points</button>
-    <label for="ptAdjust">Manual adjustment — signed points (+ or −)</label>
-    <input type="number" id="ptAdjust" step="1" inputmode="numeric" placeholder="e.g. 50 or -30">
-    <label for="ptAdjustNote">Reason for adjustment (required)</label>
-    <input type="text" id="ptAdjustNote" placeholder="e.g. order cancelled">
-    <button type="button" class="big-btn grey" id="ptAdjustBtn">Adjust points</button>
-    <p class="hint">If an order is cancelled or a mistake happens, fix the points with the adjustment above (a reason is required), or cancel an earn entry from the history below the balance.</p>
+    <div class="help-box">🪙 <strong>How points work:</strong> customers earn points worth <strong>1% of each order</strong> (1 pt = ¥1).<br>
+    Points from an order can be used <strong>1 month later</strong>. Points you add by hand can be used <strong>right away</strong>.<br>
+    Type the customer's phone number below and tap <strong>Find customer</strong> — their points, history, and the add / use buttons are all in that one card.</div>
+    <p class="hint">Add / use points only <strong>after</strong> the order and payment are confirmed on WhatsApp. Phone numbers are stored only as hashes — the raw number is never saved.</p>
+
+    <div class="cust-card" id="ptCard">
+      <h3>Find a customer</h3>
+      <label for="ptPhone">Customer phone number</label>
+      <input type="tel" id="ptPhone" class="phone-input" placeholder="Phone number — e.g. 09012345678" autocomplete="off">
+      <button type="button" class="big-btn" id="ptLookupBtn">🔍 Find customer</button>
+      <div id="pointsResult"></div>
+
+      <h3 class="card-sub">＋ Add points by hand — usable right away</h3>
+      <label for="ptAdjust">Points (+ to add, − to take off)</label>
+      <input type="number" id="ptAdjust" step="1" inputmode="numeric" placeholder="e.g. 50 or -30">
+      <label for="ptAdjustNote">Reason (optional — write one if you can)</label>
+      <input type="text" id="ptAdjustNote" placeholder="e.g. order cancelled">
+      <button type="button" class="big-btn gold" id="ptAdjustBtn">＋ Add points — usable right away</button>
+
+      <h3 class="card-sub">Use points (customer pays with points)</h3>
+      <label for="ptUse">Points to use</label>
+      <input type="number" id="ptUse" min="0" step="1" inputmode="numeric" placeholder="e.g. 200">
+      <button type="button" class="big-btn" id="ptUseBtn">Use points</button>
+    </div>
+
+    <details class="more" id="ptEarnSection">
+      <summary>Give 1% points for an order (when a customer pays)</summary>
+      <label for="ptAmount">Order amount ¥ (yen) — adds 1% as points</label>
+      <input type="number" id="ptAmount" min="0" step="1" inputmode="numeric" placeholder="e.g. 7580">
+      <button type="button" class="big-btn" id="ptAddBtn">Add points (1%)</button>
+      <p class="hint">Uses the phone number in the card above. These points become usable <strong>1 month later</strong>. Afterwards press “💾 Save points” below.</p>
+    </details>
+
+    <p class="hint">If an order is cancelled or a mistake happens, cancel the earn entry from the history in the card above, or fix the points with “Add points by hand” (use a − number to take points off).</p>
     <p class="dirty-note" id="pointsDirty">● Points not saved yet — press the button below.</p>
     <button type="button" class="big-btn gold" id="ptSaveBtn">💾 Save points</button>
     <div class="msg" id="pointsMsg"></div>
@@ -332,6 +365,12 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
   <!-- ===== Customers (from the spreadsheet's "Customers" tab, via the Apps Script) ===== -->
   <section class="panel" id="customersPanel">
     <h2>Customers</h2>
+    <div class="help-box">👥 <strong>Customers and their points, in one place:</strong> tap a customer (or their <strong>＋ Add points</strong> button) to see their points history.<br>
+    Points from orders are worth <strong>1% of the order</strong> and can be used <strong>1 month later</strong>; points you add by hand can be used <strong>right away</strong>.</div>
+    <div class="search-row">
+      <input type="tel" id="custSearch" class="phone-input" placeholder="Phone number — e.g. 09012345678" autocomplete="off">
+      <button type="button" class="mini edit" id="custSearchClear" hidden>✕ Clear</button>
+    </div>
     <p class="hint">Everyone who has ordered, saved under their phone number in the spreadsheet's <strong>“Customers”</strong> tab — biggest spenders first. Press the button to load the latest list.</p>
     <button type="button" class="big-btn" id="custLoadBtn">👥 Load customers</button>
     <div class="msg" id="custMsg"></div>
@@ -1628,34 +1667,148 @@ function customersApi(){
     return j.customers;
   });
 }
+/* Customer list state: the full sorted list from the endpoint, the
+   subset currently shown (after the search filter), and which row is
+   expanded — kept by phone number so it survives re-renders. The
+   Points tab's customer card also reads names from custListCache. */
+var custAllList = [];
+var custShownList = [];
+var custListCache = [];
+var custFilter = "";
+var custOpenPhone = "";
+var custLoadedOnce = false;
+var custLoadTriggered = false;
+/* Digits used for the points ledger: digits-only, with a leading +81
+   folded back to the domestic 0 form (same folding everywhere). */
+function custDigits(phone){
+  var digits = normalizePhone(phone || "");
+  if (digits.indexOf("81") === 0 && digits.length >= 12) digits = "0" + digits.slice(2);
+  return digits;
+}
+function custNameFor(digits){
+  var want = custDigits(digits || "");
+  if (!want) return "";
+  var hit = custListCache.filter(function(c){ return custDigits(c.phone || "") === want; })[0];
+  return hit ? (hit.name || "") : "";
+}
+/* Search match: by phone digits (hyphens/spaces ignored on both sides)
+   or by name (case-insensitive substring). */
+function custMatches(c, q){
+  q = String(q || "").trim();
+  if (!q) return true;
+  var qd = normalizePhone(q);
+  if (qd && custDigits(c.phone || "").indexOf(qd) !== -1) return true;
+  return String(c.name || "").toLowerCase().indexOf(q.toLowerCase()) !== -1;
+}
 function renderCustomers(list){
   var sorted = list.slice().sort(function(a, b){ return (Number(b.totalSpent) || 0) - (Number(a.totalSpent) || 0); });
+  custAllList = sorted;
+  custListCache = sorted;
+  custShownList = sorted.filter(function(c){ return custMatches(c, custFilter); });
   if (!sorted.length){
+    custOpenPhone = "";
     $("custResult").innerHTML = '<p class="hint" style="margin-top:10px;">No customers yet — they appear here after their first order.</p>';
     return;
   }
-  var rows = sorted.map(function(c){
+  if (!custShownList.length){
+    $("custResult").innerHTML = '<p style="margin-top:12px;"><strong>0 of ' + sorted.length + ' customers</strong></p>'
+      + '<p class="hint" style="margin-top:6px;">No customer matches that number.</p>';
+    return;
+  }
+  var rows = custShownList.map(function(c, idx){
     var pts = "0 pt";
     if (c._points){
       pts = c._points.available + " pt";
       if (c._points.pending > 0) pts += " (+" + c._points.pending + " pending)";
     }
-    return '<tr><td>' + esc(c.name || "") + '</td><td>' + esc(c.phone || "") + '</td>'
+    return '<tr class="cust-row" data-cust-idx="' + idx + '"><td>' + esc(c.name || "") + '</td><td>' + esc(c.phone || "") + '</td>'
       + '<td class="num">' + salesCount(c.orders) + '</td>'
       + '<td class="num">' + yen(c.totalSpent || 0) + '</td>'
       + '<td class="num">' + pts + '</td>'
-      + '<td>' + esc(c.lastOrder || "") + '</td></tr>';
+      + '<td>' + esc(c.lastOrder || "") + '</td>'
+      + '<td><button type="button" class="mini addpts" data-cust-add="' + idx + '">＋ Add points</button></td></tr>'
+      + '<tr class="cust-detail" data-cust-detail="' + idx + '" hidden><td colspan="7"><div class="cust-detail-box"></div></td></tr>';
   }).join("");
-  $("custResult").innerHTML = '<p style="margin-top:12px;"><strong>' + sorted.length + ' customers</strong></p>'
-    + '<table class="cust-table"><thead><tr><th>Name</th><th>Phone</th><th class="num">Orders</th><th class="num">Total spent</th><th class="num">Points</th><th>Last order</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  $("custResult").innerHTML = '<p style="margin-top:12px;"><strong>' + custShownList.length + ' of ' + sorted.length + ' customers</strong></p>'
+    + '<table class="cust-table"><thead><tr><th>Name</th><th>Phone</th><th class="num">Orders</th><th class="num">Total spent</th><th class="num">Points</th><th>Last order</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+  $("custResult").querySelectorAll("[data-cust-idx]").forEach(function(row){
+    row.addEventListener("click", function(){ toggleCustDetail(Number(this.getAttribute("data-cust-idx"))); });
+  });
+  $("custResult").querySelectorAll("[data-cust-add]").forEach(function(btn){
+    btn.addEventListener("click", function(ev){
+      ev.stopPropagation();
+      openCustDetail(Number(this.getAttribute("data-cust-add")));
+      var box = document.querySelector('[data-cust-detail="' + this.getAttribute("data-cust-add") + '"] .cust-add-pts');
+      if (box) box.focus();
+    });
+  });
+  if (custOpenPhone){
+    var openIdx = -1;
+    custShownList.forEach(function(c, i){ if (String(c.phone || "") === custOpenPhone) openIdx = i; });
+    if (openIdx >= 0) openCustDetail(openIdx);
+    else custOpenPhone = "";
+  }
+}
+function toggleCustDetail(idx){
+  var row = document.querySelector('[data-cust-detail="' + idx + '"]');
+  if (!row) return;
+  if (row.hidden) openCustDetail(idx);
+  else { row.hidden = true; custOpenPhone = ""; }
+}
+function openCustDetail(idx){
+  var c = custShownList[idx];
+  if (!c) return;
+  custOpenPhone = String(c.phone || "");
+  var row = document.querySelector('[data-cust-detail="' + idx + '"]');
+  if (!row) return;
+  row.hidden = false;
+  fillCustDetail(idx);
+}
+/* The expanded area under a customer row: their points history in plain
+   words, plus a one-step "add points by hand" form (saved at once via
+   pointsAddAdjust — the same adjust entry + save the Points tab uses). */
+function fillCustDetail(idx){
+  var c = custShownList[idx];
+  if (!c) return;
+  var box = document.querySelector('[data-cust-detail="' + idx + '"] .cust-detail-box');
+  if (!box) return;
+  var b = c._points || (c._rec ? pointBalances(c._rec) : null);
+  var balLine = b
+    ? '<p class="pt-bal">Available: ' + b.available + ' pt (= ' + yen(b.available) + ')'
+      + (b.pending > 0 ? ' · Pending: ' + b.pending + ' pt' : '') + '</p>'
+    : '<p class="pt-bal">Available: 0 pt</p>';
+  box.innerHTML = '<strong>Points history</strong>' + balLine
+    + '<div class="cust-history">' + pointsHistoryHtml(c._rec, false) + '</div>'
+    + '<div class="cust-add-form">'
+    + '<label>Points to add<input type="number" class="cust-add-pts" min="1" step="1" inputmode="numeric" placeholder="e.g. 100"></label>'
+    + '<label>Reason (optional)<input type="text" class="cust-add-note" placeholder="e.g. birthday gift"></label>'
+    + '<button type="button" class="big-btn gold cust-add-btn">＋ Add points — usable right away</button>'
+    + '</div>';
+  box.querySelector(".cust-add-btn").addEventListener("click", function(){ custRowAddPoints(idx, box); });
+}
+function custRowAddPoints(idx, box){
+  var c = custShownList[idx];
+  if (!c) return;
+  var pts = Math.floor(Number(box.querySelector(".cust-add-pts").value));
+  if (!pts || isNaN(pts) || pts <= 0){ showMsg($("custMsg"), "Type how many points to add first.", "err"); return; }
+  var note = box.querySelector(".cust-add-note").value.trim();
+  var btn = box.querySelector(".cust-add-btn");
+  btn.disabled = true;
+  pointsAddAdjust(c._digits || custDigits(c.phone || ""), pts, note, $("custMsg"), function(rec){
+    c._rec = rec;
+    c._points = pointBalances(rec);
+    showMsg($("custMsg"), "✅ Added " + pts + " pt for " + (c.name || c.phone || "the customer") + " — usable right away.", "ok");
+    renderCustomers(custAllList);   /* custOpenPhone keeps this row expanded */
+  }).then(function(ok){ if (!ok) btn.disabled = false; });
 }
 /* Points column data: points.json sits next to this page and is PUBLIC
    (the shop front reads it the same way), so NO GitHub token is needed.
    Each customer's phone digits are hashed (SHA-256 — the ledger's own
    scheme, via sha256Hex + pointBalances below) and matched against the
-   ledger. ANY failure — fetch error, bad JSON, no record — just leaves
-   the customer without points (shown as "0 pt"); it never blocks or
-   breaks the customer list. */
+   ledger; the matched RECORD is kept on the customer (c._rec) so the
+   expanded row can show the full history. ANY failure — fetch error,
+   bad JSON, no record — just leaves the customer without points (shown
+   as "0 pt"); it never blocks or breaks the customer list. */
 function custPointsFor(list){
   return fetch("points.json", { cache: "no-store" }).then(function(r){
     if (!r.ok) throw new Error("points.json " + r.status);
@@ -1664,16 +1817,18 @@ function custPointsFor(list){
     var byHash = {};
     (data.customers || []).forEach(function(c){ if (c && c.hash) byHash[c.hash] = c; });
     return Promise.all(list.map(function(c){
-      var digits = normalizePhone(c.phone || "");
-      if (digits.indexOf("81") === 0 && digits.length >= 12) digits = "0" + digits.slice(2);
-      if (!digits) { c._points = null; return null; }
+      var digits = custDigits(c.phone || "");
+      c._digits = digits;
+      if (!digits) { c._points = null; c._rec = null; c._hash = ""; return null; }
       return sha256Hex(digits).then(function(hash){
         var rec = byHash[hash] || null;
+        c._hash = hash;
+        c._rec = rec;
         c._points = rec ? pointBalances(rec) : null;
-      }).catch(function(){ c._points = null; });
+      }).catch(function(){ c._points = null; c._rec = null; });
     }));
   }).catch(function(){
-    list.forEach(function(c){ c._points = null; });
+    list.forEach(function(c){ c._points = null; c._rec = null; });
   });
 }
 function loadCustomers(){
@@ -1684,6 +1839,7 @@ function loadCustomers(){
     return custPointsFor(list).then(function(){ return list; });
   }).then(function(list){
     renderCustomers(list);
+    custLoadedOnce = true;
     showMsg($("custMsg"), "✅ Customer list loaded.", "ok");
   }).catch(function(err){
     $("custResult").innerHTML = "";
@@ -1691,6 +1847,36 @@ function loadCustomers(){
   }).finally(function(){ btn.disabled = false; });
 }
 $("custLoadBtn").addEventListener("click", loadCustomers);
+
+/* ---------- 👥 Customers search (by phone number, or name) ----------
+   Typing filters the loaded list live (renderCustomers applies
+   custFilter). If the list has not been loaded yet, typing (or Enter)
+   loads it first — the filter is already set when it renders. */
+function custSearchLoad(){
+  if (custLoadedOnce || custLoadTriggered) return;
+  custLoadTriggered = true;
+  loadCustomers().then(function(){ if (!custLoadedOnce) custLoadTriggered = false; });
+}
+function syncCustSearchClear(){ $("custSearchClear").hidden = !$("custSearch").value; }
+$("custSearch").addEventListener("input", function(){
+  custFilter = this.value;
+  syncCustSearchClear();
+  if (!custLoadedOnce){ custSearchLoad(); return; }
+  renderCustomers(custAllList);
+});
+$("custSearch").addEventListener("keydown", function(ev){
+  if (ev.key !== "Enter") return;
+  ev.preventDefault();
+  custFilter = this.value;
+  if (!custLoadedOnce){ custSearchLoad(); return; }
+  renderCustomers(custAllList);
+});
+$("custSearchClear").addEventListener("click", function(){
+  $("custSearch").value = "";
+  custFilter = "";
+  syncCustSearchClear();
+  if (custLoadedOnce) renderCustomers(custAllList);
+});
 
 /* ---------- tabs: one section at a time ---------- */
 var ADMIN_TABS = ["products", "orders", "customers", "points", "sales", "news", "coupons", "templates", "setup"];
@@ -1948,28 +2134,81 @@ function entryText(e){
   if (e.type === "adjust") return (e.points >= 0 ? "+" : "−") + Math.abs(e.points) + " pt — " + e.date + " adjustment";
   return e.points + " pt — " + e.date;
 }
+/* One customer's points history in plain words — one line per entry:
+   date · what happened · +/− points · status. Used by the Points tab's
+   customer card (with Cancel buttons on earn entries) and by the
+   Customers tab's expanded row (view only). Newest first. */
+function pointsHistoryHtml(rec, withCancel){
+  if (!rec || !rec.entries || !rec.entries.length) return '<p class="hint">No points yet.</p>';
+  var t = todayStr();
+  var indexed = rec.entries.map(function(e, i){ return { e: e, i: i }; }).slice(-15).reverse();
+  return indexed.map(function(x){
+    var e = x.e, word, status, amt;
+    if (e.cancelled){ word = "Cancelled"; status = "does not count"; }
+    else if (e.type === "earn"){
+      word = "Earned from order";
+      status = (e.matures && e.matures > t) ? "waiting — usable from " + e.matures : "usable now";
+    }
+    else if (e.type === "redeem"){ word = "Used"; status = "done"; }
+    else if (e.type === "adjust"){
+      word = e.points >= 0 ? "Added by hand" : "Taken off by hand";
+      status = e.points >= 0 ? "usable now" : "done";
+    }
+    else { word = String(e.type || ""); status = ""; }
+    amt = (e.type === "redeem" ? "−" + e.points : (e.points >= 0 ? "+" : "−") + Math.abs(e.points)) + " pt";
+    var btn = (withCancel && e.type === "earn" && !e.cancelled)
+      ? ' <button type="button" class="mini del" data-cancel-earn="' + x.i + '">Cancel</button>' : "";
+    var note = e.note ? ' <span class="en">' + esc(e.note) + "</span>" : "";
+    return '<div class="pt-entry">' + esc(e.date || "") + " · " + word + " · <strong>" + amt + "</strong>"
+      + (status ? ' · <span class="st">' + esc(status) + "</span>" : "") + note + btn + "</div>";
+  }).join("");
+}
+function bindCancelEarn(container, rec){
+  if (!container) return;
+  container.querySelectorAll("[data-cancel-earn]").forEach(function(btn){
+    btn.addEventListener("click", function(){ cancelEarn(rec, Number(this.getAttribute("data-cancel-earn"))); });
+  });
+}
+/* The one-step "add points by hand" write path, shared by the Customers
+   tab's row form: the SAME adjust entry the Points tab's adjust writes,
+   saved at once with savePoints(). Token-gated exactly like the rest of
+   the points ledger — without a token it just shows the notice in the
+   caller's message box. Resolves true when the entry was saved. */
+function pointsAddAdjust(digits, pts, note, msgEl, onOk){
+  if (!digits){ showMsg(msgEl, "No phone number for this customer.", "err"); return Promise.resolve(false); }
+  if (!token()){ showMsg(msgEl, "No token — set it up in the ⚙️ Setup tab first.", "err"); return Promise.resolve(false); }
+  var ready = pointsLoaded ? Promise.resolve(true) : loadPoints();
+  return ready.then(function(ok){
+    if (!ok){ showMsg(msgEl, "Could not load the points list — check the connection and try again.", "err"); return false; }
+    return sha256Hex(digits).then(function(hash){
+      var rec = findCustomer(hash);
+      if (!rec){ rec = { hash: hash, entries: [] }; pointsData.customers.push(rec); }
+      rec.entries.push({ type: "adjust", points: pts, date: todayStr(), note: note || "Added by hand" });
+      return savePoints().then(function(saved){
+        if (saved && onOk) onOk(rec);
+        return saved;
+      });
+    });
+  }).catch(function(err){ showMsg(msgEl, "Error (" + err.message + ")", "err"); return false; });
+}
 function renderPointsResult(rec, digits){
   lastPointsDigits = digits;
   var el = $("pointsResult");
   if (!rec){
-    el.innerHTML = '<p class="hint">No points record for this number (' + esc(digits) + ') yet.</p>';
+    el.innerHTML = '<p class="hint">No points record for this number (' + esc(digits) + ') yet. You can add points by hand below, or give points for an order.</p>';
     return;
   }
   var b = pointBalances(rec);
-  var indexed = rec.entries.map(function(e, i){ return { e: e, i: i }; }).slice(-10).reverse();
-  var rows = indexed.map(function(x){
-    var e = x.e;
-    var btn = (e.type === "earn" && !e.cancelled)
-      ? ' <button type="button" class="mini del" data-cancel-earn="' + x.i + '">Cancel</button>' : "";
-    var cflag = e.cancelled ? ' <strong style="color:var(--red);">Cancelled</strong>' : "";
-    return '<div class="pt-entry">' + esc(entryText(e)) + (e.note ? " ・ " + esc(e.note) : "") + cflag + btn + "</div>";
-  }).join("");
+  var name = custNameFor(digits);
+  var head = name
+    ? '<p style="font-weight:800; font-size:1.05rem; margin-top:12px;">' + esc(name) + ' <span class="en">' + esc(digits) + "</span></p>" : "";
   var warn = b.available < 0
     ? '<p class="hint" style="color:var(--red); font-weight:700;">⚠ Warning: available points are negative (' + b.available + ' pt) after a cancellation — fix with an adjustment if needed.</p>' : "";
-  el.innerHTML = '<p class="pt-bal">Available: ' + b.available + ' pt<br>Pending (usable after 1 month): ' + b.pending + " pt</p>" + warn + rows;
-  el.querySelectorAll("[data-cancel-earn]").forEach(function(btn){
-    btn.addEventListener("click", function(){ cancelEarn(rec, Number(this.getAttribute("data-cancel-earn"))); });
-  });
+  el.innerHTML = head
+    + '<p class="pt-bal">Available: ' + b.available + ' pt (= ' + yen(b.available) + ')<br>Pending (usable after 1 month): ' + b.pending + " pt</p>"
+    + warn
+    + '<div style="margin-top:8px;">' + pointsHistoryHtml(rec, true) + "</div>";
+  bindCancelEarn(el, rec);
 }
 function cancelEarn(rec, idx){
   var e = rec.entries[idx];
@@ -1990,8 +2229,7 @@ function addAdjust(){
   var raw = $("ptAdjust").value.trim();
   var pts = Math.floor(Number(raw));
   if (raw === "" || isNaN(pts) || pts === 0){ showMsg($("pointsMsg"), "Please enter an adjustment amount (not 0).", "err"); return; }
-  var note = $("ptAdjustNote").value.trim();
-  if (!note){ showMsg($("pointsMsg"), "A reason is required for adjustments (e.g. order cancelled).", "err"); return; }
+  var note = $("ptAdjustNote").value.trim() || (pts > 0 ? "Added by hand" : "Taken off by hand");
   withCustomer(function(hash, digits){
     var rec = findCustomer(hash);
     if (!rec){ rec = { hash: hash, entries: [] }; pointsData.customers.push(rec); }
@@ -2052,9 +2290,9 @@ window.__supershopAdmin = { getState: function(){ return state; }, buildPayload:
          isJunk: ocrIsJunkLine, detectSize: ocrDetectSize, linesFromTesseract: ocrLinesFromTesseract },
   form: { cats: function(){ return formCats.slice(); }, setCats: setFormCats, productCats: productCats,
           reset: resetForm, isDirty: function(){ return formDirty; }, isEdit: function(){ return !!editingId; } },
-  points: { data: function(){ return pointsData; }, balances: pointBalances, load: loadPoints, save: savePoints, sha256Hex: sha256Hex, addOneMonth: addOneMonth, normalizePhone: normalizePhone, todayStr: todayStr, cancelEarn: cancelEarn, addAdjust: addAdjust },
+  points: { data: function(){ return pointsData; }, balances: pointBalances, load: loadPoints, save: savePoints, sha256Hex: sha256Hex, addOneMonth: addOneMonth, normalizePhone: normalizePhone, todayStr: todayStr, cancelEarn: cancelEarn, addAdjust: addAdjust, history: pointsHistoryHtml, addAdjustSaved: pointsAddAdjust },
   tabs: { show: showTab, current: function(){ return currentTab; } },
-  customers: { load: loadCustomers, render: renderCustomers, pointsFor: custPointsFor } };
+  customers: { load: loadCustomers, render: renderCustomers, pointsFor: custPointsFor, list: function(){ return custListCache; }, all: function(){ return custAllList; }, shown: function(){ return custShownList; }, filterText: function(){ return custFilter; }, matches: custMatches, toggle: toggleCustDetail, open: openCustDetail, nameFor: custNameFor } };
 
 /* ---------- init ---------- */
 $("nDate").value = todayJstStr();
