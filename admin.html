@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Madina Halal Supershop — Admin 管理画面</title>
+<style>
+:root{ --green:#0b4530; --green-dark:#07301f; --gold:#e3c04a; --gold-soft:#f6ecd2; --bg:#f2f7f2; --ink:#1d2a1d; --muted:#5c6b5c; --line:#dde6dc; --red:#b3261e; }
+*{box-sizing:border-box; margin:0; padding:0;}
+body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif; background:var(--bg); color:var(--ink); padding-bottom:40px;}
+.en{font-size:.85em; color:var(--muted); font-weight:400;}
+header{background:var(--green); color:#fff; padding:16px; text-align:center; border-bottom:4px solid var(--gold);}
+header .t{font-size:1.35rem; font-weight:800;}
+header .s{color:var(--gold); font-size:.9rem;}
+.wrap{max-width:860px; margin:0 auto; padding:16px 12px;}
+.panel{background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:16px;}
+.panel h2{color:var(--green); font-size:1.1rem; margin-bottom:8px;}
+.big-btn{display:block; width:100%; background:var(--green); color:#fff; border:none; border-radius:12px; padding:16px; font-size:1.1rem; font-weight:800; cursor:pointer; margin-top:10px;}
+.big-btn.gold{background:var(--gold); color:var(--green-dark);}
+.big-btn.grey{background:#eef3ee; color:var(--ink); border:2px solid var(--line);}
+.big-btn:active{opacity:.85;}
+.big-btn:disabled{opacity:.5; cursor:default;}
+input[type=text],input[type=number],input[type=password],input[type=url],select,textarea{width:100%; font-size:1rem; padding:12px; border:2px solid var(--line); border-radius:10px; background:#fff; margin-top:4px;}
+label{display:block; font-weight:700; font-size:.95rem; margin-top:12px;}
+.hint{font-size:.85rem; color:var(--muted); margin-top:6px; line-height:1.5;}
+.msg{border-radius:10px; padding:12px; font-size:.95rem; margin-top:12px; display:none;}
+.msg.show{display:block;}
+.msg.ok{background:#e3efe6; color:var(--green-dark); border:1px solid var(--green);}
+.msg.err{background:#fbeae8; color:var(--red); border:1px solid var(--red);}
+.msg.info{background:var(--gold-soft); color:#4a3d08; border:1px solid var(--gold);}
+.search-row{display:flex; gap:8px; margin-bottom:10px;}
+.search-row input{flex:1; margin-top:0;}
+.prow{display:flex; align-items:center; gap:10px; padding:10px 6px; border-bottom:1px dashed var(--line);}
+.prow .thumb{width:52px; height:52px; border-radius:8px; object-fit:cover; background:#e3efe6; flex:0 0 auto;}
+.prow .ph{width:52px; height:52px; border-radius:8px; background:linear-gradient(135deg,var(--green),#146344); color:var(--gold); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.3rem; flex:0 0 auto;}
+.prow .info{flex:1; min-width:0;}
+.prow .info .n{font-weight:700;}
+.prow .info .d{font-size:.82rem; color:var(--muted);}
+.prow .mini{border:none; border-radius:8px; padding:10px 12px; font-size:.9rem; font-weight:700; cursor:pointer;}
+.mini.edit{background:var(--gold-soft); color:#4a3d08;}
+.mini.del{background:#fbeae8; color:var(--red);}
+.switch{position:relative; width:56px; height:32px; flex:0 0 auto;}
+.switch input{opacity:0; width:0; height:0;}
+.switch .sl{position:absolute; inset:0; background:#c9d4c9; border-radius:999px; cursor:pointer; transition:.2s;}
+.switch .sl:before{content:""; position:absolute; width:26px; height:26px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s;}
+.switch input:checked + .sl{background:var(--green);}
+.switch input:checked + .sl:before{transform:translateX(24px);}
+.off-row{opacity:.55;}
+.photo-preview{max-width:180px; max-height:140px; border-radius:10px; margin-top:8px; display:none;}
+.dirty-note{color:var(--red); font-weight:700; font-size:.9rem; margin-top:8px; display:none;}
+code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
+</style>
+</head>
+<body>
+<header>
+  <div class="t">Madina Halal Supershop</div>
+  <div class="s">管理画面 Admin Panel</div>
+</header>
+
+<div class="wrap">
+
+  <!-- ===== Setup / token ===== -->
+  <section class="panel" id="setupPanel">
+    <h2>① 設定 Setup — GitHub トークン</h2>
+    <p class="hint">商品を保存するには、GitHub のトークン（パスワードのような文字列）が1回だけ必要です。<br>
+    A GitHub token is needed once so this page can save products. Paste it below — it is stored <strong>only on this device</strong> (in this browser), never in any file.</p>
+    <label for="tokenInput">トークンを貼り付け <span class="en">Paste token</span></label>
+    <input type="password" id="tokenInput" placeholder="github_pat_…" autocomplete="off">
+    <button type="button" class="big-btn" id="saveTokenBtn">トークンを保存して読み込む <span style="font-size:.8em;">Save token &amp; load products</span></button>
+    <button type="button" class="big-btn grey" id="forgetTokenBtn">トークンを消す <span style="font-size:.8em;">Forget token on this device</span></button>
+    <div class="msg" id="setupMsg"></div>
+  </section>
+
+  <!-- ===== Main ===== -->
+  <section class="panel" id="mainPanel" hidden>
+    <h2>② 商品リスト <span class="en">Products</span> <span id="prodCount" class="en"></span></h2>
+    <div class="search-row">
+      <input type="text" id="adminSearch" placeholder="商品を検索 Search products…">
+      <button type="button" class="mini edit" id="reloadBtn" style="font-size:1rem;">再読込 Reload</button>
+    </div>
+    <div id="productList"></div>
+    <p class="dirty-note" id="dirtyNote">● まだ保存されていません — Unsaved changes. 下の「保存する」を押してください。</p>
+    <button type="button" class="big-btn gold" id="saveBtn">💾 保存する Save to shop</button>
+    <p class="hint" id="lastSaved">前回の保存: — <span class="en">Last saved: —</span></p>
+    <div class="msg" id="saveMsg"></div>
+  </section>
+
+  <!-- ===== Add / Edit form ===== -->
+  <section class="panel" id="formPanel" hidden>
+    <h2 id="formTitle">③ 商品を追加 <span class="en">Add product</span></h2>
+    <input type="hidden" id="fId">
+    <label for="fEn">商品名（英語）<span class="en">Product name (English) *</span></label>
+    <input type="text" id="fEn" placeholder="e.g. Chana Dal">
+    <label for="fJp">商品名（日本語）<span class="en">Product name (Japanese)</span></label>
+    <input type="text" id="fJp" placeholder="例：チャナダール">
+    <label for="fPrice">価格 ¥ <span class="en">Price (yen) *</span></label>
+    <input type="number" id="fPrice" min="0" step="1" inputmode="numeric" placeholder="e.g. 490">
+    <label for="fSize">内容量 <span class="en">Size / weight</span></label>
+    <input type="text" id="fSize" placeholder="e.g. 1kg / 450g / 100 bags">
+    <label for="fCat">カテゴリー <span class="en">Category</span></label>
+    <select id="fCat"></select>
+    <label for="fNewCat">新しいカテゴリー（作る場合だけ）<span class="en">New category name (only if making one)</span></label>
+    <input type="text" id="fNewCat" placeholder="e.g. Frozen">
+    <label for="fPhotoUrl">写真のURL <span class="en">Photo URL</span></label>
+    <input type="url" id="fPhotoUrl" placeholder="https://…">
+    <label for="fPhotoFile">または写真を選ぶ <span class="en">…or choose a photo file</span></label>
+    <input type="file" id="fPhotoFile" accept="image/*">
+    <img class="photo-preview" id="photoPreview" alt="">
+    <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">表示する <span class="en">Show in shop</span>
+      <span class="switch"><input type="checkbox" id="fOn" checked><span class="sl"></span></span>
+    </label>
+    <div class="msg" id="formMsg"></div>
+    <button type="button" class="big-btn" id="applyBtn">この商品を追加 / 変更する <span style="font-size:.8em;">Add / Update product</span></button>
+    <button type="button" class="big-btn grey" id="cancelEditBtn" hidden>編集をやめる <span style="font-size:.8em;">Cancel edit</span></button>
+    <p class="hint">追加・変更したあとは、上の「💾 保存する Save to shop」を押すとお店に反映されます。<br>After adding or changing, press “💾 Save to shop” above to publish.</p>
+  </section>
+
+</div>
+
+<script>
+var REPO = "goldfamilyjp/madina-supershop";
+var FILE_PATH = "products.json";
+var API = "https://api.github.com/repos/" + REPO + "/contents/" + FILE_PATH;
+var TOKEN_KEY = "madina_supershop_token";
+var SAVED_KEY = "madina_supershop_lastsaved";
+var DEFAULT_CATEGORIES = [
+  { id: "rice", en: "Rice & Grains", jp: "お米・穀物" },
+  { id: "dal", en: "Dal & Lentils", jp: "豆類" },
+  { id: "spices", en: "Spices", jp: "スパイス" },
+  { id: "tea", en: "Tea", jp: "お茶" },
+  { id: "fish", en: "Fish", jp: "魚" },
+  { id: "meat", en: "Meat", jp: "肉" },
+  { id: "frozen", en: "Frozen", jp: "冷凍食品" },
+  { id: "snacks", en: "Snacks", jp: "お菓子" },
+  { id: "drinks", en: "Drinks", jp: "飲み物" },
+  { id: "other", en: "Other", jp: "その他" }
+];
+
+var state = { categories: [], products: [] };
+var fileSha = null;
+var dirty = false;
+var editingId = null;
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function yen(n){ return "¥" + Number(n).toLocaleString("ja-JP"); }
+function token(){ return localStorage.getItem(TOKEN_KEY) || ""; }
+function showMsg(el, text, kind){ el.textContent = text; el.className = "msg show " + kind; }
+function hideMsg(el){ el.className = "msg"; }
+function b64encodeUtf8(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64decodeUtf8(b64){ return decodeURIComponent(escape(atob(String(b64).replace(/\s/g, "")))); }
+function slugify(s){
+  var base = String(s || "product").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "product";
+  var id = base, n = 2;
+  while (state.products.some(function(p){ return p.id === id && p.id !== editingId; })) { id = base + "-" + n; n++; }
+  return id;
+}
+function catLabel(id){
+  var c = state.categories.filter(function(x){ return x.id === id; })[0];
+  return c ? (c.jp + " " + c.en) : id;
+}
+
+/* ---------- GitHub API layer ---------- */
+function apiHeaders(){
+  return {
+    "Authorization": "Bearer " + token(),
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28"
+  };
+}
+function loadFromGitHub(){
+  if (!token()){ showMsg($("setupMsg"), "トークンがありません。上の欄に貼ってください。No token yet — paste it above.", "err"); return Promise.reject(new Error("no token")); }
+  return fetch(API, { headers: apiHeaders() })
+    .then(function(r){
+      if (r.status === 404) { fileSha = null; state = { categories: DEFAULT_CATEGORIES.slice(), products: [] }; return "new"; }
+      if (!r.ok) throw new Error("GitHub error " + r.status);
+      return r.json().then(function(j){
+        fileSha = j.sha;
+        var data = JSON.parse(b64decodeUtf8(j.content));
+        state = { categories: data.categories || [], products: data.products || [] };
+        return "loaded";
+      });
+    })
+    .then(function(how){
+      dirty = false; editingId = null;
+      $("mainPanel").hidden = false; $("formPanel").hidden = false;
+      renderAll(); updateLastSavedNote();
+      showMsg($("setupMsg"), how === "new"
+        ? "products.json はまだリポジトリにありません。商品を追加して「保存する」を押すと作られます。products.json not in the repo yet — add products and press Save to create it."
+        : "読み込みました。Loaded " + state.products.length + " products.", "ok");
+    })
+    .catch(function(err){
+      showMsg($("setupMsg"), "読み込みに失敗しました（" + err.message + "）。トークンとネット接続を確認してください。Load failed — check the token and connection.", "err");
+    });
+}
+function buildPayload(){
+  return { categories: state.categories, products: state.products };
+}
+function saveToGitHub(){
+  if (!token()){ showMsg($("saveMsg"), "トークンがありません。No token — set it up above first.", "err"); return Promise.reject(new Error("no token")); }
+  var body = {
+    message: "Update products via Madina Supershop admin panel",
+    content: b64encodeUtf8(JSON.stringify(buildPayload(), null, 2))
+  };
+  if (fileSha) body.sha = fileSha;
+  var btn = $("saveBtn"); btn.disabled = true;
+  return fetch(API, { method: "PUT", headers: Object.assign({ "Content-Type": "application/json" }, apiHeaders()), body: JSON.stringify(body) })
+    .then(function(r){
+      if (!r.ok) return r.text().then(function(t){ throw new Error("GitHub error " + r.status + " " + t.slice(0, 120)); });
+      return r.json();
+    })
+    .then(function(j){
+      if (j && j.content && j.content.sha) fileSha = j.content.sha;
+      dirty = false; $("dirtyNote").style.display = "none";
+      var when = new Date().toLocaleString("ja-JP");
+      localStorage.setItem(SAVED_KEY, when);
+      updateLastSavedNote();
+      showMsg($("saveMsg"), "✅ 保存しました！お店に反映されます（1〜2分かかります）。Saved! The shop updates in 1–2 minutes.", "ok");
+    })
+    .catch(function(err){
+      showMsg($("saveMsg"), "保存に失敗しました（" + err.message + "）。もう一度お試しください。Save failed — please try again.", "err");
+      throw err;
+    })
+    .finally(function(){ btn.disabled = false; });
+}
+function updateLastSavedNote(){
+  var when = localStorage.getItem(SAVED_KEY);
+  $("lastSaved").innerHTML = "前回の保存: " + (when ? esc(when) : "—") + ' <span class="en">Last saved: ' + (when ? esc(when) : "—") + "</span>";
+}
+
+/* ---------- rendering ---------- */
+function renderCatOptions(){
+  var sel = $("fCat");
+  sel.innerHTML = state.categories.map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.jp) + " " + esc(c.en) + "</option>"; }).join("");
+}
+function renderList(){
+  var q = $("adminSearch").value.trim().toLowerCase();
+  var list = state.products.filter(function(p){
+    if (!q) return true;
+    return (p.en + " " + (p.jp || "") + " " + (p.size || "")).toLowerCase().indexOf(q) !== -1;
+  });
+  $("prodCount").textContent = "（全 " + state.products.length + " 件 / " + state.products.length + " products）";
+  if (!list.length){ $("productList").innerHTML = '<p class="hint">商品がありません。No products.</p>'; return; }
+  $("productList").innerHTML = list.map(function(p){
+    var thumb = p.photo ? '<img class="thumb" src="' + esc(p.photo) + '" alt="">' : '<div class="ph">' + esc((p.en || "?").charAt(0).toUpperCase()) + "</div>";
+    return '<div class="prow' + (p.on === false ? " off-row" : "") + '" data-row="' + esc(p.id) + '">' + thumb
+      + '<div class="info"><div class="n">' + esc(p.jp || p.en) + ' <span class="en">' + esc(p.en) + '</span></div>'
+      + '<div class="d">' + yen(p.price) + (p.size ? " ・ " + esc(p.size) : "") + " ・ " + esc(catLabel(p.cat)) + (p.on === false ? " ・ 非表示 OFF" : "") + "</div></div>"
+      + '<label class="switch" title="表示 ON/OFF"><input type="checkbox" data-toggle="' + esc(p.id) + '"' + (p.on === false ? "" : " checked") + '><span class="sl"></span></label>'
+      + '<button type="button" class="mini edit" data-edit="' + esc(p.id) + '">編集 Edit</button>'
+      + '<button type="button" class="mini del" data-del="' + esc(p.id) + '">削除 Delete</button></div>';
+  }).join("");
+  $("productList").querySelectorAll("[data-edit]").forEach(function(b){ b.addEventListener("click", function(){ startEdit(this.getAttribute("data-edit")); }); });
+  $("productList").querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click", function(){ deleteProduct(this.getAttribute("data-del")); }); });
+  $("productList").querySelectorAll("[data-toggle]").forEach(function(t){ t.addEventListener("change", function(){
+    var p = findProduct(this.getAttribute("data-toggle")); if (p){ p.on = this.checked; markDirty(); renderList(); }
+  }); });
+}
+function renderAll(){ renderCatOptions(); renderList(); }
+function findProduct(id){ return state.products.filter(function(p){ return p.id === id; })[0] || null; }
+function markDirty(){ dirty = true; $("dirtyNote").style.display = "block"; hideMsg($("saveMsg")); }
+
+/* ---------- form ---------- */
+function clearForm(){
+  editingId = null;
+  ["fId","fEn","fJp","fPrice","fSize","fNewCat","fPhotoUrl"].forEach(function(id){ $(id).value = ""; });
+  $("fPhotoFile").value = ""; $("fOn").checked = true;
+  $("photoPreview").style.display = "none"; $("photoPreview").src = "";
+  $("formTitle").innerHTML = '③ 商品を追加 <span class="en">Add product</span>';
+  $("applyBtn").innerHTML = 'この商品を追加する <span style="font-size:.8em;">Add product</span>';
+  $("cancelEditBtn").hidden = true; hideMsg($("formMsg"));
+}
+function startEdit(id){
+  var p = findProduct(id); if (!p) return;
+  editingId = id;
+  $("fId").value = p.id; $("fEn").value = p.en || ""; $("fJp").value = p.jp || "";
+  $("fPrice").value = p.price; $("fSize").value = p.size || "";
+  renderCatOptions(); $("fCat").value = p.cat || "other";
+  $("fNewCat").value = ""; $("fPhotoUrl").value = p.photo && p.photo.indexOf("data:") !== 0 ? p.photo : "";
+  $("fOn").checked = p.on !== false;
+  if (p.photo){ $("photoPreview").src = p.photo; $("photoPreview").style.display = "block"; } else { $("photoPreview").style.display = "none"; }
+  $("formTitle").innerHTML = '③ 商品を編集 <span class="en">Edit product</span>';
+  $("applyBtn").innerHTML = '変更する <span style="font-size:.8em;">Update product</span>';
+  $("cancelEditBtn").hidden = false; hideMsg($("formMsg"));
+  $("formPanel").scrollIntoView({ block: "start" });
+}
+function currentPhotoValue(){
+  var pv = $("photoPreview");
+  if (pv.style.display !== "none" && pv.src && pv.src.indexOf("data:") === 0) return pv.src;
+  return $("fPhotoUrl").value.trim();
+}
+function applyForm(){
+  hideMsg($("formMsg"));
+  var en = $("fEn").value.trim();
+  var priceRaw = $("fPrice").value.trim();
+  var price = Number(priceRaw);
+  if (!en){ showMsg($("formMsg"), "商品名（英語）を入力してください。Please enter the product name (English).", "err"); return; }
+  if (priceRaw === "" || isNaN(price) || price < 0){ showMsg($("formMsg"), "価格を正しく入力してください。Please enter a valid price.", "err"); return; }
+  var cat = $("fCat").value || "other";
+  var newCat = $("fNewCat").value.trim();
+  if (newCat){
+    cat = slugify(newCat);
+    if (!state.categories.some(function(c){ return c.id === cat; })) state.categories.push({ id: cat, en: newCat, jp: newCat });
+  }
+  var data = {
+    en: en, jp: $("fJp").value.trim(), price: Math.round(price),
+    size: $("fSize").value.trim(), cat: cat, photo: currentPhotoValue(), on: $("fOn").checked
+  };
+  if (editingId){
+    var p = findProduct(editingId);
+    if (p){ Object.assign(p, data); }
+    showMsg($("formMsg"), "変更しました。「保存する」を押してください。Updated — now press Save.", "ok");
+  } else {
+    data.id = slugify(en);
+    state.products.push(data);
+    showMsg($("formMsg"), "追加しました。「保存する」を押してください。Added — now press Save.", "ok");
+  }
+  markDirty(); renderAll(); clearForm();
+}
+function deleteProduct(id){
+  var p = findProduct(id); if (!p) return;
+  if (!window.confirm("「" + (p.jp || p.en) + "」を削除しますか？ Delete “" + p.en + "”?")) return;
+  state.products = state.products.filter(function(x){ return x.id !== id; });
+  if (editingId === id) clearForm();
+  markDirty(); renderAll();
+}
+
+/* ---------- photo upload: resize to max 480px wide JPEG data-URI ---------- */
+$("fPhotoFile").addEventListener("change", function(){
+  var file = this.files && this.files[0]; if (!file) return;
+  var url = URL.createObjectURL(file);
+  var img = new Image();
+  img.onload = function(){
+    var scale = Math.min(1, 480 / img.width);
+    var canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+    var dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+    $("photoPreview").src = dataUrl; $("photoPreview").style.display = "block";
+    $("fPhotoUrl").value = "";
+  };
+  img.src = url;
+});
+$("fPhotoUrl").addEventListener("input", function(){
+  var v = this.value.trim();
+  if (v){ $("photoPreview").src = v; $("photoPreview").style.display = "block"; }
+});
+
+/* ---------- events ---------- */
+$("saveTokenBtn").addEventListener("click", function(){
+  var t = $("tokenInput").value.trim();
+  if (!t){ showMsg($("setupMsg"), "トークンを貼ってください。Please paste the token.", "err"); return; }
+  localStorage.setItem(TOKEN_KEY, t);
+  $("tokenInput").value = "";
+  loadFromGitHub();
+});
+$("forgetTokenBtn").addEventListener("click", function(){
+  localStorage.removeItem(TOKEN_KEY);
+  showMsg($("setupMsg"), "この端末のトークンを消しました。Token removed from this device.", "info");
+});
+$("reloadBtn").addEventListener("click", function(){
+  if (dirty && !window.confirm("保存していない変更があります。再読込すると消えます。よろしいですか？ Unsaved changes will be lost. Reload anyway?")) return;
+  loadFromGitHub();
+});
+$("saveBtn").addEventListener("click", function(){ saveToGitHub().catch(function(){}); });
+$("applyBtn").addEventListener("click", applyForm);
+$("cancelEditBtn").addEventListener("click", clearForm);
+$("adminSearch").addEventListener("input", renderList);
+
+/* expose for testing */
+window.__supershopAdmin = { getState: function(){ return state; }, buildPayload: buildPayload, saveToGitHub: saveToGitHub, loadFromGitHub: loadFromGitHub };
+
+/* ---------- init ---------- */
+if (token()){
+  showMsg($("setupMsg"), "トークンは保存済みです。読み込んでいます… Token found on this device — loading…", "info");
+  loadFromGitHub();
+} else {
+  showMsg($("setupMsg"), "まずトークンを貼ってください。Setup: paste your GitHub token to begin.", "info");
+}
+updateLastSavedNote();
+</script>
+</body>
+</html>

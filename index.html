@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Madina Halal Supershop — マディナ ハラール スーパーショップ</title>
+<style>
+:root{
+  --green:#0b4530; --green-dark:#07301f; --gold:#e3c04a; --gold-soft:#f6ecd2;
+  --bg:#f2f7f2; --card:#ffffff; --ink:#1d2a1d; --muted:#5c6b5c; --line:#dde6dc;
+  --red:#b3261e;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif; background:var(--bg); color:var(--ink); padding-bottom:96px;}
+.en{font-size:.82em; color:var(--muted); font-weight:400;}
+header{background:var(--green); color:#fff; padding:18px 16px 14px; text-align:center; border-bottom:4px solid var(--gold);}
+header .shop-name{font-size:1.55rem; font-weight:800; letter-spacing:.02em;}
+header .shop-name-jp{font-size:.95rem; color:var(--gold); margin-top:2px;}
+header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
+.ship-strip{background:var(--gold-soft); color:#4a3d08; text-align:center; font-size:.85rem; padding:9px 12px; border-bottom:1px solid var(--line);}
+.wrap{max-width:1080px; margin:0 auto; padding:14px 12px;}
+.search-box{display:flex; gap:8px; margin-bottom:10px;}
+.search-box input{flex:1; font-size:1rem; padding:12px 14px; border:2px solid var(--line); border-radius:12px; background:#fff;}
+.search-box input:focus{outline:none; border-color:var(--green);}
+.chips{display:flex; gap:8px; overflow-x:auto; padding:4px 2px 10px; -webkit-overflow-scrolling:touch;}
+.chip{flex:0 0 auto; border:2px solid var(--green); background:#fff; color:var(--green); border-radius:999px; padding:8px 14px; font-size:.92rem; font-weight:700; cursor:pointer;}
+.chip .cnt{font-size:.75rem; background:var(--gold-soft); border-radius:999px; padding:1px 7px; margin-left:6px; color:#4a3d08;}
+.chip.active{background:var(--green); color:#fff;}
+.chip.active .cnt{background:var(--gold); color:var(--green-dark);}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px;}
+@media(min-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));}}
+.card{background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column;}
+.card .photo{aspect-ratio:4/3; background:#e3efe6; display:flex; align-items:center; justify-content:center; overflow:hidden;}
+.card .photo img{width:100%; height:100%; object-fit:cover;}
+.card .ph-tile{width:100%; height:100%; background:linear-gradient(135deg,var(--green) 0%,#146344 100%); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:800;}
+.card .body{padding:10px 12px 12px; display:flex; flex-direction:column; gap:3px; flex:1;}
+.card .jp{font-weight:700; font-size:1rem; line-height:1.3;}
+.card .en-name{font-size:.85rem; color:var(--muted);}
+.card .size{font-size:.8rem; color:var(--muted);}
+.card .price{font-size:1.15rem; font-weight:800; color:var(--green); margin-top:auto; padding-top:6px;}
+.add-btn{margin-top:8px; background:var(--green); color:#fff; border:none; border-radius:10px; padding:11px; font-size:1rem; font-weight:700; cursor:pointer; width:100%;}
+.add-btn:active{background:var(--green-dark);}
+.stepper{margin-top:8px; display:flex; align-items:center; justify-content:space-between; background:var(--gold-soft); border-radius:10px; padding:4px;}
+.stepper button{width:44px; height:40px; font-size:1.3rem; border:none; background:var(--green); color:#fff; border-radius:8px; cursor:pointer;}
+.stepper .qty{font-size:1.1rem; font-weight:800;}
+.show-more{display:block; margin:18px auto 4px; background:#fff; border:2px solid var(--green); color:var(--green); font-size:1rem; font-weight:700; border-radius:12px; padding:12px 28px; cursor:pointer;}
+.count-line{text-align:center; color:var(--muted); font-size:.85rem; margin-top:8px;}
+.empty-note{text-align:center; color:var(--muted); padding:34px 10px; font-size:1rem;}
+/* cart bar */
+.cartbar{position:fixed; left:0; right:0; bottom:0; background:var(--green-dark); color:#fff; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; box-shadow:0 -3px 14px rgba(0,0,0,.25); z-index:40;}
+.cartbar .cb-info{font-size:.95rem;}
+.cartbar .cb-info strong{font-size:1.1rem;}
+.cartbar button{background:var(--gold); color:var(--green-dark); border:none; font-weight:800; font-size:1rem; border-radius:10px; padding:12px 20px; cursor:pointer;}
+/* cart sheet */
+.overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:50; display:none;}
+.overlay.show{display:block;}
+.sheet{position:fixed; left:0; right:0; bottom:0; max-height:92vh; overflow-y:auto; background:#fff; border-radius:18px 18px 0 0; z-index:60; padding:18px 16px 26px; display:none;}
+.sheet.show{display:block;}
+@media(min-width:760px){.sheet{left:50%; right:auto; transform:translateX(-50%); width:640px; border-radius:18px; bottom:16px;}}
+.sheet h2{font-size:1.2rem; color:var(--green); margin-bottom:4px;}
+.sheet .close-x{float:right; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--muted);}
+.ci-row{display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed var(--line); font-size:.95rem;}
+.ci-row .ci-name{flex:1; padding-right:8px;}
+.ci-stepper{display:flex; align-items:center; gap:8px;}
+.ci-stepper button{width:32px; height:32px; border:none; border-radius:8px; background:var(--green); color:#fff; font-size:1.05rem; cursor:pointer;}
+.totals{margin:12px 0; font-size:.98rem;}
+.totals .t-row{display:flex; justify-content:space-between; padding:3px 0;}
+.totals .t-grand{font-size:1.2rem; font-weight:800; color:var(--green); border-top:2px solid var(--green); padding-top:8px; margin-top:6px;}
+.fee-note{background:var(--gold-soft); border-radius:10px; padding:9px 12px; font-size:.85rem; margin:8px 0;}
+.seg{display:flex; gap:8px; margin:10px 0;}
+.seg button{flex:1; padding:12px 6px; border:2px solid var(--line); background:#fff; border-radius:12px; font-size:.95rem; font-weight:700; cursor:pointer; line-height:1.35;}
+.seg button.selected{border-color:var(--green); background:#e3efe6; color:var(--green);}
+.seg button .en{display:block;}
+label.flabel{display:block; font-weight:700; font-size:.92rem; margin:12px 0 5px;}
+label.flabel .req{color:var(--red);}
+input[type=text],input[type=tel],textarea{width:100%; font-size:1rem; padding:11px 12px; border:2px solid var(--line); border-radius:10px; background:#fff;}
+textarea{min-height:64px;}
+.form-error{display:none; background:#fbeae8; color:var(--red); border-radius:10px; padding:10px 12px; font-size:.9rem; margin:10px 0;}
+.form-error.show{display:block;}
+.confirm-btn{width:100%; background:var(--green); color:#fff; border:none; border-radius:12px; padding:16px; font-size:1.15rem; font-weight:800; cursor:pointer; margin-top:14px;}
+.confirm-hint{text-align:center; font-size:.82rem; color:var(--muted); margin-top:8px;}
+.pay-note{text-align:center; font-size:.85rem; color:var(--muted); margin-top:10px;}
+.invoice-preview{background:#fbfcf9; border:1px solid var(--line); border-radius:10px; padding:12px; font-size:.85rem; white-space:pre-wrap; word-break:break-word; margin-top:12px;}
+/* ticket */
+.ticket-box{background:#fff; border:3px dashed var(--green); border-radius:14px; padding:18px 16px; margin-top:14px;}
+.ticket-box h3{color:var(--green); text-align:center; margin-bottom:8px;}
+.ticket-box pre{white-space:pre-wrap; word-break:break-word; font-size:.88rem; font-family:inherit;}
+.wa-fallback{display:block; text-align:center; margin-top:12px; background:#25d366; color:#fff; text-decoration:none; font-weight:800; padding:13px; border-radius:10px;}
+.howto{background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-top:16px; font-size:.9rem;}
+.howto h3{color:var(--green); margin-bottom:6px; font-size:1rem;}
+.howto li{margin:5px 0 5px 18px;}
+footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px 6px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="shop-name">Madina Halal Supershop</div>
+  <div class="shop-name-jp">マディナ ハラール スーパーショップ</div>
+  <div class="tagline">100%ハラール食品のお店 — 100% Halal groceries, Anjo &amp; Toyota</div>
+</header>
+<div class="ship-strip">宅配便で全国へお届け：¥10,000以上のご注文は送料無料、未満は送料¥990 <span class="en">— Courier delivery to your address — FREE for orders ¥10,000+, otherwise ¥990. Shop pickup always free.</span></div>
+
+<div class="wrap">
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="商品を検索 Search products…">
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="grid" id="grid"></div>
+  <p class="empty-note" id="emptyNote" hidden>商品が見つかりません。No products found.</p>
+  <button type="button" class="show-more" id="showMore" hidden>もっと見る Show more</button>
+  <p class="count-line" id="countLine"></p>
+
+  <div class="howto">
+    <h3>ご注文方法 <span class="en">How to order</span></h3>
+    <ol>
+      <li>商品をカートに入れてください。<span class="en">Add products to the cart.</span></li>
+      <li>カート画面でお名前・電話番号・受け取り方法（宅配便または店舗受け取り）を選んでください。宅配便の方は住所とお支払い方法をご入力ください。<span class="en">In the cart, enter your name and phone, and choose courier delivery or shop pickup. Delivery customers add their address and payment method.</span></li>
+      <li>「注文を確定する」を1回押すと、確認チケットが表示され、同時にWhatsAppが開きます。WhatsAppで送信を押してください。<span class="en">Press “Confirm Order” once — your confirmation ticket appears and WhatsApp opens at the same moment with the full order written. Tap Send in WhatsApp.</span></li>
+      <li>お支払い：店舗受け取りは店頭にて。宅配便は銀行・ゆうちょ振込（確認後に発送、到着まで約3日）または代引き（配達員へお支払い）が選べます。<span class="en">Payment: at the shop for pickup. For courier delivery, choose bank / Japan Post transfer (we ship after the transfer is confirmed; delivery takes about 3 days) or cash on delivery (pay the courier).</span></li>
+    </ol>
+  </div>
+  <footer>Madina Halal Supershop — Gold Family Co. Ltd.<br>安城店 Anjo: 0566-98-9995 ・ 豊田店 Toyota: 0565-41-5616</footer>
+</div>
+
+<!-- cart bar -->
+<div class="cartbar" id="cartbar" hidden>
+  <div class="cb-info"><strong id="cbQty">0</strong> 点 items ・ <strong id="cbTotal">¥0</strong></div>
+  <button type="button" id="openCartBtn">カートを見る View Cart</button>
+</div>
+
+<!-- cart sheet -->
+<div class="overlay" id="overlay"></div>
+<aside class="sheet" id="cartSheet" aria-label="Cart">
+  <button type="button" class="close-x" id="closeCartBtn" aria-label="Close">×</button>
+  <h2>カート <span class="en">Your Cart</span></h2>
+  <div id="cartItems"></div>
+  <div class="totals" id="totals"></div>
+  <p class="fee-note" id="feeLine"></p>
+
+  <span class="flabel">受け取り方法 <span class="en">Courier Delivery / Pickup</span></span>
+  <div class="seg" id="fulfillSeg">
+    <button type="button" data-fulfill="delivery" class="selected">宅配便<span class="en">Courier Delivery — to your address</span></button>
+    <button type="button" data-fulfill="pickup">店頭受取<span class="en">Pickup at shop — always free</span></button>
+  </div>
+
+  <div id="branchField">
+  <span class="flabel">受け取り店舗 <span class="en">Pickup Branch</span></span>
+  <div class="seg" id="branchSeg">
+    <button type="button" data-branch="Anjo" class="selected">安城店<span class="en">Anjo</span></button>
+    <button type="button" data-branch="Toyota">豊田店<span class="en">Toyota</span></button>
+  </div>
+  <p class="fee-note" id="branchHint">選んだ店舗でお受け取りください。Please pick up at the branch you choose.</p>
+  </div>
+
+  <form id="orderForm" novalidate>
+    <label class="flabel" for="fName">お名前 <span class="en">Name</span><span class="req">*</span></label>
+    <input type="text" id="fName" autocomplete="name" placeholder="お名前 Name">
+    <label class="flabel" for="fPhone">電話番号 <span class="en">Phone</span><span class="req">*</span></label>
+    <input type="tel" id="fPhone" autocomplete="tel" placeholder="電話番号 Phone number">
+    <div id="addressField">
+      <label class="flabel" for="fAddress">お届け先住所 <span class="en">Delivery Address</span><span class="req">*</span></label>
+      <textarea id="fAddress" autocomplete="street-address" placeholder="宅配便のお届け先住所 Your delivery address"></textarea>
+    </div>
+    <div id="paymentField">
+      <span class="flabel">お支払い方法 <span class="en">Payment Method</span></span>
+      <div class="seg" id="paymentSeg" style="flex-wrap:wrap;">
+        <button type="button" data-pay="yucho" class="selected">ゆうちょ銀行振込<span class="en">Japan Post Bank Transfer</span></button>
+        <button type="button" data-pay="bank">銀行振込<span class="en">Bank Transfer</span></button>
+        <button type="button" data-pay="cod">代引き<span class="en">Cash on Delivery</span></button>
+      </div>
+      <p class="fee-note" id="paymentNote"></p>
+    </div>
+    <label class="flabel" for="fNote">メッセージ <span class="en">Message (optional)</span></label>
+    <textarea id="fNote" placeholder="ご要望があればどうぞ Any requests"></textarea>
+
+    <div class="form-error" id="formError"></div>
+    <div class="invoice-preview" id="invoicePreview"></div>
+    <button type="submit" class="confirm-btn" id="confirmBtn">注文を確定する Confirm Order</button>
+    <p class="confirm-hint">1回押すと確認チケットが表示され、同時にWhatsAppが開きます。<br>One press: the confirmation ticket shows and WhatsApp opens together.</p>
+    <p class="pay-note">店舗受け取りは店頭でお支払いください。宅配便は振込（確認後に発送）または代引きです。<br>Pickup: pay at the shop. Courier: bank transfer (ships after confirmation) or cash on delivery.</p>
+  </form>
+
+  <div class="ticket-box" id="ticketBox" hidden>
+    <h3>ご注文ありがとうございます！<br><span class="en">Thank you — your order ticket</span></h3>
+    <pre id="ticketText"></pre>
+    <a class="wa-fallback" id="waFallback" href="#" target="_blank" rel="noopener">WhatsAppが開かない場合はこちら — Open WhatsApp</a>
+  </div>
+</aside>
+
+<script>
+var WA_NUMBER = "819065842039";
+var FREE_THRESHOLD = 10000;
+var DELIVERY_FEE = 990;
+var PAGE_SIZE = 60;
+/* Bank details shown on the ticket for transfer payments.
+   TODO (owner): replace these placeholders with the confirmed account details. */
+var BANK_INFO = {
+  yucho: "（ゆうちょ：未設定）",
+  bank: "（銀行：未設定）"
+};
+var PAY_LABELS = {
+  yucho: "ゆうちょ銀行振込 Japan Post Bank Transfer",
+  bank: "銀行振込 Bank Transfer",
+  cod: "代引き Cash on Delivery"
+};
+
+var CATEGORIES = [];
+var PRODUCTS = [];
+var cart = {};
+var activeCat = "all";
+var searchQuery = "";
+var shownCount = PAGE_SIZE;
+var fulfill = "delivery"; // "delivery" (courier) | "pickup"
+var branch = "Anjo"; // pickup branch: "Anjo" | "Toyota"
+var payment = "yucho"; // delivery only: "yucho" | "bank" | "cod"
+
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function yen(n){ return "¥" + Number(n).toLocaleString("ja-JP"); }
+function catById(id){ for (var i=0;i<CATEGORIES.length;i++) if (CATEGORIES[i].id===id) return CATEGORIES[i]; return null; }
+function productById(id){ for (var i=0;i<PRODUCTS.length;i++) if (PRODUCTS[i].id===id) return PRODUCTS[i]; return null; }
+function visibleProducts(){ return PRODUCTS.filter(function(p){ return p.on !== false; }); }
+function filteredProducts(){
+  var q = searchQuery.trim().toLowerCase();
+  return visibleProducts().filter(function(p){
+    if (activeCat !== "all" && p.cat !== activeCat) return false;
+    if (!q) return true;
+    var c = catById(p.cat);
+    var hay = (p.en + " " + (p.jp||"") + " " + (p.size||"") + " " + (c ? c.en + " " + c.jp : "")).toLowerCase();
+    return hay.indexOf(q) !== -1;
+  });
+}
+
+/* ---------- chips ---------- */
+var chipsEl = document.getElementById("chips");
+function renderChips(){
+  var vis = visibleProducts();
+  var counts = {};
+  vis.forEach(function(p){ counts[p.cat] = (counts[p.cat]||0)+1; });
+  var html = '<button type="button" class="chip' + (activeCat==="all" ? " active" : "") + '" data-cat="all">すべて All<span class="cnt">' + vis.length + '</span></button>';
+  CATEGORIES.forEach(function(c){
+    if (!counts[c.id]) return;
+    html += '<button type="button" class="chip' + (activeCat===c.id ? " active" : "") + '" data-cat="' + esc(c.id) + '">' + esc(c.jp) + ' ' + esc(c.en) + '<span class="cnt">' + counts[c.id] + '</span></button>';
+  });
+  chipsEl.innerHTML = html;
+  var btns = chipsEl.querySelectorAll(".chip");
+  for (var i=0;i<btns.length;i++) btns[i].addEventListener("click", function(){
+    activeCat = this.getAttribute("data-cat"); shownCount = PAGE_SIZE; renderChips(); renderGrid();
+  });
+}
+
+/* ---------- grid ---------- */
+var gridEl = document.getElementById("grid");
+var showMoreBtn = document.getElementById("showMore");
+var emptyNote = document.getElementById("emptyNote");
+var countLine = document.getElementById("countLine");
+function cardHTML(p){
+  var qty = cart[p.id] || 0;
+  var photo = p.photo
+    ? '<img src="' + esc(p.photo) + '" alt="' + esc(p.en) + '" loading="lazy">'
+    : '<div class="ph-tile">' + esc((p.en || p.jp || "?").trim().charAt(0).toUpperCase()) + '</div>';
+  var action = qty === 0
+    ? '<button type="button" class="add-btn" data-add="' + esc(p.id) + '">カートに入れる Add</button>'
+    : '<div class="stepper"><button type="button" data-dec="' + esc(p.id) + '">−</button><span class="qty">' + qty + '</span><button type="button" data-inc="' + esc(p.id) + '">＋</button></div>';
+  return '<article class="card" data-card="' + esc(p.id) + '">'
+    + '<div class="photo">' + photo + '</div>'
+    + '<div class="body"><div class="jp">' + esc(p.jp || p.en) + '</div>'
+    + '<div class="en-name">' + esc(p.en) + '</div>'
+    + (p.size ? '<div class="size">' + esc(p.size) + '</div>' : '')
+    + '<div class="price">' + yen(p.price) + '</div>' + action + '</div></article>';
+}
+function renderGrid(){
+  var list = filteredProducts();
+  var show = list.slice(0, shownCount);
+  gridEl.innerHTML = show.map(cardHTML).join("");
+  emptyNote.hidden = list.length !== 0;
+  showMoreBtn.hidden = list.length <= shownCount;
+  countLine.textContent = list.length ? ("全 " + list.length + " 商品中 " + show.length + " 件を表示 — Showing " + show.length + " of " + list.length + " products") : "";
+  bindGridButtons();
+  renderCartBar();
+}
+function bindGridButtons(){
+  gridEl.querySelectorAll("[data-add]").forEach(function(b){ b.addEventListener("click", function(){ setQty(this.getAttribute("data-add"), 1); }); });
+  gridEl.querySelectorAll("[data-inc]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-inc"); setQty(id, (cart[id]||0)+1); }); });
+  gridEl.querySelectorAll("[data-dec]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-dec"); setQty(id, (cart[id]||0)-1); }); });
+}
+showMoreBtn.addEventListener("click", function(){ shownCount += PAGE_SIZE; renderGrid(); });
+document.getElementById("searchInput").addEventListener("input", function(){ searchQuery = this.value; shownCount = PAGE_SIZE; renderGrid(); });
+
+/* ---------- cart ---------- */
+function setQty(id, qty){
+  if (qty <= 0) delete cart[id]; else cart[id] = qty;
+  renderGrid(); renderCart();
+}
+function sortedCartIds(){
+  return Object.keys(cart).filter(function(id){ return productById(id); })
+    .sort(function(a,b){ return productById(a).en.localeCompare(productById(b).en); });
+}
+function cartTotalQty(){ var n=0; for (var k in cart) n += cart[k]; return n; }
+function subtotal(){ var t=0; for (var k in cart){ var p=productById(k); if (p) t += p.price*cart[k]; } return t; }
+function deliveryFee(){
+  if (fulfill !== "delivery") return 0;
+  var st = subtotal();
+  if (!st) return 0;
+  return st >= FREE_THRESHOLD ? 0 : DELIVERY_FEE;
+}
+var cartbar = document.getElementById("cartbar");
+function renderCartBar(){
+  var n = cartTotalQty();
+  cartbar.hidden = n === 0;
+  document.getElementById("cbQty").textContent = n;
+  document.getElementById("cbTotal").textContent = yen(subtotal() + deliveryFee());
+}
+var cartItemsEl = document.getElementById("cartItems");
+var totalsEl = document.getElementById("totals");
+var feeLineEl = document.getElementById("feeLine");
+var invoicePreviewEl = document.getElementById("invoicePreview");
+function renderCart(){
+  var ids = sortedCartIds();
+  if (!ids.length){
+    cartItemsEl.innerHTML = '<p class="empty-note">カートは空です。Your cart is empty.</p>';
+  } else {
+    cartItemsEl.innerHTML = ids.map(function(id){
+      var p = productById(id);
+      return '<div class="ci-row"><span class="ci-name">' + esc(p.jp || p.en) + ' ' + esc(p.en) + '<br><span class="en">' + yen(p.price) + (p.size ? " ・ " + esc(p.size) : "") + '</span></span>'
+        + '<span class="ci-stepper"><button type="button" data-cdec="' + esc(id) + '">−</button><strong>' + cart[id] + '</strong><button type="button" data-cinc="' + esc(id) + '">＋</button></span>'
+        + '<strong style="min-width:76px; text-align:right;">' + yen(p.price*cart[id]) + '</strong></div>';
+    }).join("");
+    cartItemsEl.querySelectorAll("[data-cinc]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-cinc"); setQty(id, cart[id]+1); }); });
+    cartItemsEl.querySelectorAll("[data-cdec]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-cdec"); setQty(id, cart[id]-1); }); });
+  }
+  var st = subtotal(), fee = deliveryFee();
+  totalsEl.innerHTML =
+    '<div class="t-row"><span>小計 Subtotal</span><span>' + yen(st) + '</span></div>'
+    + '<div class="t-row"><span>送料 Courier fee</span><span>' + (fulfill==="pickup" ? "¥0（店頭受取 Pickup）" : (fee===0 && st>0 ? "¥0 — 無料 FREE" : yen(fee))) + '</span></div>'
+    + '<div class="t-row t-grand"><span>合計 Total</span><span>' + yen(st+fee) + '</span></div>';
+  if (fulfill === "pickup") feeLineEl.textContent = "店頭受取：送料 ¥0（無料） / Pickup: delivery fee ¥0 — FREE ・ 合計 Total: " + yen(st);
+  else if (st >= FREE_THRESHOLD) feeLineEl.textContent = "送料：¥0 — 無料 FREE（¥10,000以上） / Courier fee: ¥0 — FREE ・ 合計 Total: " + yen(st);
+  else if (st > 0) feeLineEl.textContent = "送料：¥990（¥10,000未満） / Courier fee: ¥990 ・ 合計 Total: " + yen(st + DELIVERY_FEE) + " — あと " + yen(FREE_THRESHOLD - st) + " で送料無料 / " + yen(FREE_THRESHOLD - st) + " more for FREE delivery";
+  else feeLineEl.textContent = "宅配便：¥10,000以上のご注文は送料無料、未満は送料¥990。店頭受取は無料です。 / Courier delivery: FREE on orders ¥10,000+, otherwise ¥990. Pickup is free.";
+  invoicePreviewEl.textContent = buildInvoiceText(readForm().name, readForm().phone, readForm().address, readForm().note, true);
+  renderCartBar();
+}
+function readForm(){
+  return {
+    name: document.getElementById("fName").value.trim(),
+    phone: document.getElementById("fPhone").value.trim(),
+    address: document.getElementById("fAddress").value.trim(),
+    note: document.getElementById("fNote").value.trim()
+  };
+}
+["fName","fPhone","fAddress","fNote"].forEach(function(id){
+  document.getElementById(id).addEventListener("input", function(){
+    invoicePreviewEl.textContent = buildInvoiceText(readForm().name, readForm().phone, readForm().address, readForm().note, true);
+  });
+});
+
+/* ---------- fulfillment / branch ---------- */
+function branchJp(){ return branch === "Anjo" ? "安城店" : "豊田店"; }
+function fulfillmentText(){
+  if (fulfill === "delivery") return "宅配便 Courier Delivery（ご住所へ発送 / shipped to your address）";
+  return "店頭受取 Pickup — " + branchJp() + " " + branch;
+}
+function paymentNoteText(){
+  if (payment === "cod") return "代引き：商品到着時に配達員へ合計金額をお支払いください。Cash on delivery — please pay the courier the total amount when your order arrives.";
+  var info = payment === "yucho" ? BANK_INFO.yucho : BANK_INFO.bank;
+  return "振込先 / Transfer to: " + info + " — 振込確認後に発送します。到着まで約3日かかります。We ship after your transfer is confirmed; delivery takes about 3 days.";
+}
+function syncFulfillmentUI(){
+  document.querySelectorAll("#fulfillSeg button").forEach(function(b){ b.classList.toggle("selected", b.getAttribute("data-fulfill")===fulfill); });
+  document.querySelectorAll("#branchSeg button").forEach(function(b){ b.classList.toggle("selected", b.getAttribute("data-branch")===branch); });
+  document.querySelectorAll("#paymentSeg button").forEach(function(b){ b.classList.toggle("selected", b.getAttribute("data-pay")===payment); });
+  var isDelivery = fulfill === "delivery";
+  document.getElementById("addressField").hidden = !isDelivery;
+  document.getElementById("paymentField").hidden = !isDelivery;
+  document.getElementById("branchField").hidden = isDelivery;
+  if (isDelivery) document.getElementById("paymentNote").textContent = paymentNoteText();
+  renderCart();
+}
+document.querySelectorAll("#fulfillSeg button").forEach(function(b){ b.addEventListener("click", function(){ fulfill = this.getAttribute("data-fulfill"); syncFulfillmentUI(); }); });
+document.querySelectorAll("#branchSeg button").forEach(function(b){ b.addEventListener("click", function(){ branch = this.getAttribute("data-branch"); syncFulfillmentUI(); }); });
+document.querySelectorAll("#paymentSeg button").forEach(function(b){ b.addEventListener("click", function(){ payment = this.getAttribute("data-pay"); syncFulfillmentUI(); }); });
+
+/* ---------- invoice text (same format as the current shop) ---------- */
+function pad(n){ return (n<10?"0":"")+n; }
+function orderDateStr(){
+  var d = new Date(); var days = ["日","月","火","水","木","金","土"];
+  return d.getFullYear() + "年" + (d.getMonth()+1) + "月" + d.getDate() + "日（" + days[d.getDay()] + "）" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+function buildInvoiceText(name, phone, address, note, preview){
+  var sep = "──────────";
+  var ids = sortedCartIds();
+  var isDelivery = fulfill === "delivery";
+  var lines = [];
+  lines.push("Madina Halal Supershop — Online Order");
+  lines.push("日時 / Date: " + orderDateStr());
+  lines.push(sep);
+  lines.push("お名前 / Name: " + (name || (preview ? "（未入力）" : "")));
+  lines.push("電話 / Phone: " + (phone || (preview ? "（未入力）" : "")));
+  lines.push("受取方法 / Fulfillment: " + fulfillmentText());
+  if (isDelivery) lines.push("住所 / Address: " + (address || (preview ? "（未入力）" : "")));
+  if (note) lines.push("メッセージ / Note: " + note);
+  if (!isDelivery){
+    lines.push("支払い / Payment: 店頭払い（Pay at the shop）");
+  } else {
+    lines.push("支払い / Payment: " + PAY_LABELS[payment]);
+    if (payment === "cod"){
+      lines.push("代引き：商品到着時に配達員へ合計金額をお支払いください。 / Cash on delivery: please pay the courier the total on arrival.");
+    } else {
+      lines.push("振込先 / Transfer to: " + (payment === "yucho" ? BANK_INFO.yucho : BANK_INFO.bank));
+      lines.push("※ 振込確認後に発送します。到着まで約3日かかります。 / We ship after your transfer is confirmed; delivery takes about 3 days.");
+    }
+  }
+  lines.push(sep);
+  var st = 0;
+  ids.forEach(function(id, i){
+    var p = productById(id); if (!p) return;
+    lines.push((i+1) + ". " + p.en + "（" + (p.jp||"") + "）" + (p.size||"") + " — " + yen(p.price) + " × " + cart[id] + " = " + yen(p.price*cart[id]));
+    st += p.price * cart[id];
+  });
+  lines.push(sep);
+  var fee = deliveryFee();
+  lines.push("小計 / Subtotal: " + yen(st));
+  if (isDelivery){
+    if (fee === 0 && st >= FREE_THRESHOLD) lines.push("送料 / Courier fee: ¥0 — 無料 FREE（¥10,000以上のご注文 / orders ¥10,000+）");
+    else lines.push("送料 / Courier fee: " + yen(fee) + "（¥10,000未満 / orders under ¥10,000）");
+  } else {
+    lines.push("送料 / Courier fee: ¥0 — 店頭受取無料 / Pickup free");
+  }
+  lines.push("合計 / TOTAL: " + yen(st + fee));
+  lines.push("ありがとうございます / Thank you for your order.");
+  return lines.join("\n");
+}
+
+/* ---------- sheet open/close ---------- */
+var overlay = document.getElementById("overlay");
+var sheet = document.getElementById("cartSheet");
+function openCart(){ overlay.classList.add("show"); sheet.classList.add("show"); renderCart(); }
+function closeCart(){ overlay.classList.remove("show"); sheet.classList.remove("show"); }
+document.getElementById("openCartBtn").addEventListener("click", openCart);
+document.getElementById("closeCartBtn").addEventListener("click", closeCart);
+overlay.addEventListener("click", closeCart);
+
+/* ---------- Confirm Order: ticket + WhatsApp in one press ---------- */
+var formError = document.getElementById("formError");
+function showError(msg){ formError.innerHTML = msg; formError.classList.add("show"); }
+function hideError(){ formError.classList.remove("show"); }
+document.getElementById("orderForm").addEventListener("submit", function(e){
+  e.preventDefault(); hideError();
+  var ids = sortedCartIds();
+  var f = readForm();
+  var isDelivery = fulfill === "delivery";
+  if (!ids.length){ showError("カートが空です。まず商品をカートに入れてください。<br>Your cart is empty — please add items first."); return; }
+  if (!f.name){ showError("お名前をご入力ください。<br>Please enter your name."); return; }
+  if (!f.phone){ showError("電話番号をご入力ください。<br>Please enter your phone number."); return; }
+  if (isDelivery && !f.address){ showError("配達をご希望の方は住所をご入力ください。<br>Please enter your delivery address."); return; }
+  var text = buildInvoiceText(f.name, f.phone, f.address, f.note, false);
+  var url = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(text);
+  document.getElementById("ticketText").textContent = text;
+  document.getElementById("waFallback").href = url;
+  var ticketBox = document.getElementById("ticketBox");
+  ticketBox.hidden = false;
+  window.open(url, "_blank");
+  ticketBox.scrollIntoView({ block: "start" });
+});
+
+/* ---------- load products ---------- */
+fetch("products.json", { cache: "no-store" })
+  .then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+  .then(function(data){
+    CATEGORIES = data.categories || [];
+    PRODUCTS = data.products || [];
+    renderChips(); renderGrid(); syncFulfillmentUI();
+  })
+  .catch(function(err){
+    gridEl.innerHTML = "";
+    emptyNote.hidden = false;
+    emptyNote.textContent = "商品を読み込めませんでした。Could not load products (" + err.message + "). Please reload.";
+  });
+</script>
+</body>
+</html>
