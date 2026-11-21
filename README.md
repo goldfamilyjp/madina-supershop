@@ -159,16 +159,38 @@ layer; this feature is the second, permanent layer.
   balance** triggers the usual soft warning at Confirm — warned once, the customer may
   proceed; the shop still confirms the balance by hand before applying any discount.
 
-**Switching it on (one time, owner's Google account)**
+**Status: SWITCHED ON (2026-11-21).** The script is deployed in the owner's Google account
+and `ORDER_API_URL` in `index.html` now holds the live **/exec URL**, so the feature is
+active in production: lookups fill returning customers' details and every order gets its
+MS-number from the script (the Google Form is now only the failure fallback). Setting the
+constant back to empty would return the shop to the dormant, Form-only behaviour.
 
-1. Open (or create) the spreadsheet that should hold the records.
-2. Extensions → Apps Script → delete the sample code → paste all of `apps-script.gs` → Save.
-3. Deploy → New deployment → type **Web app**: Execute as **Me**, Who has access **Anyone** →
-   Deploy → authorise once → copy the **/exec URL**.
-4. Paste that URL into `index.html` as the `ORDER_API_URL` constant (top of the main script)
-   and redeploy the shop. While the constant is empty the whole feature is dormant and
-   checkout behaves exactly as it did before. (Later script changes need
-   Deploy → Manage deployments → New version to go live.)
+**The live contract (what the shop sends / expects)**
+
+- **Order POST** — the JSON body carries `action: "order"`, the items text **twice** —
+  as `items` and as `itemsText` (the same string) — and the points request **twice** —
+  as `pointsUsed` and as `pointsUse` (the same number) — alongside all the other order
+  fields (phone, name, address parts, totals, …). The script answers
+  `{ ok: true, orderNo: "MS-0001" }`.
+- **Lookup GET** — `?action=lookup&phone=…&zip=…`. The answer is
+  `{ ok: true, found: true, name, fulfilment, branch, payment }`, and **only when the
+  postal code matched** it additionally carries `email, zip, prefecture, city, town,
+  street, building`. There is **no `verified` flag**: the shop treats the answer as
+  zip-verified when `verified === true` **or** the address keys (`email` + `zip`) are
+  present, and only then fills the address fields.
+
+**Deployed script vs `apps-script.gs` in this folder**
+
+The script actually running in the owner's account is a **functionally equivalent
+variant** of the `apps-script.gs` kept here (the local file is the original variant; the
+two differ in the contract details above, which is why the shop sends the duplicated
+fields — they satisfy both variants). One fix exists **only in the deployed script
+(its Version 2)**: when writing the “Customers” sheet, the street cell/row is formatted
+as **plain text before** the value is written, so a 番地 like `1-11-13` is stored as
+text instead of being auto-converted by Sheets into a date. If the script is ever
+re-deployed from the local file, that text-format fix must be re-applied and the
+contract re-checked. (Script changes need Deploy → Manage deployments → New version
+to go live; a plain save does not update the web app.)
 
 ## Address & phone check (checkout)
 
@@ -304,28 +326,54 @@ file and saves only `active` from then on — no manual migration is needed.
 ## Photo auto-fill (OCR) in the admin panel
 
 When the owner picks a product photo in the Add/Edit form, the panel reads the packet's printed
-text with **Tesseract.js** (loaded from the jsDelivr CDN; languages **English + Japanese**) and
-pre-fills the form, so the owner only has to type the **price**:
+text and pre-fills the form, so the owner only has to type the **price**. Two readers, in order:
 
-- **Product name (English)** — the printed line with the most Latin letters (a lone brand line is
-  joined with the next line), title-cased, with any weight text removed.
+1. **Online reader (preferred)** — the photo (a ~1000 px version) is POSTed to the shop's own
+   Google Apps Script endpoint (`ORDERS_API_URL` in `admin.html` — the same public endpoint the
+   shop uses for orders) with `{"action":"ocr", …}`. The script reads it server-side with
+   OCR.space; **the OCR.space API key lives only in the script's properties** — there is no key
+   in the admin page, nothing key-like is stored in the browser, and the owner never handles a
+   key. Any failure or a ~20 s timeout falls back silently to the built-in reader.
+2. **Built-in reader (fallback)** — **Tesseract.js** (jsDelivr CDN; **English + Japanese**) in
+   the browser, run on a pre-processed copy of the photo (upscaled 2×, grayscale, contrast
+   boost, light sharpen, mild threshold at the extremes), which reads packet print far better
+   than the raw photo. Works offline.
+
+The status line always says which reader produced the result (“Read by online reader” /
+“Read by built-in reader”). What gets filled:
+
+- **Product name (English)** — the printed line with the most Latin letters, with weight text
+  removed. Junk lines (barcodes, prices, symbol noise, long digit runs) are never candidates.
+  An ALL-CAPS brand line printed just above the name (e.g. `SHAN`) is kept **in caps** in front
+  of the name; a lone brand word is joined with the next clean line.
 - **Japanese name** — the first mostly-Japanese printed line, if the field is empty.
-- **Size / weight** — patterns like `450g`, `5kg`, `500ml`, `1L`, `100g x 20`, `100 bags` go into
-  the Size field.
+- **Size / weight** — `450g`, `NET WT 450g`, `450 g`, `1.5kg`, `5kg`, `500ml`, `1L`,
+  `100g x 20`, `500ml×12`, `100枚`, `20 bags` and similar go into the Size field.
 - **Category** — a keyword map (basmati/rice → Rice & Grains, dal/lentil/chana → Dal & Lentils,
   tea → Tea, fish → Fish, masala/spice/chilli → Spices, etc.), set only on a confident match.
+  The guessed category becomes the **primary** ticked category; categories the owner already
+  ticked by hand are kept (see “Multiple categories” below).
 
-Safety rules: OCR fills **empty fields only** — it never overwrites anything the owner typed, and
-it never replaces the category of a product being edited (or one the owner picked by hand). After
-reading, a note lists exactly what was auto-filled (“Auto-filled from photo: name, size, category —
-please check before saving”). If no text can be read, a friendly note says so and the form stays
-fully manual; OCR never blocks saving, and if the CDN library cannot load, the photo still uploads
-as before.
+Safety rules: OCR fills **empty fields only** — it never overwrites anything the owner typed.
+After reading, a note lists exactly what was auto-filled (“Auto-filled from photo: name, size,
+category — please check before saving”). If no text can be read, a friendly note says so and
+the form stays fully manual; OCR never blocks saving, and if the CDN library cannot load, the
+photo still uploads as before.
 
-**Honest note:** OCR reads **printed packet text** — clear, flat, well-lit photos of the front of
-the packet work best. Handwriting, curved/foil packaging, glare and small print can be misread or
-missed, so the auto-filled fields must always be checked before saving. The reading happens in the
-browser on the same ~480 px resized photo that gets saved with the product.
+**Honest note:** OCR reads **printed packet text** — clear, flat, well-lit photos of the front
+of the packet work best. Handwriting, curved/foil packaging, glare and small print can be
+misread or missed, so the auto-filled fields must always be checked before saving.
+
+## Reset & recovery (admin panel)
+
+- **↺ Reset form** (in the Add/Edit form, and **↺ Reset** in the Quick Add card — same action):
+  clears every form field — names, price, size, category ticks, stock, both photo URL/file
+  inputs and previews, the Popular/Show switches — and exits edit mode back to “add new”.
+  If the form holds un-applied input it asks for confirmation first.
+- **↺ Reload from shop — discard unsaved changes** (② Products, next to “💾 Save to shop”):
+  re-downloads `products.json` and throws away every unsaved local change (with a confirmation
+  when there are any), so a bad edit/save session can be abandoned cleanly. The small
+  “↺ Reload” button in the search row does the same reload without clearing the form.
 
 ## Quick Add (admin panel)
 
@@ -347,9 +395,31 @@ names, photo URLs and editing existing products.
 
 **New categories:** type the new category's name in the **“New category name (only if you
 need a new one)”** box — in the Quick Add card or in the main form — and it is created when
-the product is added/saved. It then appears in the category dropdowns and as a filter chip
-on the shop front automatically (the shop builds its chips from the `categories` array in
-`products.json`). Leave the box empty to use an existing category.
+the product is added/saved, and ticked for that product (as its main category). It then
+appears in the form's category chips, in the Quick Add dropdown and as a filter chip on the
+shop front automatically (the shop builds its chips from the `categories` array in
+`products.json`). Leave the box empty to use existing categories.
+
+## Multiple categories per product
+
+A product can belong to **several categories** (e.g. a frozen spice mix: Spices + Frozen):
+
+- **Data:** the optional **`cats`** array in `products.json` holds all category ids. The
+  legacy single **`cat`** is the **primary** category — always the first entry of `cats` —
+  and every save writes **both** fields (`cat = cats[0]`), so older data and other tools keep
+  working. A product stored without `cats` is treated as `[cat]`.
+- **Admin form:** the category picker is a row of **checkbox chips**, one per category; tick
+  as many as apply. The first ticked chip is badged **MAIN**. If nothing is ticked when the
+  product is added, the first category in the list is used. Editing a product pre-ticks its
+  categories. The admin product list shows **all** of a product's category names.
+- **Quick Add** keeps its single category dropdown — it sets the (only/primary) category:
+  a quick-added product gets `cats = [selected]`.
+- **Photo OCR** ticks its guessed category as the primary one and never unticks categories
+  the owner picked by hand.
+- **Shop front:** the category filter matches a product when the tapped chip is in the
+  product's effective category list (`cats`, falling back to `[cat]`), so a multi-category
+  product appears under **each** of its categories as well as under “All”. Chip counts count
+  a product under every category it belongs to.
 
 ## Stock control (products)
 
