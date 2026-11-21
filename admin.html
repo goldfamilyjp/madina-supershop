@@ -748,10 +748,12 @@ $("fPhoto2Url").addEventListener("input", function(){
    is never overwritten. The guessed category becomes the primary ticked
    category; categories ticked by hand are kept. Two engines, in order:
    the shop's own online reader (Apps Script endpoint, server-side), then
-   the built-in Tesseract.js reader as a silent fallback. OCR is a helper
-   only: it never blocks saving, and the owner is always told to check
-   what was filled. The price is never read from the photo — the owner
-   types it himself. */
+   the built-in Tesseract.js reader as a silent fallback. When a reader
+   supplies printed-line heights, the English name is the biggest Latin
+   line — the packet title — rather than the longest small-print line.
+   OCR is a helper only: it never blocks saving, and the owner is always
+   told to check what was filled. The price is never read from the
+   photo — the owner types it himself. */
 var OCR_CAT_KEYWORDS = [
   ["fish",   ["fish", "rui", "hilsa", "ilish", "pangas", "prawn", "shrimp"]],
   ["tea",    ["tea", "chai"]],
@@ -818,16 +820,60 @@ function ocrIsJunkLine(line){
   if (/[|~^`]/.test(s) && letters < 4) return true;
   return false;
 }
-function parseOcrText(text){
+/* A sized OCR line can identify the packet TITLE: the product name is
+   the biggest printed Latin line, not necessarily the longest line of
+   small print. `sizedLines` entries are { t, h }, where h is the printed
+   line height in pixels. A directly adjacent line printed at at least
+   70% of that height is part of the same wrapped title, so it is joined
+   in reading order when the combined name stays within 42 characters.
+   This helper returns "" when no usable positive line height is present,
+   allowing parseOcrText to use its established fallback heuristic. */
+function ocrNameFromSizedLines(sizedLines, size){
+  if (!Array.isArray(sizedLines) || !sizedLines.length) return "";
+  var candidates = [];
+  sizedLines.forEach(function(entry, idx){
+    if (!entry || typeof entry !== "object") return;
+    var raw = String(entry.t == null ? "" : entry.t).trim();
+    var h = Number(entry.h);
+    if (!raw || !isFinite(h) || h <= 0) return;
+    var jpChars = (raw.match(/[぀-ヿ一-鿿]/g) || []).length;
+    var latChars = (raw.match(/[A-Za-z]/g) || []).length;
+    if (!latChars || jpChars > latChars) return;       /* Latin lines only (not mostly-Japanese) */
+    if (ocrIsJunkLine(raw)) return;
+    var cleaned = ocrCleanNameLine(raw, size);
+    if ((cleaned.match(/[A-Za-z]/g) || []).length < 2) return;
+    candidates.push({ idx: idx, h: h, name: cleaned });
+  });
+  if (!candidates.length) return "";
+  var winner = candidates[0];
+  candidates.forEach(function(c){ if (c.h > winner.h) winner = c; });
+  var chosen = [winner];
+  candidates.forEach(function(c){
+    if (c !== winner && Math.abs(c.idx - winner.idx) === 1 && c.h >= winner.h * 0.7) chosen.push(c);
+  });
+  chosen.sort(function(a, b){ return a.idx - b.idx; });
+  var joined = chosen.map(function(c){ return c.name; }).join(" ");
+  var name = chosen.length > 1 && joined.length <= 42 ? joined : winner.name;
+  name = ocrTitleCase(name);
+  if (!/[|~^`]/.test(name) && !/\d{4,}/.test(name)) return name;
+  return "";
+}
+function parseOcrText(text, sizedLines){
   var out = { name: "", jp: "", size: "", cat: "" };
   if (!text) return out;
   out.size = ocrDetectSize(text);
   var lines = String(text).split(/\r?\n/).map(function(l){ return l.trim(); }).filter(function(l){ return l.length >= 2; });
-  /* English name: the printed line with the most Latin letters wins —
+  /* English name: when line sizes are available, the biggest printed
+     Latin line is the packet title and wins (see ocrNameFromSizedLines).
+     Otherwise, the printed line with the most Latin letters wins —
      junk lines (barcodes, prices, symbol noise) are never candidates.
-     A lone ALL-CAPS brand line just above the winner is kept, in caps,
-     in front of it (e.g. "SHAN" + "Chicken Tikka Masala"); a lone brand
-     word on the winning line itself is joined with the next clean line. */
+     In that fallback, a lone ALL-CAPS brand line just above the winner
+     is kept, in caps, in front of it (e.g. "SHAN" + "Chicken Tikka
+     Masala"); a lone brand word on the winning line itself is joined
+     with the next clean line. */
+  var sizedName = ocrNameFromSizedLines(sizedLines, out.size);
+  if (sizedName) out.name = sizedName;
+  if (!sizedName){
   var bestIdx = -1, bestScore = 0;
   lines.forEach(function(line, i){
     if (/[぀-ヿ一-鿿]/.test(line)) return;
@@ -863,6 +909,7 @@ function parseOcrText(text){
       if (!/[|~^`]/.test(name) && !/\d{4,}/.test(name)) out.name = name;
     }
   }
+  }
   /* Japanese name: first mostly-Japanese line that is not junk. */
   for (var i = 0; i < lines.length; i++){
     if (ocrIsJunkLine(lines[i])) continue;
@@ -881,13 +928,13 @@ function parseOcrText(text){
   }
   return out;
 }
-function applyOcrResult(text, engine){
+function applyOcrResult(text, engine, lines){
   var note = $("ocrMsg");
   if (!text || !String(text).trim()){
     showMsg(note, "Could not read any text from this photo — please fill in the details by hand.", "info");
     return;
   }
-  var r = parseOcrText(text);
+  var r = parseOcrText(text, lines);
   var filled = [];
   if (r.name && !$("fEn").value.trim()){ $("fEn").value = r.name; filled.push("name"); }
   if (r.jp && !$("fJp").value.trim()){ $("fJp").value = r.jp; filled.push("Japanese name"); }
@@ -940,7 +987,10 @@ function ordersApiOcr(dataUrl){
     return r.json();
   }).then(function(j){
     if (!j || j.ok !== true || typeof j.text !== "string") throw new Error("online reader bad response");
-    return j.text;
+    /* Newer deployments also return each printed line's height as
+       lines: [{ t, h }, …] — used to pick the packet title. Older
+       deployments omit it, and the parser then uses its fallback. */
+    return { text: j.text, lines: Array.isArray(j.lines) ? j.lines : undefined };
   });
 }
 /* Pre-process a photo for the built-in reader: upscale 2× (capped),
@@ -989,6 +1039,27 @@ function preprocessForOcr(dataUrl){
     img.src = dataUrl;
   });
 }
+/* Tesseract.js v5 may expose result.data.lines, each with text and a
+   bbox { x0, y0, x1, y1 }. Convert those to the same { t, h } contract
+   as the online reader. Any unexpected shape simply yields undefined,
+   preserving the established text-only fallback. */
+function ocrLinesFromTesseract(res){
+  try {
+    var rawLines = res && res.data && Array.isArray(res.data.lines) ? res.data.lines : null;
+    if (!rawLines) return undefined;
+    var lines = rawLines.map(function(line){
+      var bbox = line && line.bbox ? line.bbox : {};
+      var h = Number(bbox.y1) - Number(bbox.y0);
+      return {
+        t: line && line.text != null ? String(line.text).trim() : "",
+        h: isFinite(h) && h > 0 ? h : 0
+      };
+    }).filter(function(line){ return !!line.t; });
+    return lines.length ? lines : undefined;
+  } catch (e) {
+    return undefined;
+  }
+}
 function runTesseractOcr(dataUrl){
   var note = $("ocrMsg");
   if (!window.Tesseract){
@@ -1004,7 +1075,7 @@ function runTesseractOcr(dataUrl){
         .then(function(w){ worker = w; return worker.recognize(procUrl); });
     })
     .then(function(res){
-      applyOcrResult(res && res.data ? res.data.text : "", "built-in reader");
+      applyOcrResult(res && res.data ? res.data.text : "", "built-in reader", ocrLinesFromTesseract(res));
       return true;
     })
     .catch(function(){
@@ -1017,8 +1088,10 @@ function runOcr(dataUrl, ocrDataUrl){
   var note = $("ocrMsg");
   showMsg(note, "Reading text from the photo…", "info");
   return ordersApiOcr(ocrDataUrl || dataUrl)
-    .then(function(text){
-      if (text && String(text).trim()){ applyOcrResult(text, "online reader"); return true; }
+    .then(function(result){
+      var text = result && typeof result === "object" ? result.text : result;
+      var lines = result && typeof result === "object" ? result.lines : undefined;
+      if (text && String(text).trim()){ applyOcrResult(text, "online reader", lines); return true; }
       return runTesseractOcr(dataUrl);   /* online reader found nothing — try the built-in one */
     })
     .catch(function(){
@@ -1724,7 +1797,7 @@ window.__supershopAdmin = { getState: function(){ return state; }, buildPayload:
   tax: { rate: function(){ return state.taxRate; }, syncFromInput: syncTaxFromInput, parse: parseTaxRate },
   quick: { addSave: quickAddSave, sync: syncQuickFromForm, updateTokenNotice: updateTokenNotice },
   ocr: { parse: parseOcrText, run: runOcr, apply: applyOcrResult, online: ordersApiOcr, preprocess: preprocessForOcr, apiUrl: ordersApiUrl,
-         isJunk: ocrIsJunkLine, detectSize: ocrDetectSize },
+         isJunk: ocrIsJunkLine, detectSize: ocrDetectSize, linesFromTesseract: ocrLinesFromTesseract },
   form: { cats: function(){ return formCats.slice(); }, setCats: setFormCats, productCats: productCats,
           reset: resetForm, isDirty: function(){ return formDirty; }, isEdit: function(){ return !!editingId; } },
   points: { data: function(){ return pointsData; }, balances: pointBalances, load: loadPoints, save: savePoints, sha256Hex: sha256Hex, addOneMonth: addOneMonth, normalizePhone: normalizePhone, todayStr: todayStr, cancelEarn: cancelEarn, addAdjust: addAdjust } };
