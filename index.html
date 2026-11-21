@@ -43,6 +43,29 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .chip .cnt{font-size:.75rem; background:var(--gold-soft); border-radius:999px; padding:1px 7px; margin-left:6px; color:#4a3d08;}
 .chip.active{background:var(--green); color:#fff;}
 .chip.active .cnt{background:var(--gold); color:var(--green-dark);}
+/* ⭐ popular slideshow — stacked slides in one grid cell, fade transition */
+#popShow{margin:2px 0 14px;}
+.ss-title{font-size:1.15rem; font-weight:800; color:var(--green); margin:4px 0 8px;}
+.ss-box{position:relative;}
+.ss-track{display:grid;}
+.ss-slide{grid-area:1/1; display:flex; gap:14px; background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px; opacity:0; transition:opacity .45s ease; pointer-events:none;}
+.ss-slide.active{opacity:1; pointer-events:auto; z-index:1;}
+.ss-photo{flex:0 0 38%; max-width:230px; aspect-ratio:1/1; border-radius:10px; overflow:hidden; position:relative; background:#e3efe6; cursor:pointer;}
+.ss-photo img{width:100%; height:100%; object-fit:cover; display:block;}
+.ss-photo .ph-tile{width:100%; height:100%; background:linear-gradient(135deg,var(--green) 0%,#146344 100%); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:800;}
+.ss-photo .zoom-btn{position:absolute; left:8px; top:8px; width:40px; height:40px; border:none; border-radius:50%; background:rgba(7,48,31,.85); color:#fff; font-size:1.05rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2;}
+.ss-info{flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;}
+.ss-info .jp{font-weight:700; font-size:1.05rem; line-height:1.3;}
+.ss-info .en-name,.ss-info .id-name{font-size:1rem; color:var(--muted); line-height:1.3;}
+.ss-info .size{font-size:.85rem; color:var(--muted);}
+.ss-info .price{font-size:1.25rem; font-weight:800; color:var(--green); margin-top:auto; padding-top:6px;}
+.ss-arrow{position:absolute; top:50%; transform:translateY(-50%); width:44px; height:52px; border:none; border-radius:10px; background:rgba(7,48,31,.75); color:#fff; font-size:1.7rem; line-height:1; cursor:pointer; z-index:3; padding:0;}
+.ss-arrow:active{background:var(--green);}
+.ss-prev{left:6px;}
+.ss-next{right:6px;}
+.ss-dots{display:flex; gap:7px; justify-content:center; margin-top:9px;}
+.ss-dot{width:11px; height:11px; border-radius:50%; border:2px solid var(--green); background:#fff; padding:0; cursor:pointer;}
+.ss-dot.active{background:var(--green);}
 .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px;}
 @media(min-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));}}
 .card{background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column;}
@@ -194,6 +217,16 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
   <div class="search-box">
     <input type="text" id="searchInput" placeholder="商品を検索 Search / Cari produk…">
   </div>
+  <!-- ⭐ Popular slideshow (only shown when at least one visible product is starred) -->
+  <section id="popShow" hidden>
+    <h2 class="ss-title">⭐ 人気商品 <span class="en">Popular</span> <span class="idn">Populer</span></h2>
+    <div class="ss-box">
+      <div class="ss-track" id="ssTrack"></div>
+      <button type="button" class="ss-arrow ss-prev" id="ssPrev" aria-label="Previous">‹</button>
+      <button type="button" class="ss-arrow ss-next" id="ssNext" aria-label="Next">›</button>
+    </div>
+    <div class="ss-dots" id="ssDots"></div>
+  </section>
   <div class="chips" id="chips"></div>
   <div class="grid" id="grid"></div>
   <p class="empty-note" id="emptyNote" hidden>商品が見つかりません。No products found. Produk tidak ditemukan.</p>
@@ -464,6 +497,7 @@ function renderGrid(){
   showMoreBtn.hidden = list.length <= shownCount;
   countLine.textContent = list.length ? ("全 " + list.length + " 商品中 " + show.length + " 件を表示 — Showing " + show.length + " of " + list.length + " products — Menampilkan " + show.length + " dari " + list.length + " produk") : "";
   bindGridButtons();
+  refreshSlideActions();
   renderCartBar();
 }
 function bindGridButtons(){
@@ -645,6 +679,135 @@ document.addEventListener("keydown", function(e){
   else if (e.key === "ArrowLeft" && lbPhotos.length > 1) lbSetPhoto(lbIdx - 1);
   else if (e.key === "ArrowRight" && lbPhotos.length > 1) lbSetPhoto(lbIdx + 1);
 });
+
+/* ---------- ⭐ popular slideshow ----------
+   One slide at a time for the products the owner starred (popular:true)
+   that are visible in the shop. Plain JS/CSS only — slide DOM is built
+   just for the starred products and reuses their existing photo strings,
+   so there are no extra downloads and the grid keeps its batching.
+   Auto-advances every ~4s; pauses while the customer touches / hovers
+   it and while the tab is hidden (no catch-up jumps). */
+var popShowEl = document.getElementById("popShow");
+var ssTrack = document.getElementById("ssTrack");
+var ssDotsEl = document.getElementById("ssDots");
+var ssPrevBtn = document.getElementById("ssPrev");
+var ssNextBtn = document.getElementById("ssNext");
+var ssList = [];        /* starred + visible products, in products.json order */
+var ssIdx = 0;
+var ssDelay = 4000;
+var ssTimer = null;
+var ssHover = false;    /* mouse is over the section */
+var ssDown = false;     /* a pointer is pressed on the section */
+
+function popularProducts(){ return visibleProducts().filter(function(p){ return p.popular === true; }); }
+function slideActionHTML(p){
+  var qty = cart[p.id] || 0;
+  var tracked = typeof p.stock === "number";
+  var soldOut = tracked && p.stock <= 0;
+  if (soldOut) return '<button type="button" class="add-btn" data-sadd="' + esc(p.id) + '" disabled>売り切れ Sold out / Habis</button>';
+  if (qty === 0) return '<button type="button" class="add-btn" data-sadd="' + esc(p.id) + '">カートに入れる Add / Tambah</button>';
+  var atCap = tracked && qty >= p.stock;
+  return '<div class="stepper"><button type="button" data-sdec="' + esc(p.id) + '">−</button><span class="qty">' + qty + '</span><button type="button" data-sinc="' + esc(p.id) + '"' + (atCap ? " disabled" : "") + '>＋</button></div>';
+}
+function slideHTML(p){
+  var tracked = typeof p.stock === "number";
+  var soldOut = tracked && p.stock <= 0;
+  var fewLeft = tracked && p.stock >= 1 && p.stock <= 5;
+  var mainPhoto = p.photo || p.photo2 || "";
+  var photo = mainPhoto
+    ? '<img src="' + esc(mainPhoto) + '" alt="' + esc(p.en) + '" loading="lazy">'
+      + '<button type="button" class="zoom-btn" data-szoom="' + esc(p.id) + '" aria-label="Zoom">🔍</button>'
+    : '<div class="ph-tile">' + esc((p.en || p.jp || "?").trim().charAt(0).toUpperCase()) + '</div>';
+  return '<div class="ss-slide" data-slide="' + esc(p.id) + '">'
+    + '<div class="ss-photo" data-sphoto="' + esc(p.id) + '">' + photo + '</div>'
+    + '<div class="ss-info">'
+    + (soldOut ? '<div class="soldout-badge">売り切れ Sold out / Habis</div>' : '')
+    + '<div class="jp">' + esc(p.jp || p.en) + '</div>'
+    + '<div class="en-name">' + esc(p.en) + '</div>'
+    + (p.idn ? '<div class="id-name">' + esc(p.idn) + '</div>' : '')
+    + (p.size ? '<div class="size">' + esc(p.size) + '</div>' : '')
+    + (fewLeft ? '<div class="few-note">残りわずか Only a few left / Sisa sedikit</div>' : '')
+    + '<div class="price">' + yen(p.price) + '</div>'
+    + '<div class="ss-action">' + slideActionHTML(p) + '</div>'
+    + '</div></div>';
+}
+function bindSlideActions(scope){
+  scope.querySelectorAll("[data-sadd]").forEach(function(b){ b.addEventListener("click", function(){ setQty(this.getAttribute("data-sadd"), 1); }); });
+  scope.querySelectorAll("[data-sinc]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-sinc"); setQty(id, (cart[id]||0)+1); }); });
+  scope.querySelectorAll("[data-sdec]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-sdec"); setQty(id, (cart[id]||0)-1); }); });
+}
+function openSlideLightbox(id){
+  var p = productById(id); if (!p) return;
+  var photos = [];
+  if (p.photo) photos.push(p.photo);
+  if (p.photo2) photos.push(p.photo2);
+  if (photos.length) openLightbox(photos, 0);
+}
+/* After any cart change, refresh just the slides' Add/stepper area so the
+   slideshow itself (position + timer) is never disturbed. Called from
+   renderGrid(), which runs on every cart change. */
+function refreshSlideActions(){
+  if (!ssTrack) return;
+  ssTrack.querySelectorAll(".ss-slide").forEach(function(sl){
+    var p = productById(sl.getAttribute("data-slide")); if (!p) return;
+    var act = sl.querySelector(".ss-action"); if (!act) return;
+    act.innerHTML = slideActionHTML(p);
+    bindSlideActions(act);
+  });
+}
+function ssShow(i){
+  if (!ssList.length) return;
+  ssIdx = ((i % ssList.length) + ssList.length) % ssList.length;
+  ssTrack.querySelectorAll(".ss-slide").forEach(function(sl, j){ sl.classList.toggle("active", j === ssIdx); });
+  ssDotsEl.querySelectorAll(".ss-dot").forEach(function(d, j){ d.classList.toggle("active", j === ssIdx); });
+}
+function ssStop(){ if (ssTimer){ clearInterval(ssTimer); ssTimer = null; } }
+function ssUpdate(){
+  if (ssList.length > 1 && !ssHover && !ssDown && !document.hidden){
+    if (!ssTimer) ssTimer = setInterval(function(){ ssShow(ssIdx + 1); }, ssDelay);
+  } else ssStop();
+}
+function ssGo(i){ ssShow(i); ssStop(); ssUpdate(); }
+function renderSlideshow(){
+  ssList = popularProducts();
+  ssStop();
+  if (!ssList.length){
+    popShowEl.hidden = true;
+    ssTrack.innerHTML = ""; ssDotsEl.innerHTML = "";
+    return;
+  }
+  popShowEl.hidden = false;
+  if (ssIdx >= ssList.length) ssIdx = 0;
+  ssTrack.innerHTML = ssList.map(slideHTML).join("");
+  ssDotsEl.innerHTML = ssList.map(function(p, i){ return '<button type="button" class="ss-dot" data-sdot="' + i + '" aria-label="Slide ' + (i + 1) + '"></button>'; }).join("");
+  var multi = ssList.length > 1;
+  ssPrevBtn.style.display = multi ? "" : "none";
+  ssNextBtn.style.display = multi ? "" : "none";
+  ssDotsEl.style.display = multi ? "" : "none";
+  bindSlideActions(ssTrack);
+  ssTrack.querySelectorAll("[data-sphoto]").forEach(function(ph){
+    ph.addEventListener("click", function(){ openSlideLightbox(this.getAttribute("data-sphoto")); });
+  });
+  ssDotsEl.querySelectorAll("[data-sdot]").forEach(function(d){ d.addEventListener("click", function(){ ssGo(Number(this.getAttribute("data-sdot"))); }); });
+  ssShow(ssIdx);
+  ssUpdate();
+}
+ssPrevBtn.addEventListener("click", function(){ ssGo(ssIdx - 1); });
+ssNextBtn.addEventListener("click", function(){ ssGo(ssIdx + 1); });
+popShowEl.addEventListener("pointerenter", function(){ ssHover = true; ssUpdate(); });
+popShowEl.addEventListener("pointerleave", function(){ ssHover = false; ssDown = false; ssUpdate(); });
+popShowEl.addEventListener("pointerdown", function(){ ssDown = true; ssUpdate(); });
+popShowEl.addEventListener("pointerup", function(){ ssDown = false; ssUpdate(); });
+popShowEl.addEventListener("pointercancel", function(){ ssDown = false; ssUpdate(); });
+document.addEventListener("visibilitychange", ssUpdate);
+/* expose for testing */
+window.__supershopSlideshow = {
+  count: function(){ return ssList.length; },
+  index: function(){ return ssIdx; },
+  go: function(i){ ssGo(i); },
+  setDelay: function(ms){ ssDelay = ms; ssStop(); ssUpdate(); },
+  visible: function(){ return !popShowEl.hidden; }
+};
 
 showMoreBtn.addEventListener("click", function(){ shownCount += PAGE_SIZE; renderGrid(); });
 document.getElementById("searchInput").addEventListener("input", function(){ searchQuery = this.value; shownCount = PAGE_SIZE; renderGrid(); });
@@ -1217,7 +1380,7 @@ fetch("products.json", { cache: "no-store" })
   .then(function(data){
     CATEGORIES = data.categories || [];
     PRODUCTS = data.products || [];
-    renderChips(); renderGrid(); syncFulfillmentUI();
+    renderChips(); renderGrid(); renderSlideshow(); syncFulfillmentUI();
   })
   .catch(function(err){
     gridEl.innerHTML = "";

@@ -44,6 +44,8 @@ label{display:block; font-weight:700; font-size:.95rem; margin-top:12px;}
 .prow .mini{border:none; border-radius:8px; padding:10px 12px; font-size:.9rem; font-weight:700; cursor:pointer;}
 .mini.edit{background:var(--gold-soft); color:#4a3d08;}
 .mini.del{background:#fbeae8; color:var(--red);}
+.mini.star{background:#fff; border:2px solid var(--line); font-size:1.05rem; padding:8px 10px; line-height:1;}
+.mini.star.on{background:var(--gold-soft); border-color:var(--gold);}
 .switch{position:relative; width:56px; height:32px; flex:0 0 auto;}
 .switch input{opacity:0; width:0; height:0;}
 .switch .sl{position:absolute; inset:0; background:#c9d4c9; border-radius:999px; cursor:pointer; transition:.2s;}
@@ -103,6 +105,9 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
       <select id="qCat"></select>
       <label for="qNewCat">New category name (only if you need a new one)</label>
       <input type="text" id="qNewCat" placeholder="Only if the category is not in the list above">
+      <label style="display:flex; align-items:center; gap:10px;">⭐ Popular — show in the top slideshow
+        <input type="checkbox" id="qPopular" style="width:22px; height:22px; margin:0; flex:0 0 auto;">
+      </label>
       <div class="msg" id="qMsg"></div>
       <button type="button" class="big-btn gold" id="qAddSaveBtn">⚡ Add &amp; Save — goes live now</button>
       <p class="hint">This adds the product and saves it to the shop in one press. The full form below still works for stock, Japanese / Indonesian names and editing.</p>
@@ -142,6 +147,9 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">Show in shop
       <span class="switch"><input type="checkbox" id="fOn" checked><span class="sl"></span></span>
     </label>
+    <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">⭐ Popular — show in the top slideshow
+      <span class="switch"><input type="checkbox" id="fPopular"><span class="sl"></span></span>
+    </label>
     <div class="msg" id="formMsg"></div>
     <button type="button" class="big-btn" id="applyBtn">Add / Update product</button>
     <button type="button" class="big-btn grey" id="cancelEditBtn" hidden>Cancel edit</button>
@@ -157,6 +165,7 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
     </div>
     <div id="productList"></div>
     <p class="hint">Stock can also be adjusted with the −1 / +1 buttons on each product. Adjust stock when an order is confirmed — it is never cut automatically.</p>
+    <p class="hint">Tap ⭐ to put a product in the shop's top slideshow. About 10 is best.</p>
     <p class="dirty-note" id="dirtyNote">● Unsaved changes — press "Save to shop" below.</p>
     <button type="button" class="big-btn gold" id="saveBtn">💾 Save to shop</button>
     <p class="hint" id="lastSaved">Last saved: —</p>
@@ -373,6 +382,7 @@ function renderList(){
       + '<div class="info"><div class="n">' + esc(p.jp || p.en) + ' <span class="en">' + esc(p.en) + '</span></div>'
       + '<div class="d">' + yen(p.price) + (p.size ? " ・ " + esc(p.size) : "") + " ・ " + esc(catLabel(p.cat)) + (p.active === false ? " ・ Hidden (OFF)" : "") + "</div>"
       + stockHtml + "</div>"
+      + '<button type="button" class="mini star' + (p.popular ? " on" : "") + '" data-star="' + esc(p.id) + '" title="Popular — show in the top slideshow">' + (p.popular ? "⭐" : "☆") + '</button>'
       + '<label class="switch" title="Show / Hide in shop"><input type="checkbox" data-toggle="' + esc(p.id) + '"' + (p.active === false ? "" : " checked") + '><span class="sl"></span></label>'
       + '<button type="button" class="mini edit" data-edit="' + esc(p.id) + '">Edit</button>'
       + '<button type="button" class="mini del" data-del="' + esc(p.id) + '">Delete</button></div>';
@@ -381,6 +391,9 @@ function renderList(){
   $("productList").querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click", function(){ deleteProduct(this.getAttribute("data-del")); }); });
   $("productList").querySelectorAll("[data-toggle]").forEach(function(t){ t.addEventListener("change", function(){
     var p = findProduct(this.getAttribute("data-toggle")); if (p){ p.active = this.checked; markDirty(); renderList(); }
+  }); });
+  $("productList").querySelectorAll("[data-star]").forEach(function(b){ b.addEventListener("click", function(){
+    var p = findProduct(this.getAttribute("data-star")); if (p){ p.popular = !p.popular; markDirty(); renderList(); }
   }); });
   $("productList").querySelectorAll("[data-stock-inc]").forEach(function(b){ b.addEventListener("click", function(){
     var p = findProduct(this.getAttribute("data-stock-inc")); if (p && typeof p.stock === "number"){ p.stock += 1; markDirty(); renderList(); }
@@ -398,7 +411,7 @@ function clearForm(){
   editingId = null;
   catTouched = false;
   ["fId","fEn","fJp","fIdn","fPrice","fSize","fStock","fNewCat","fPhotoUrl","fPhoto2Url"].forEach(function(id){ $(id).value = ""; });
-  $("fPhotoFile").value = ""; $("fPhoto2File").value = ""; $("fOn").checked = true;
+  $("fPhotoFile").value = ""; $("fPhoto2File").value = ""; $("fOn").checked = true; $("fPopular").checked = false;
   $("photoPreview").style.display = "none"; $("photoPreview").src = "";
   $("photo2Preview").style.display = "none"; $("photo2Preview").src = "";
   $("formTitle").innerHTML = '① Add product';
@@ -417,6 +430,7 @@ function startEdit(id){
   $("fNewCat").value = ""; $("fPhotoUrl").value = p.photo && p.photo.indexOf("data:") !== 0 ? p.photo : "";
   $("fPhoto2Url").value = p.photo2 && p.photo2.indexOf("data:") !== 0 ? p.photo2 : "";
   $("fOn").checked = p.active !== false;
+  $("fPopular").checked = p.popular === true;
   if (p.photo){ $("photoPreview").src = p.photo; $("photoPreview").style.display = "block"; } else { $("photoPreview").style.display = "none"; }
   if (p.photo2){ $("photo2Preview").src = p.photo2; $("photo2Preview").style.display = "block"; } else { $("photo2Preview").style.display = "none"; $("photo2Preview").src = ""; }
   $("formTitle").innerHTML = '① Edit product';
@@ -455,7 +469,7 @@ function applyForm(){
   }
   var data = {
     en: en, jp: $("fJp").value.trim(), idn: $("fIdn").value.trim(), price: Math.round(price),
-    size: $("fSize").value.trim(), stock: stockVal, cat: cat, photo: currentPhotoValue(), photo2: currentPhoto2Value(), active: $("fOn").checked
+    size: $("fSize").value.trim(), stock: stockVal, cat: cat, photo: currentPhotoValue(), photo2: currentPhoto2Value(), active: $("fOn").checked, popular: $("fPopular").checked
   };
   if (editingId){
     var p = findProduct(editingId);
@@ -673,6 +687,7 @@ function startQuickSync(){
 function stopQuickSync(){ if (qSyncTimer){ clearInterval(qSyncTimer); qSyncTimer = null; } }
 function clearQuick(){
   ["qEn", "qPrice", "qNewCat"].forEach(function(id){ $(id).value = ""; });
+  $("qPopular").checked = false; $("fPopular").checked = false;
   $("qPhotoFile").value = ""; $("qPhoto2File").value = "";
   $("qPhotoPreview").style.display = "none"; $("qPhotoPreview").src = "";
   $("qPhoto2Preview").style.display = "none"; $("qPhoto2Preview").src = "";
@@ -686,6 +701,7 @@ function quickAddSave(){
   var photo2 = currentPhoto2Value();
   if (editingId) clearForm(); /* Quick Add always adds a NEW product */
   $("fEn").value = nm; $("fPrice").value = pr; $("fNewCat").value = nc;
+  $("fPopular").checked = $("qPopular").checked;
   if (ct){ $("fCat").value = ct; catTouched = true; }
   if (photo){
     if (photo.indexOf("data:") === 0){ $("photoPreview").src = photo; $("photoPreview").style.display = "block"; }
@@ -740,6 +756,7 @@ $("qEn").addEventListener("input", function(){ $("fEn").value = this.value; });
 $("qPrice").addEventListener("input", function(){ $("fPrice").value = this.value; });
 $("qNewCat").addEventListener("input", function(){ $("fNewCat").value = this.value; });
 $("qCat").addEventListener("change", function(){ $("fCat").value = this.value; catTouched = true; });
+$("qPopular").addEventListener("change", function(){ $("fPopular").checked = this.checked; });
 $("qAddSaveBtn").addEventListener("click", quickAddSave);
 
 /* ---------- token notice (top of page, only when no token is saved) ---------- */

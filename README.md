@@ -40,6 +40,8 @@ inside the GitHub repository **goldfamilyjp/madina-supershop** (GitHub Pages hos
   inside the overlay with the same “1 / 2” indicator. ✕, a tap on the dark backdrop, or the Escape key
   closes it, and the page scrolls again afterwards. Tapping the card photo itself still only switches
   front/back — the 🔍 button is the only way into the zoom view.
+- **⭐ Popular flag:** each product has an optional `popular` boolean (absent/false = not popular).
+  Starred, visible products appear in the shop's top slideshow — see “⭐ Popular slideshow” below.
 
 ## Business rules
 
@@ -317,6 +319,24 @@ a custom category typed in the admin displays exactly as entered.
   chips — 送料無料（¥10,000以上）/ Free delivery over ¥10,000 · ポイント1%還元 / Points 1% back ·
   全品ハラール / All halal — kept compact so products stay near the top on mobile.
 - SEO basics: JP+EN(+ID) meta description and a descriptive `<title>`.
+
+## ⭐ Popular slideshow (shop front)
+
+- **How to star a product:** in the admin, tap the ⭐ button on a product row in ② Products, or use
+  the “⭐ Popular — show in the top slideshow” switch in the Add/Edit form (the ⚡ Quick Add card has
+  the same checkbox). This sets the product's `popular` field; Save publishes it like any other change.
+- **Where it shows:** directly under the shop's search bar, above the category chips, with the
+  trilingual heading “⭐ 人気商品 / Popular / Populer”. One product at a time — large photo, name,
+  size, price and a working Add button (same cart, stock and sold-out rules as the grid cards).
+  Tapping the slide photo opens the photo zoom lightbox.
+- **Behaviour:** auto-advances every ~4 seconds with a fade; dots and ‹ › arrows jump between
+  slides; it pauses while the customer touches or hovers it and while the browser tab is hidden.
+- **How many:** about **10** starred products is best. Only starred **and** visible products appear
+  (a hidden product never shows). If **no** product is starred, the whole section is hidden — there
+  is no empty box.
+- **Performance:** plain JS/CSS, no libraries. Slide markup is built only for the starred products
+  and reuses their existing photo data — no extra downloads; the product grid below keeps its
+  60-at-a-time batching.
 
 ## Setup (one time, done by Manager)
 
