@@ -639,6 +639,18 @@ a custom category typed in the admin displays exactly as entered.
   background, keeping their gold-bordered pill styling (now with a solid green fill so the white
   text stays readable off the photo); the courier-fee strip follows under them as before.
 - The social-share image (`og:image`) is unchanged — it still uses `logo.jpg`.
+- **Hero slideshow (owner, 2026-11-22):** the photo strip under the name band is now a
+  **slideshow** — slide 1 is the Anjo shop front, followed by the owner's own interior photos
+  (dining area, partition seating, grocery shelves, freezer aisle, buffet corner). The slides
+  are separate files in the repo root, **`hero-slide-1.jpg` … `hero-slide-7.jpg`**, all
+  prepared at **1400×1050** (≤350 KB each) so the strip's fixed 4:3 box never changes height.
+  `hero-slide-1.jpg` is the same Anjo front as `shop-banner-full.jpg`, re-exported at the
+  slideshow size; `shop-banner-full.jpg` itself is still in the repo, unreferenced by the
+  strip. The show crossfades every ~5 s and pauses on touch/hover and while the tab is
+  hidden; ‹ › arrows, dots and a horizontal swipe move it by hand (same pattern as the
+  ⭐ Popular slideshow). Slide 1 loads eagerly, the rest are `loading="lazy"`. To change a
+  photo, replace the matching `hero-slide-N.jpg` file (keep it 1400×1050); to add or remove
+  a slide, edit the `<img class="hero-slide">` list in the `#heroShow` block in `index.html`.
 
 ## 📢 News board (owner announcements)
 
