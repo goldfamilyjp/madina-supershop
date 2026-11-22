@@ -330,7 +330,7 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
   <!-- ===== Points ===== -->
   <section class="panel" id="pointsPanel">
     <h2>Points</h2>
-    <div class="help-box">🪙 <strong>How points work:</strong> customers earn points worth <strong>1% of each order</strong> (1 pt = ¥1).<br>
+    <div class="help-box">🪙 <strong>How points work:</strong> customers earn points worth <strong>2% of each order</strong> (1 pt = ¥1).<br>
     Points from an order can be used <strong>1 month later</strong>. Points you add by hand can be used <strong>right away</strong>.<br>
     Type the customer's phone number below and tap <strong>Find customer</strong> — their points, history, and the add / use buttons are all in that one card.</div>
     <p class="hint">Add / use points only <strong>after</strong> the order and payment are confirmed on WhatsApp. Phone numbers are stored only as hashes — the raw number is never saved.</p>
@@ -356,10 +356,10 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
     </div>
 
     <details class="more" id="ptEarnSection">
-      <summary>Give 1% points for an order (when a customer pays)</summary>
-      <label for="ptAmount">Order amount ¥ (yen) — adds 1% as points</label>
+      <summary>Give 2% points for an order (when a customer pays)</summary>
+      <label for="ptAmount">Order amount ¥ (yen) — adds 2% as points</label>
       <input type="number" id="ptAmount" min="0" step="1" inputmode="numeric" placeholder="e.g. 7580">
-      <button type="button" class="big-btn" id="ptAddBtn">Add points (1%)</button>
+      <button type="button" class="big-btn" id="ptAddBtn">Add points (2%)</button>
       <p class="hint">Uses the phone number in the card above. These points become usable <strong>1 month later</strong>. They are saved straight away — no extra Save press needed.</p>
     </details>
 
@@ -388,7 +388,7 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
     <h2>Customers</h2>
     <div class="help-box">👥 <strong>Customers and their points, in one place:</strong> tap a customer (or their <strong>＋ Add points</strong> button) to see their points history.<br>
     To find someone fast: type their phone number (or name) in the big box below and tap <strong>🔍 Find customer</strong>.<br>
-    Points from orders are worth <strong>1% of the order</strong> and can be used <strong>1 month later</strong>; points you add by hand can be used <strong>right away</strong>.</div>
+    Points from orders are worth <strong>2% of the order</strong> and can be used <strong>1 month later</strong>; points you add by hand can be used <strong>right away</strong>.</div>
     <div class="phone-stack">
       <input type="tel" id="custSearch" class="phone-input" placeholder="Phone number — e.g. 09012345678" autocomplete="off">
       <button type="button" class="big-btn find-btn" id="custFindBtn">🔍 Find customer</button>
@@ -2533,8 +2533,8 @@ function addPoints(){
   var amount = Number($("ptAmount").value);
   if (!$("ptPhone").value.trim()){ showMsg($("pointsMsg"), "Please enter the customer's phone number.", "err"); return; }
   if (!amount || isNaN(amount) || amount <= 0){ showMsg($("pointsMsg"), "Please enter the order amount.", "err"); return; }
-  var pts = Math.floor(amount * 0.01);
-  if (pts <= 0){ showMsg($("pointsMsg"), "Less than 1 point — orders of ¥100+ earn points.", "err"); return; }
+  var pts = Math.floor(amount * 0.02);
+  if (pts <= 0){ showMsg($("pointsMsg"), "Less than 1 point — orders of ¥50+ earn points.", "err"); return; }
   withCustomer(function(hash, digits){
     var rec = findCustomer(hash);
     if (!rec){ rec = { hash: hash, entries: [] }; pointsData.customers.push(rec); }
