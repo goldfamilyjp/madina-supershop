@@ -151,6 +151,14 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
    "1 / 2" badge bottom-right, the sold-out bar sits below the photo, so
    nothing clashes). Shown for a product's first 14 days (addedAt). */
 .card .photo .new-badge,.ss-photo .new-badge{position:absolute; right:8px; top:8px; background:#d42a1e; color:#fff; font-size:.82rem; font-weight:800; letter-spacing:.05em; border-radius:999px; padding:3px 11px; pointer-events:none; z-index:2; box-shadow:0 2px 6px rgba(0,0,0,.35);}
+/* "SALE −%" badge — same red pill family as NEW, also top-right of the
+   photo. When a product wears BOTH badges they are wrapped in
+   .photo-badges and stacked vertically (SALE on top, NEW below it), so
+   the two never overlap; alone, each badge renders exactly as before. */
+.card .photo .sale-badge,.ss-photo .sale-badge{position:absolute; right:8px; top:8px; background:#d42a1e; color:#fff; font-size:.82rem; font-weight:800; letter-spacing:.03em; border-radius:999px; padding:3px 11px; pointer-events:none; z-index:2; box-shadow:0 2px 6px rgba(0,0,0,.35);}
+.card .photo .photo-badges,.ss-photo .photo-badges{position:absolute; top:8px; right:8px; display:flex; flex-direction:column; align-items:flex-end; gap:6px; z-index:2; pointer-events:none;}
+.card .photo .photo-badges .new-badge,.ss-photo .photo-badges .new-badge,
+.card .photo .photo-badges .sale-badge,.ss-photo .photo-badges .sale-badge{position:static;}
 .card .photo .zoom-btn{position:absolute; left:8px; top:8px; width:36px; height:36px; border:2px solid var(--green); border-radius:50%; background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,.35);}
 .card .photo .zoom-btn:active,.ss-photo .zoom-btn:active{background:#e3efe6;}
 .zoom-btn svg{width:20px; height:20px; display:block;}
@@ -172,6 +180,10 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .card .jp,.card .en-name,.card .id-name,.ss-info .jp,.ss-info .en-name,.ss-info .id-name{overflow-wrap:break-word;}
 .card .size{font-size:.8rem; color:var(--muted);}
 .card .price{font-size:1.15rem; font-weight:800; color:var(--green); margin-top:auto; padding-top:6px;}
+/* sale price (cards + Popular slides): the sale price big and bold in
+   red, the regular price smaller, grey and struck through beside it */
+.price .sale-now{color:#d42a1e;}
+.price .sale-was{font-size:.76em; font-weight:600; color:var(--muted); text-decoration:line-through; margin-left:7px;}
 /* Compact professional pill (owner request 2026-11-22): single-line
    short trilingual label "Add · 追加 · Tambah", ~34px tall. The sold-out
    (disabled) state keeps its stacked trilingual label, so it overrides
@@ -710,6 +722,44 @@ function isNewProduct(p){
 var ZOOM_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0b4530" stroke-width="2.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="6.2"/><path d="M10 7.1v5.8M7.1 10h5.8"/><path d="M14.6 14.6 20.2 20.2" stroke-width="3.6"/></svg>';
 function newBadgeHTML(p){ return isNewProduct(p) ? '<span class="new-badge">NEW</span>' : ''; }
 
+/* ---------- 💸 sale price ----------
+   A product may carry an optional salePrice (integer yen, set in the
+   admin next to the regular price). It counts ONLY when
+   0 < salePrice < price — absent, empty, 0, negative, equal or higher
+   all mean "not on sale", and the product then renders and charges
+   exactly as before. EVERY money read in the shop goes through
+   effectivePrice(): the card and Popular-slide prices, the cart lines,
+   the subtotal (and with it the coupon discount, the tax and the
+   courier-fee threshold), the totals, the ticket, the WhatsApp text,
+   the Google Form record, the Apps Script payload and the confirmation
+   email — so a sale can never be displayed in one place and charged at
+   the old price in another. Points follow the totals automatically. */
+function effectivePrice(p){
+  var price = Number(p && p.price) || 0;
+  var sp = Number(p && p.salePrice);
+  return (isFinite(sp) && sp > 0 && sp < price) ? Math.floor(sp) : price;
+}
+function isOnSale(p){ return !!p && effectivePrice(p) < (Number(p.price) || 0); }
+function salePct(p){ return isOnSale(p) ? Math.round((1 - effectivePrice(p) / Number(p.price)) * 100) : 0; }
+function saleBadgeHTML(p){ return isOnSale(p) ? '<span class="sale-badge">-' + salePct(p) + '%</span>' : ''; }
+/* Photo badges: the SALE −% pill and the NEW pill both live at the
+   photo's top-right. When a product wears both, they are wrapped and
+   stacked (SALE on top, NEW below it) so neither overlaps the other;
+   a single badge renders exactly as it did before. */
+function photoBadgesHTML(p){
+  var s = saleBadgeHTML(p), n = newBadgeHTML(p);
+  if (s && n) return '<span class="photo-badges">' + s + n + '</span>';
+  return s + n;
+}
+/* Price block shared by the grid cards and the ⭐ Popular slides:
+   on sale, the sale price big and bold in red with the regular price
+   smaller, grey and struck through beside it; otherwise the plain
+   price, unchanged. */
+function priceHTML(p){
+  if (!isOnSale(p)) return '<div class="price">' + yen(p.price) + '</div>';
+  return '<div class="price"><span class="sale-now">' + yen(effectivePrice(p)) + '</span><span class="sale-was">' + yen(p.price) + '</span></div>';
+}
+
 /* ---------- grid ---------- */
 var gridEl = document.getElementById("grid");
 var showMoreBtn = document.getElementById("showMore");
@@ -738,14 +788,14 @@ function cardHTML(p){
     action = '<div class="stepper"><button type="button" data-dec="' + esc(p.id) + '">−</button><span class="qty">' + qty + '</span><button type="button" data-inc="' + esc(p.id) + '"' + (atCap ? " disabled" : "") + '>＋</button></div>';
   }
   return '<article class="card" data-card="' + esc(p.id) + '">'
-    + '<div class="photo' + (hasTwo ? ' two' : '') + '">' + photo + newBadgeHTML(p) + '</div>'
+    + '<div class="photo' + (hasTwo ? ' two' : '') + '">' + photo + photoBadgesHTML(p) + '</div>'
     + (soldOut ? '<div class="soldout-badge">' + stack3("Sold out", "売り切れ", "Habis") + '</div>' : '')
     + '<div class="body"><div class="en-name">' + esc(p.en || p.jp || "") + '</div>'
     + (p.jp && p.jp !== p.en ? '<div class="jp">' + esc(p.jp) + '</div>' : '')
     + (p.idn ? '<div class="id-name">' + esc(p.idn) + '</div>' : '')
     + (p.size ? '<div class="size">' + esc(p.size) + '</div>' : '')
     + (fewLeft ? '<div class="few-note">' + stack3("Only a few left", "残りわずか", "Sisa sedikit") + '</div>' : '')
-    + '<div class="price">' + yen(p.price) + '</div>' + action + '</div></article>';
+    + priceHTML(p) + action + '</div></article>';
 }
 function renderGrid(){
   var list = filteredProducts();
@@ -1103,7 +1153,7 @@ function slideHTML(p){
       + '<button type="button" class="zoom-btn" data-szoom="' + esc(p.id) + '" title="Zoom / 拡大" aria-label="Zoom / 拡大">' + ZOOM_SVG + '</button>'
     : '<div class="ph-tile">' + esc((p.en || p.jp || "?").trim().charAt(0).toUpperCase()) + '</div>';
   return '<div class="ss-slide" data-slide="' + esc(p.id) + '">'
-    + '<div class="ss-photo" data-sphoto="' + esc(p.id) + '">' + photo + newBadgeHTML(p) + '</div>'
+    + '<div class="ss-photo" data-sphoto="' + esc(p.id) + '">' + photo + photoBadgesHTML(p) + '</div>'
     + '<div class="ss-info">'
     + (soldOut ? '<div class="soldout-badge">' + stack3("Sold out", "売り切れ", "Habis") + '</div>' : '')
     + '<div class="en-name">' + esc(p.en || p.jp || "") + '</div>'
@@ -1111,7 +1161,7 @@ function slideHTML(p){
     + (p.idn ? '<div class="id-name">' + esc(p.idn) + '</div>' : '')
     + (p.size ? '<div class="size">' + esc(p.size) + '</div>' : '')
     + (fewLeft ? '<div class="few-note">' + stack3("Only a few left", "残りわずか", "Sisa sedikit") + '</div>' : '')
-    + '<div class="price">' + yen(p.price) + '</div>'
+    + priceHTML(p)
     + '<div class="ss-action">' + slideActionHTML(p) + '</div>'
     + '</div></div>';
 }
@@ -1338,7 +1388,7 @@ function sortedCartIds(){
     .sort(function(a,b){ return productById(a).en.localeCompare(productById(b).en); });
 }
 function cartTotalQty(){ var n=0; for (var k in cart) n += cart[k]; return n; }
-function subtotal(){ var t=0; for (var k in cart){ var p=productById(k); if (p) t += p.price*cart[k]; } return t; }
+function subtotal(){ var t=0; for (var k in cart){ var p=productById(k); if (p) t += effectivePrice(p)*cart[k]; } return t; }
 function deliveryFee(){
   if (fulfill !== "delivery") return 0;
   var st = subtotal();
@@ -1470,9 +1520,9 @@ function renderCart(){
       return '<div class="ci-row"><span class="ci-name"><span class="en">' + esc(p.en || p.jp || "") + '</span>'
         + (p.jp && p.jp !== p.en ? '<span class="jp">' + esc(p.jp) + '</span>' : '')
         + (p.idn ? '<span class="idn">' + esc(p.idn) + '</span>' : '')
-        + '<span class="ci-price">' + yen(p.price) + (p.size ? " ・ " + esc(p.size) : "") + '</span></span>'
+        + '<span class="ci-price">' + yen(effectivePrice(p)) + (p.size ? " ・ " + esc(p.size) : "") + '</span></span>'
         + '<span class="ci-stepper"><button type="button" data-cdec="' + esc(id) + '">−</button><strong>' + cart[id] + '</strong><button type="button" data-cinc="' + esc(id) + '">＋</button></span>'
-        + '<strong style="min-width:76px; text-align:right;">' + yen(p.price*cart[id]) + '</strong></div>';
+        + '<strong style="min-width:76px; text-align:right;">' + yen(effectivePrice(p)*cart[id]) + '</strong></div>';
     }).join("");
     cartItemsEl.querySelectorAll("[data-cinc]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-cinc"); setQty(id, cart[id]+1); }); });
     cartItemsEl.querySelectorAll("[data-cdec]").forEach(function(b){ b.addEventListener("click", function(){ var id=this.getAttribute("data-cdec"); setQty(id, cart[id]-1); }); });
@@ -1952,8 +2002,8 @@ function buildInvoiceText(name, phone, address, note, preview, orderNo){
   var st = 0;
   ids.forEach(function(id, i){
     var p = productById(id); if (!p) return;
-    lines.push((i+1) + ". " + p.en + "（" + (p.jp||"") + "）" + (p.size||"") + " — " + yen(p.price) + " × " + cart[id] + " = " + yen(p.price*cart[id]));
-    st += p.price * cart[id];
+    lines.push((i+1) + ". " + p.en + "（" + (p.jp||"") + "）" + (p.size||"") + " — " + yen(effectivePrice(p)) + " × " + cart[id] + " = " + yen(effectivePrice(p)*cart[id]));
+    st += effectivePrice(p) * cart[id];
   });
   lines.push(sep);
   var fee = deliveryFee();
@@ -1990,7 +2040,7 @@ function buildAutoresponse(f){
   L.push("──────────");
   sortedCartIds().forEach(function(id, i){
     var p = productById(id); if (!p) return;
-    L.push((i+1) + ". " + p.en + "（" + (p.jp||"") + "）" + (p.size||"") + " — " + yen(p.price) + " × " + cart[id] + " = " + yen(p.price*cart[id]));
+    L.push((i+1) + ". " + p.en + "（" + (p.jp||"") + "）" + (p.size||"") + " — " + yen(effectivePrice(p)) + " × " + cart[id] + " = " + yen(effectivePrice(p)*cart[id]));
   });
   L.push("──────────");
   L.push("小計 / Subtotal: " + yen(st));
@@ -2020,7 +2070,7 @@ function sendConfirmationEmail(f){
   var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount(), total = st - disc + tax + fee;
   var orderLines = sortedCartIds().map(function(id, i){
     var p = productById(id);
-    return (i+1) + ". " + p.en + " (" + (p.jp||"") + ") " + (p.size||"") + " — " + yen(p.price) + " x " + cart[id] + " = " + yen(p.price*cart[id]);
+    return (i+1) + ". " + p.en + " (" + (p.jp||"") + ") " + (p.size||"") + " — " + yen(effectivePrice(p)) + " x " + cart[id] + " = " + yen(effectivePrice(p)*cart[id]);
   }).join("\n");
   var payload = {
     "email": f.email,
@@ -2073,7 +2123,7 @@ function orderItemLines(){
   var fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount();
   var lines = sortedCartIds().map(function(id){
     var p = productById(id); if (!p) return "";
-    return p.en + (p.jp ? "（" + p.jp + "）" : "") + (p.size ? " " + p.size : "") + " × " + cart[id] + " — " + yen(p.price * cart[id]);
+    return p.en + (p.jp ? "（" + p.jp + "）" : "") + (p.size ? " " + p.size : "") + " × " + cart[id] + " — " + yen(effectivePrice(p) * cart[id]);
   }).filter(function(s){ return s; });
   if (disc > 0 && appliedCoupon) lines.push("クーポン " + appliedCoupon.code + ": −" + yen(disc));
   if (tax > 0) lines.push(taxLineText());
