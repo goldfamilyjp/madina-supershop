@@ -837,6 +837,30 @@ and that the key elements stay visible and usable.
   and reuses their existing photo data — no extra downloads; the product grid below keeps its
   60-at-a-time batching.
 
+## 📱 Home-screen icons & shortcuts (shop vs admin)
+
+The shop page and the admin page have **separate home-screen icons and names**, so the two
+shortcuts can be told apart at a glance (owner request, 2026-11-22). Each icon is the Madina
+logo on white with a deep-green band across the bottom carrying the word in bold white:
+
+- **Shop** — band says **SHOP**. Files: `icon-shop-512.png`, `icon-shop-192.png`,
+  `apple-touch-icon-shop.png` (180×180). Shortcut name **“Madina Super”**
+  (`apple-mobile-web-app-title` + `manifest-shop.json`: name “MADINA HALAL SUPER”,
+  short_name “Madina Super”, `start_url "."`).
+- **Admin** — band says **ADMIN**. Files: `icon-admin-512.png`, `icon-admin-192.png`,
+  `apple-touch-icon-admin.png` (180×180). Shortcut name **“Madina Admin”**
+  (`apple-mobile-web-app-title` + `manifest-admin.json`: name “MADINA HALAL SUPER — Admin”,
+  short_name “Madina Admin”, `start_url "admin.html"`).
+
+Both manifests use `display: standalone`, `theme_color #0b4530`, `background_color #ffffff`.
+The older generic icons (`icon-192.png`, `icon-512.png`, `apple-touch-icon.png`) are still in
+the repo — nothing references them from these two pages any more, but they are kept in place.
+
+**Already saved a shortcut before this change?** Phones/tablets keep the OLD icon and name —
+the shortcut must be **deleted and re-added** (open the page in the browser → Share / menu →
+“Add to Home Screen”) to pick up the new SHOP/ADMIN icon and name. The same applies on
+Android/desktop Chrome via “Install app / Create shortcut”, which reads the manifest.
+
 ## Setup (one time, done by Manager)
 
 1. Create the public GitHub repo **goldfamilyjp/madina-supershop**.
