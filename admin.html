@@ -51,6 +51,7 @@ label{display:block; font-weight:700; font-size:.95rem; margin-top:12px;}
 .prow .info{flex:1; min-width:0;}
 .prow .info .n{font-weight:700;}
 .prow .info .d{font-size:.82rem; color:var(--muted);}
+.prow .info .sale-mark{color:#d42a1e; font-weight:800;}
 .prow .mini{border:none; border-radius:8px; padding:10px 12px; font-size:.9rem; font-weight:700; cursor:pointer; min-height:44px;}
 .prow .info .n{overflow-wrap:break-word;}
 .mini.edit{background:var(--gold-soft); color:#4a3d08;}
@@ -255,6 +256,14 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
         <label for="fSize">Size / weight</label>
         <input type="text" id="fSize" placeholder="e.g. 1kg / 450g / 100 bags">
       </div>
+    </div>
+    <!-- 3b) Sale price (optional) — directly under the price: a valid
+         sale price is lower than the price; the shop then shows the
+         sale price in red, the old price struck through, and a -% badge -->
+    <div>
+      <label for="fSalePrice">Sale price ¥ (optional)</label>
+      <input type="number" id="fSalePrice" min="0" step="1" inputmode="numeric" placeholder="Blank = no sale">
+      <p class="hint">Lower than the price — the shop shows the old price struck through with a -% badge.</p>
     </div>
     <!-- 4) Categories -->
     <label>Categories — tick all that apply (the first one ticked is the main category)</label>
@@ -694,6 +703,13 @@ function setFormCats(ids){
   formCats = out;
   renderCatChips();
 }
+/* The product's valid sale price, or null when it is not on sale.
+   Mirrors the shop's effectivePrice() rule: a sale counts only when
+   0 < salePrice < price — anything else is ignored everywhere. */
+function salePriceOf(p){
+  var sp = Number(p && p.salePrice), pr = Number(p && p.price) || 0;
+  return (isFinite(sp) && sp > 0 && sp < pr) ? Math.floor(sp) : null;
+}
 function renderList(){
   var q = $("adminSearch").value.trim().toLowerCase();
   var list = state.products.filter(function(p){
@@ -711,7 +727,7 @@ function renderList(){
       : '<div class="d">No stock tracking</div>';
     return '<div class="prow' + (p.active === false ? " off-row" : "") + '" data-row="' + esc(p.id) + '">' + thumb
       + '<div class="info"><div class="n">' + esc(p.jp || p.en) + ' <span class="en">' + esc(p.en) + '</span></div>'
-      + '<div class="d">' + yen(p.price) + (p.size ? " ・ " + esc(p.size) : "") + " ・ " + esc(productCats(p).map(catLabel).join(", ")) + (p.active === false ? " ・ Hidden (OFF)" : "") + "</div>"
+      + '<div class="d">' + yen(p.price) + (salePriceOf(p) !== null ? ' <span class="sale-mark">SALE ' + yen(salePriceOf(p)) + '</span>' : "") + (p.size ? " ・ " + esc(p.size) : "") + " ・ " + esc(productCats(p).map(catLabel).join(", ")) + (p.active === false ? " ・ Hidden (OFF)" : "") + "</div>"
       + stockHtml + "</div>"
       + '<button type="button" class="mini star' + (p.popular ? " on" : "") + '" data-star="' + esc(p.id) + '" title="Popular — show in the top slideshow">' + (p.popular ? "⭐" : "☆") + '</button>'
       + '<label class="switch" title="Show / Hide in shop"><input type="checkbox" data-toggle="' + esc(p.id) + '"' + (p.active === false ? "" : " checked") + '><span class="sl"></span></label>'
@@ -763,7 +779,7 @@ function clearForm(){
   catTouched = false;
   formCats = [];
   renderCatChips();
-  ["fId","fEn","fJp","fIdn","fPrice","fSize","fStock","fNewCat","fPhotoUrl","fPhoto2Url"].forEach(function(id){ $(id).value = ""; });
+  ["fId","fEn","fJp","fIdn","fPrice","fSalePrice","fSize","fStock","fNewCat","fPhotoUrl","fPhoto2Url"].forEach(function(id){ $(id).value = ""; });
   $("fPhotoFile").value = ""; $("fPhoto2File").value = ""; $("fOn").checked = true; $("fPopular").checked = false;
   $("photoPreview").style.display = "none"; $("photoPreview").src = "";
   $("photo2Preview").style.display = "none"; $("photo2Preview").src = "";
@@ -789,7 +805,7 @@ function startEdit(id){
   catTouched = true; /* a saved product's category was chosen deliberately — OCR must not replace it */
   $("fId").value = p.id; $("fEn").value = p.en || ""; $("fJp").value = p.jp || "";
   $("fIdn").value = p.idn || "";
-  $("fPrice").value = p.price; $("fSize").value = p.size || "";
+  $("fPrice").value = p.price; $("fSalePrice").value = (typeof p.salePrice === "number") ? p.salePrice : ""; $("fSize").value = p.size || "";
   $("fStock").value = (typeof p.stock === "number") ? p.stock : "";
   formCats = productCats(p);
   renderCatOptions();
@@ -833,6 +849,17 @@ function applyForm(){
   var price = Number(priceRaw);
   if (!en){ showMsg($("formMsg"), "Please enter the product name (English).", "err"); return false; }
   if (priceRaw === "" || isNaN(price) || price < 0){ showMsg($("formMsg"), "Please enter a valid price.", "err"); return false; }
+  /* Sale price: blank = no sale. When filled it must be a real
+     discount — more than ¥0 and lower than the regular price —
+     otherwise the save is refused until it is fixed. */
+  var saleRaw = $("fSalePrice").value.trim();
+  var saleVal = null;
+  if (saleRaw !== ""){
+    saleVal = Math.round(Number(saleRaw));
+    if (isNaN(saleVal) || saleVal <= 0 || saleVal >= Math.round(price)){
+      showMsg($("formMsg"), "The sale price must be lower than the price (and more than ¥0) — or leave it blank for no sale.", "err"); return false;
+    }
+  }
   var cats = formCats.slice();
   var newCat = $("fNewCat").value.trim();
   if (newCat){
@@ -852,14 +879,20 @@ function applyForm(){
     en: en, jp: $("fJp").value.trim(), idn: $("fIdn").value.trim(), price: Math.round(price),
     size: $("fSize").value.trim(), stock: stockVal, cat: cat, cats: cats, photo: currentPhotoValue(), photo2: currentPhoto2Value(), active: $("fOn").checked, popular: $("fPopular").checked
   };
+  var target = null;
   if (editingId){
-    var p = findProduct(editingId);
-    if (p){ Object.assign(p, data); }   /* data carries no addedAt, so an edit preserves the product's original stamp */
+    target = findProduct(editingId);
+    if (target){ Object.assign(target, data); }   /* data carries no addedAt, so an edit preserves the product's original stamp */
   } else {
     data.id = slugify(en);
     data.addedAt = todayJstStr();   /* stamp the add date (JST): the shop shows a "NEW" badge for the first 14 days */
     state.products.push(data);
+    target = data;
   }
+  /* The sale price is applied OUTSIDE data on purpose: a blank field
+     must REMOVE a sale set earlier, which Object.assign alone (it only
+     writes the keys data carries) could never do. */
+  if (target){ if (saleVal === null) delete target.salePrice; else target.salePrice = saleVal; }
   markDirty(); renderAll();
   return true;
 }
@@ -2051,7 +2084,7 @@ $("formResetBtn").addEventListener("click", function(){ resetForm(); });
 $("adminSearch").addEventListener("input", renderList);
 /* any typing/picking in the form marks it dirty,
    so ↺ Reset can ask before clearing */
-["fEn","fJp","fIdn","fPrice","fSize","fStock","fNewCat","fPhotoUrl","fPhoto2Url"].forEach(function(id){
+["fEn","fJp","fIdn","fPrice","fSalePrice","fSize","fStock","fNewCat","fPhotoUrl","fPhoto2Url"].forEach(function(id){
   $(id).addEventListener("input", function(){ formDirty = true; });
 });
 /* leaving the English name with an empty Japanese name: auto-translate */
