@@ -742,6 +742,33 @@ function effectivePrice(p){
 function isOnSale(p){ return !!p && effectivePrice(p) < (Number(p.price) || 0); }
 function salePct(p){ return isOnSale(p) ? Math.round((1 - effectivePrice(p) / Number(p.price)) * 100) : 0; }
 function saleBadgeHTML(p){ return isOnSale(p) ? '<span class="sale-badge">-' + salePct(p) + '%</span>' : ''; }
+/* ---------- 📈 Google Analytics item events ----------
+   GA4 ecommerce events, so the owner can later see WHICH products
+   visitors look at and take: "view_item" fires when a product's photo
+   lightbox opens, "add_to_cart" when its quantity in the cart goes up
+   (an Add tap or a stepper + tap — never on −). The item payload uses
+   the GA4 shape (item_id = product slug, item_name = English name,
+   price = the effective/sale price), which is what GA's itemName
+   reports read. Every call is guarded: if the gtag script was blocked
+   or removed, window.gtag may be missing and shopping carries on
+   completely untouched — analytics must never break the shop. */
+function gaEvent(name, params){
+  try {
+    if (typeof window !== "undefined" && typeof window.gtag === "function")
+      window.gtag("event", name, params || {});
+  } catch (e) { /* analytics must never break the shop */ }
+}
+function gaItem(p, qty){
+  var it = { item_id: p.id, item_name: p.en || p.jp || p.id, price: effectivePrice(p) };
+  if (qty) it.quantity = qty;
+  return it;
+}
+function gaViewItem(p){
+  gaEvent("view_item", { currency: "JPY", value: effectivePrice(p), items: [gaItem(p)] });
+}
+function gaAddToCart(p, qty){
+  gaEvent("add_to_cart", { currency: "JPY", value: effectivePrice(p) * qty, items: [gaItem(p, qty)] });
+}
 /* Photo badges: the SALE −% pill and the NEW pill both live at the
    photo's top-right. When a product wears both, they are wrapped and
    stacked (SALE on top, NEW below it) so neither overlaps the other;
@@ -969,6 +996,7 @@ function openLightboxFor(id, btn){
     var img = card ? card.querySelector(".photo img") : null;
     if (img && img.getAttribute("src") === photos[1]) start = 1;
   }
+  gaViewItem(p);   /* GA4: the visitor is looking at this product */
   openLightbox(photos, start);
 }
 lbStage.addEventListener("pointerdown", function(e){
@@ -1175,7 +1203,7 @@ function openSlideLightbox(id){
   var photos = [];
   if (p.photo) photos.push(p.photo);
   if (p.photo2) photos.push(p.photo2);
-  if (photos.length) openLightbox(photos, 0);
+  if (photos.length){ gaViewItem(p); openLightbox(photos, 0); }
 }
 /* After any cart change, refresh just the slides' Add/stepper area so the
    slideshow itself (position + timer) is never disturbed. Called from
@@ -1375,12 +1403,17 @@ function showStockToast(p){
 }
 function setQty(id, qty){
   var p = productById(id);
+  var before = cart[id] || 0;
   /* Stock control: never let the cart hold more than the tracked stock. */
   if (p && typeof p.stock === "number" && qty > p.stock){
     qty = p.stock;
     showStockToast(p);
   }
   if (qty <= 0) delete cart[id]; else cart[id] = qty;
+  /* GA4: report only a real increase (an Add tap or a stepper + tap,
+     measured after the stock clamp) — a − tap or a removal never fires. */
+  var added = (cart[id] || 0) - before;
+  if (p && added > 0) gaAddToCart(p, added);
   renderGrid(); renderCart();
 }
 function sortedCartIds(){
