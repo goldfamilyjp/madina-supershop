@@ -2508,5 +2508,14 @@ fetch("products.json", { cache: "no-store" })
   }, 1400);
 })();
 </script>
+<script>
+/* Service worker — together with the manifest and icons this makes the
+   shop installable on Android / desktop Chrome ("Install app" / "Add to
+   Home screen"). Shop page only; the admin has none. Any failure is
+   silent: the page behaves exactly the same without it. */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(function () {});
+}
+</script>
 </body>
 </html>
