@@ -80,6 +80,23 @@ inside the GitHub repository **goldfamilyjp/madina-supershop** (GitHub Pages hos
   photo (grid card and ⭐ Popular slide alike); after 14 days the badge stops showing on
   its own — no data change needed. Products without `addedAt` (everything added before
   this feature) never show it.
+- **Sale price (`salePrice`):** a product may carry an optional `salePrice` (integer yen)
+  next to its regular `price` — e.g. price ¥4,000 on sale at ¥3,000. It counts **only**
+  when `0 < salePrice < price`; absent, empty, 0, or not lower than the price all mean
+  “not on sale”, and the product then renders and charges exactly as before. On the shop
+  front (grid card and ⭐ Popular slide) an on-sale product shows the sale price big and
+  bold in red with the regular price smaller, grey and struck through beside it, plus a
+  red **-25%** badge on the photo (percentage = round((1 − salePrice/price) × 100)); when
+  the product also wears a NEW badge, the two stack vertically at the photo's top-right
+  (SALE on top, NEW below). **All** money in the shop is computed from the sale price via
+  `effectivePrice()` in `index.html` — cart lines, subtotal, coupon discount, tax, totals,
+  the ticket, the WhatsApp text, the Google Form record, the order payload and the
+  confirmation email — so the customer is always charged the sale price, never the old
+  one. In the admin, the **“Sale price ¥ (optional)”** field sits directly under the price:
+  blank = no sale; a filled value that is not lower than the price (or is ¥0) is refused
+  with an error and nothing saves until it is fixed; editing loads the current sale price,
+  and clearing the field removes the sale. On-sale products carry a red **SALE ¥…** marker
+  next to their price in the admin product list.
 
 ## Business rules
 
@@ -548,6 +565,9 @@ options for the same thing confused the owner):
    BACK). The photo goes through the resize + OCR auto-fill pipeline (see above), so the
    name, size and category fill in automatically.
 2. Type the **price** (the one thing OCR never reads) and check the filled-in fields.
+   To put the product on sale, also fill in **Sale price** directly under the price
+   (lower than the price — see “Sale price (`salePrice`)” above); leave it blank for
+   no sale.
 3. Press the one big **Add & Save** button. That press applies the form and saves to
    GitHub, so the product is live in the shop immediately — no separate “Save to shop”
    press needed. The result is always announced in the **big banner at the top of the
