@@ -402,7 +402,11 @@ script — **it must match `BANK_INFO` in `index.html`; when the real details ar
 
 Customers earn points and spend them on later orders:
 
-- **Earn:** 1% of each purchase, rounded down (floor) — a ¥7,580 order earns 75 pt.
+- **Earn:** 2% of each purchase, rounded down (floor) — a ¥7,580 order earns 151 pt.
+  The 2% rate is staff-facing only (shown in the admin): **customers are never shown a
+  percentage** — the shop front, FAQ, share-card meta and customer messages only say
+  points are earned with every order (e.g. “Earn points with every order” /
+  「お買い物でポイントが貯まります」), plus the value 1 pt = ¥1.
 - **Value:** 1 pt = ¥1.
 - **Maturity:** points become usable **1 month after the purchase date** (each earn entry has a
   `matures` date = purchase date + 1 month). Until then they are “pending”.
@@ -421,7 +425,7 @@ public file; treat the file as a points ledger, not a customer database.)
 **Staff workflow:**
 
 1. Customer orders (WhatsApp). Shop confirms the order **and the payment** on WhatsApp first.
-2. Admin → 🪙 Points tab: enter the customer's phone number + the order amount → “Add points (1%)”.
+2. Admin → 🪙 Points tab: enter the customer's phone number + the order amount → “Add points (2%)”.
 3. When the customer asks to use points: enter the phone number → “Check balance” shows the
    **available** amount → enter the points → “Use points” (it refuses more than the available balance).
 4. Every change **saves at once** — one press writes the entry and saves it, then a green banner
@@ -658,7 +662,7 @@ a custom category typed in the admin displays exactly as entered.
 - **Hero:** the green/gold header sits on the real shop photo (see “Hero banner photo” below) and
   carries the shop name **MADINA HALAL SUPER** in gold-gradient display type (pure CSS — no font
   downloads), a trilingual tagline and three offer chips —
-  送料無料（¥10,000以上）/ Free delivery over ¥10,000 · ポイント1%還元 / Points 1% back ·
+  送料無料（¥10,000以上）/ Free delivery over ¥10,000 · お買い物でポイントが貯まります / Earn points with every order ·
   全品ハラール / All halal — kept compact so products stay near the top on mobile.
 - SEO basics: JP+EN(+ID) meta description and a descriptive `<title>`.
 
