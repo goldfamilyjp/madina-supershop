@@ -884,6 +884,32 @@ the “Install app” / “Add to Home screen” entry then appears in Chrome's 
 tablet it sits further down the menu — scroll the menu). A shortcut saved before this
 must still be **deleted and re-added** to pick up the SHOP icon and “Madina Super” name.
 
+### In-page install buttons (no menu hunting)
+
+Even with `sw.js` live, the owner's tablet Chrome still showed no menu install entry —
+so **both pages carry their own install button** (2026-11-22, same pattern as the menu
+site's “ホーム画面に追加 / Add to Home Screen” button):
+
+- **Shop** (`index.html`): a gold pill **“📲 Add to Home Screen · ホーム画面に追加”** in
+  the banner area under the hero chips, above the points card (`#btnInstall`).
+- **Admin** (`admin.html`): a gold pill **“📲 Install Admin app”** in the header, under
+  the “Admin Panel” line (`#btnInstallAdmin`). English only, like the rest of the admin.
+
+Behaviour on both pages: the button is visible by default. Each page listens for
+`beforeinstallprompt` and stores it; **tapping the button calls the stored prompt**
+directly (accepting hides the button). If Chrome has not offered a prompt, the tap
+instead opens a small **step panel** — shop: bilingual JP+EN (`#installHelp`); admin:
+English (`#installHelpAdmin`) — with the manual steps (Android Chrome: ⋮ menu →
+“Install app”, reload the page once if it is missing; iPhone: Share → “Add to Home
+Screen”). The panel closes with its Close button. The button hides itself when the
+page is already running as an installed app (`display-mode: standalone` /
+`navigator.standalone`) and on the `appinstalled` event.
+
+**How the owner uses it:** open the shop (or admin) page and **tap the gold button** —
+no Chrome-menu hunting. If Chrome still withholds the prompt, the button shows the
+manual steps instead; following them (including the one reload) adds the same
+SHOP / ADMIN shortcut.
+
 ## Setup (one time, done by Manager)
 
 1. Create the public GitHub repo **goldfamilyjp/madina-supershop**.
