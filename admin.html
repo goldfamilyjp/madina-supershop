@@ -244,6 +244,7 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
     <input type="text" id="fEn" placeholder="e.g. Chana Dal">
     <label for="fJp">Japanese name</label>
     <input type="text" id="fJp" placeholder="Product name in Japanese">
+    <div class="msg" id="jpNote"></div>
     <!-- 3) Price + size, side by side -->
     <div class="field-row">
       <div>
@@ -258,9 +259,15 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
     <!-- 4) Categories -->
     <label>Categories — tick all that apply (the first one ticked is the main category)</label>
     <div class="cat-chips" id="fCats"></div>
+    <!-- 5) Popular — a main-flow choice directly under the categories
+         (owner's ask: it used to hide inside "More options") -->
+    <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">⭐ Popular — show in the Popular slideshow on the shop page
+      <span class="switch"><input type="checkbox" id="fPopular"><span class="sl"></span></span>
+    </label>
+    <p class="hint">Tick this to feature the product in the ⭐ Popular slideshow at the top of the shop page. About 10 is best.</p>
     <!-- Rarely-needed fields, collapsed -->
     <details class="more" id="moreOptions">
-      <summary>More options — Indonesian name, stock, photo URLs, new category, show / popular</summary>
+      <summary>More options — Indonesian name, stock, photo URLs, new category, show in shop</summary>
       <label for="fIdn">Indonesian name (optional)</label>
       <input type="text" id="fIdn" placeholder="e.g. Beras Basmati Mehran">
       <label for="fStock">Stock — blank = no stock tracking</label>
@@ -275,11 +282,8 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
       <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">Show in shop
         <span class="switch"><input type="checkbox" id="fOn" checked><span class="sl"></span></span>
       </label>
-      <label style="display:flex; align-items:center; gap:10px; margin-top:16px;">⭐ Popular — show in the top slideshow
-        <span class="switch"><input type="checkbox" id="fPopular"><span class="sl"></span></span>
-      </label>
     </details>
-    <!-- 5) One big primary button: apply + save in one press -->
+    <!-- 6) One big primary button: apply + save in one press -->
     <div class="msg" id="formMsg"></div>
     <button type="button" class="big-btn gold" id="applyBtn">Add &amp; Save</button>
     <button type="button" class="big-btn grey" id="cancelEditBtn" hidden>Cancel edit</button>
@@ -766,7 +770,7 @@ function clearForm(){
   $("moreOptions").open = false;
   $("formTitle").innerHTML = 'Add product';
   $("applyBtn").innerHTML = 'Add &amp; Save';
-  $("cancelEditBtn").hidden = true; hideMsg($("formMsg")); hideMsg($("ocrMsg"));
+  $("cancelEditBtn").hidden = true; hideMsg($("formMsg")); hideMsg($("ocrMsg")); hideMsg($("jpNote"));
   formDirty = false;
 }
 /* ↺ Reset: abandon everything typed/picked in the form and go back to a
@@ -797,13 +801,13 @@ function startEdit(id){
   if (p.photo2){ $("photo2Preview").src = p.photo2; $("photo2Preview").style.display = "block"; } else { $("photo2Preview").style.display = "none"; $("photo2Preview").src = ""; }
   $("formTitle").innerHTML = 'Edit product';
   $("applyBtn").innerHTML = 'Update &amp; Save';
-  $("cancelEditBtn").hidden = false; hideMsg($("formMsg")); hideMsg($("formBanner"));
+  $("cancelEditBtn").hidden = false; hideMsg($("formMsg")); hideMsg($("formBanner")); hideMsg($("jpNote"));
   /* If this product HAS values in the collapsed fields (Indonesian name,
-     stock, photo URLs, popular, hidden), open "More options" so nothing
+     stock, photo URLs, hidden), open "More options" so nothing
      the owner saved is hiding out of sight while editing. */
   $("moreOptions").open = !!((p.idn && String(p.idn).trim()) || typeof p.stock === "number"
     || $("fPhotoUrl").value.trim() || $("fPhoto2Url").value.trim()
-    || p.popular === true || p.active === false);
+    || p.active === false);
   formDirty = false;
   $("formPanel").scrollIntoView({ block: "start" });
 }
@@ -850,9 +854,10 @@ function applyForm(){
   };
   if (editingId){
     var p = findProduct(editingId);
-    if (p){ Object.assign(p, data); }
+    if (p){ Object.assign(p, data); }   /* data carries no addedAt, so an edit preserves the product's original stamp */
   } else {
     data.id = slugify(en);
+    data.addedAt = todayJstStr();   /* stamp the add date (JST): the shop shows a "NEW" badge for the first 14 days */
     state.products.push(data);
   }
   markDirty(); renderAll();
@@ -1139,6 +1144,9 @@ function applyOcrResult(text, engine, lines){
   } else {
     showMsg(note, "Photo read, but nothing new to fill in — the fields were already filled, or no clear name/size was found." + engineNote, "info");
   }
+  /* The label had an English name but no Japanese text: fill the
+     Japanese name by auto-translation (only while it is empty). */
+  autoTranslateJpName();
 }
 /* ---------- the two reading engines ----------
    1) ONLINE reader (preferred): the photo is sent to the shop's own Apps
@@ -1177,6 +1185,83 @@ function ordersApiOcr(dataUrl){
        lines: [{ t, h }, …] — used to pick the packet title. Older
        deployments omit it, and the parser then uses its fallback. */
     return { text: j.text, lines: Array.isArray(j.lines) ? j.lines : undefined };
+  });
+}
+/* ---------- EN → JP auto-translation of the product name ----------
+   When the photo reader (or the owner's own typing) provides an English
+   name but no Japanese name — the label had no Japanese text — the
+   English name is translated for free, with no API key: MyMemory first,
+   Google's free gtx endpoint as the fallback. The result fills the
+   Japanese-name field ONLY while it is empty: a name the owner typed or
+   the reader found is never overwritten. Any failure is silent — the
+   field simply stays empty and the form is never blocked. */
+function hasJapaneseText(s){ return /[぀-ヿ一-鿿]/.test(String(s == null ? "" : s)); }
+/* Size/weight fragments ("450g", "NET WT", "100 bags") are not part of
+   a product name — strip them the same way the OCR name cleanup does,
+   both from the text sent for translation and from any fragment that
+   survives inside the translated text. */
+function stripSizeFragments(s){
+  return String(s == null ? "" : s)
+    .replace(/(\d+(?:[.,]\d+)?)\s*(kg|g|ml|l)\b/gi, " ")
+    .replace(/(\d+)\s*(bags|bag|pcs|pieces|packs|pack)\b/gi, " ")
+    .replace(/(\d+)\s*枚/g, " ")
+    .replace(/\bnet\s*wt\.?\b/gi, " ")
+    .replace(/\s+/g, " ").trim();
+}
+function translateNameToJp(enText){
+  var q = stripSizeFragments(enText);
+  if (!q) return Promise.resolve("");
+  var mmUrl = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(q) + "&langpair=en|ja";
+  return fetchWithTimeout(mmUrl, {}, 10000)
+    .then(function(r){
+      if (!r.ok) throw new Error("translate HTTP " + r.status);
+      return r.json();
+    })
+    .then(function(j){
+      if (j && j.responseStatus && String(j.responseStatus) !== "200") throw new Error("translate status " + j.responseStatus);
+      var t = j && j.responseData && typeof j.responseData.translatedText === "string" ? j.responseData.translatedText : "";
+      t = stripSizeFragments(t);
+      /* an unchanged echo of the English text is not a translation */
+      if (!hasJapaneseText(t)) throw new Error("no Japanese in translation");
+      return t;
+    })
+    .catch(function(){
+      var gUrl = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=" + encodeURIComponent(q);
+      return fetchWithTimeout(gUrl, {}, 10000)
+        .then(function(r){
+          if (!r.ok) throw new Error("translate HTTP " + r.status);
+          return r.json();
+        })
+        .then(function(j){
+          var segs = (Array.isArray(j) && Array.isArray(j[0])) ? j[0] : [];
+          var t = "";
+          segs.forEach(function(seg){ if (seg && typeof seg[0] === "string") t += seg[0]; });
+          t = stripSizeFragments(t);
+          return hasJapaneseText(t) ? t : "";
+        })
+        .catch(function(){ return ""; });
+    });
+}
+/* Fill the empty Japanese-name field by translating the English name.
+   Fire-and-forget: it never blocks the form, and if the owner types a
+   Japanese name (or changes the English one) while a translation is on
+   its way, the late result is dropped instead of overwriting. */
+var jpAutoTranslateBusy = false;
+function autoTranslateJpName(){
+  var en = $("fEn").value.trim();
+  if (!en || $("fJp").value.trim() || jpAutoTranslateBusy) return;
+  jpAutoTranslateBusy = true;
+  showMsg($("jpNote"), "Translating the Japanese name…", "info");
+  translateNameToJp(en).then(function(jp){
+    jpAutoTranslateBusy = false;
+    if ($("fJp").value.trim() || $("fEn").value.trim() !== en){ hideMsg($("jpNote")); return; }
+    if (jp){
+      $("fJp").value = jp.slice(0, 60);
+      formDirty = true;
+      showMsg($("jpNote"), "Japanese name auto-translated — please check it.", "info");
+    } else {
+      showMsg($("jpNote"), "Auto-translate failed — please type the Japanese name.", "info");
+    }
   });
 }
 /* Pre-process a photo for the built-in reader: upscale 2× (capped),
@@ -1969,6 +2054,8 @@ $("adminSearch").addEventListener("input", renderList);
 ["fEn","fJp","fIdn","fPrice","fSize","fStock","fNewCat","fPhotoUrl","fPhoto2Url"].forEach(function(id){
   $(id).addEventListener("input", function(){ formDirty = true; });
 });
+/* leaving the English name with an empty Japanese name: auto-translate */
+$("fEn").addEventListener("blur", function(){ autoTranslateJpName(); });
 $("fOn").addEventListener("change", function(){ formDirty = true; });
 $("fPopular").addEventListener("change", function(){ formDirty = true; });
 
@@ -2384,6 +2471,7 @@ window.__supershopAdmin = { getState: function(){ return state; }, buildPayload:
   tax: { rate: function(){ return state.taxRate; }, syncFromInput: syncTaxFromInput, parse: parseTaxRate },
   ocr: { parse: parseOcrText, run: runOcr, apply: applyOcrResult, online: ordersApiOcr, preprocess: preprocessForOcr, apiUrl: ordersApiUrl,
          isJunk: ocrIsJunkLine, detectSize: ocrDetectSize, linesFromTesseract: ocrLinesFromTesseract },
+  translate: { toJp: translateNameToJp, auto: autoTranslateJpName, stripSize: stripSizeFragments, hasJapanese: hasJapaneseText },
   form: { cats: function(){ return formCats.slice(); }, setCats: setFormCats, productCats: productCats,
           reset: resetForm, isDirty: function(){ return formDirty; }, isEdit: function(){ return !!editingId; } },
   points: { data: function(){ return pointsData; }, balances: pointBalances, load: loadPoints, save: savePoints, sha256Hex: sha256Hex, addOneMonth: addOneMonth, normalizePhone: normalizePhone, todayStr: todayStr, cancelEarn: cancelEarn, addAdjust: addAdjust, history: pointsHistoryHtml, addAdjustSaved: pointsAddAdjust },
