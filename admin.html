@@ -75,11 +75,10 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 .copy-btn:active{opacity:.85;}
 .pt-bal{font-size:1.05rem; font-weight:800; color:var(--green); margin-top:6px; line-height:1.6;}
 .pt-entry{font-size:.85rem; color:var(--muted); padding:4px 0; border-bottom:1px dashed var(--line);}
-.qa-card{border:2px solid var(--gold); background:var(--gold-soft); border-radius:14px; padding:14px; margin:12px 0 20px;}
-.qa-title{font-size:1.2rem; font-weight:800; color:var(--green-dark); margin-bottom:4px;}
-.qa-photo-btn{font-size:1.15rem; padding:18px;}
-.qa-photo2-btn{font-size:.95rem; padding:11px;}
-.qa-card input.qa-price{font-size:1.3rem; font-weight:700; padding:14px;}
+/* the product form's big result banner — sits at the top of the form and
+   is scrolled into view after every Add & Save, so the result (added /
+   saved / failed) can never be missed */
+#formBanner{font-size:1.1rem; font-weight:700; padding:16px; border-width:2px; scroll-margin-top:80px;}
 .cat-chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;}
 .cat-chip{display:inline-flex; align-items:center; gap:7px; border:2px solid var(--line); background:#fff; border-radius:999px; padding:9px 14px; font-size:.95rem; font-weight:700; cursor:pointer; margin-top:0;}
 .cat-chip input{width:20px; height:20px; margin:0; flex:0 0 auto; accent-color:var(--green);}
@@ -149,7 +148,7 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 .phone-input::placeholder{font-weight:700; color:#8a947f; opacity:1;}
 .phone-input:focus{outline:none; box-shadow:0 0 0 5px var(--gold);}
 #ptPhone{box-shadow:0 0 0 5px var(--gold-soft), 0 2px 10px rgba(11,69,48,.18);}
-/* ---------- big photo boxes (Add form + Quick Add) ---------- */
+/* ---------- big photo boxes (Add form) ---------- */
 .photo-boxes{display:flex; gap:12px; margin-top:6px;}
 .photo-box{position:relative; flex:1 1 0; min-height:150px; border:2px dashed var(--green); border-radius:14px; background:#f2f7f3; color:var(--green-dark); cursor:pointer; overflow:hidden; padding:0; font:inherit;}
 .photo-box .ph-empty{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:10px; text-align:center;}
@@ -212,40 +211,9 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
     <h2 id="formTitle">Add product</h2>
     <p class="hint">Pick a photo — the name, size and category fill in automatically. Type the price, then press Add &amp; Save.</p>
 
-    <!-- ===== Quick Add (photo + price, one button) ===== -->
-    <div class="qa-card" id="quickAddCard">
-      <div class="qa-title">⚡ Quick Add</div>
-      <div class="photo-boxes">
-        <button type="button" class="photo-box" id="qPhotoBox1">
-          <span class="ph-empty"><span class="ph-icon">📷</span><span class="ph-label">FRONT</span><span class="ph-sub">front side — tap to pick a photo</span></span>
-          <span class="ph-tag">FRONT</span>
-          <img class="photo-preview" id="qPhotoPreview" alt="">
-        </button>
-        <button type="button" class="photo-box" id="qPhotoBox2">
-          <span class="ph-empty"><span class="ph-icon">📷</span><span class="ph-label">BACK</span><span class="ph-sub">back side — optional, tap to pick</span></span>
-          <span class="ph-tag">BACK</span>
-          <img class="photo-preview" id="qPhoto2Preview" alt="">
-        </button>
-      </div>
-      <input type="file" id="qPhotoFile" accept="image/*" multiple hidden>
-      <input type="file" id="qPhoto2File" accept="image/*" hidden>
-      <div class="msg" id="qOcrMsg"></div>
-      <label for="qEn">Product name (English) *</label>
-      <input type="text" id="qEn" placeholder="Fills in from the photo — or type it">
-      <label for="qPrice">Price ¥ (yen) *</label>
-      <input type="number" id="qPrice" class="qa-price" min="0" step="1" inputmode="numeric" placeholder="e.g. 490">
-      <label for="qCat">Category</label>
-      <select id="qCat"></select>
-      <label for="qNewCat">New category name (only if you need a new one)</label>
-      <input type="text" id="qNewCat" placeholder="Only if the category is not in the list above">
-      <label style="display:flex; align-items:center; gap:10px;">⭐ Popular — show in the top slideshow
-        <input type="checkbox" id="qPopular" style="width:22px; height:22px; margin:0; flex:0 0 auto;">
-      </label>
-      <div class="msg" id="qMsg"></div>
-      <button type="button" class="big-btn gold" id="qAddSaveBtn">⚡ Add &amp; Save — goes live now</button>
-      <button type="button" class="big-btn grey" id="qResetBtn">↺ Reset</button>
-      <p class="hint">This adds the product and saves it to the shop in one press. The full form below still works for stock, Japanese / Indonesian names and editing.</p>
-    </div>
+    <!-- Big result banner: after Add & Save this shows, at the top of the
+         form, whether the product was added / saved or the save failed. -->
+    <div class="msg" id="formBanner"></div>
 
     <input type="hidden" id="fId">
     <!-- 1) Photos — two big boxes. Tap FRONT to pick (pick two photos
@@ -530,7 +498,7 @@ var dirty = false;
 var editingId = null;
 var catTouched = false; /* true once the owner picks a category by hand (or edits a saved product) */
 var formCats = []; /* ordered category ids ticked in the Add/Edit form — formCats[0] is the PRIMARY category */
-var formDirty = false; /* true when the Add/Edit form (or its Quick Add mirror) holds un-applied input */
+var formDirty = false; /* true when the Add/Edit form holds un-applied input */
 /* The shop's own Google Apps Script endpoint (orders + customer ID). Photo
    text reading also goes through it (server-side OCR — any API key lives in
    the script's own properties, never in this page). This URL is already
@@ -545,6 +513,16 @@ function yen(n){ return "¥" + Number(n).toLocaleString("ja-JP"); }
 function token(){ return localStorage.getItem(TOKEN_KEY) || ""; }
 function showMsg(el, text, kind){ el.textContent = text; el.className = "msg show " + kind; }
 function hideMsg(el){ el.className = "msg"; }
+/* The product form's big result banner (top of the form): same show/hide
+   mechanics as showMsg, plus a scroll into view, so the owner always
+   sees the outcome of an Add & Save press. clearForm() deliberately
+   does NOT hide it — the banner must survive the automatic form reset
+   that follows a successful save. */
+function showFormBanner(text, kind){
+  var b = $("formBanner");
+  showMsg(b, text, kind);
+  if (b.scrollIntoView) b.scrollIntoView({ block: "start", behavior: "smooth" });
+}
 function b64encodeUtf8(str){ return btoa(unescape(encodeURIComponent(str))); }
 function b64decodeUtf8(b64){ return decodeURIComponent(escape(atob(String(b64).replace(/\s/g, "")))); }
 function slugify(s){
@@ -673,9 +651,6 @@ function updateLastSavedNote(){
 
 /* ---------- rendering ---------- */
 function renderCatOptions(){
-  var html = state.categories.map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.en) + "</option>"; }).join("");
-  var q = $("qCat");
-  if (q){ var cur = q.value; q.innerHTML = html; if (cur) q.value = cur; }
   renderCatChips();
 }
 /* The Add/Edit form's category picker: one checkbox chip per category.
@@ -789,14 +764,13 @@ function clearForm(){
   $("cancelEditBtn").hidden = true; hideMsg($("formMsg")); hideMsg($("ocrMsg"));
   formDirty = false;
 }
-/* ↺ Reset: abandon everything typed/picked in the form (and its Quick
-   Add mirror) and go back to a clean "add new product" state. Asks first
-   when the form holds un-applied input. */
+/* ↺ Reset: abandon everything typed/picked in the form and go back to a
+   clean "add new product" state. Asks first when the form holds
+   un-applied input. */
 function resetForm(){
   if (formDirty && !window.confirm("Reset the form? Everything typed or picked in the form will be cleared.")) return false;
-  stopQuickSync();
   clearForm();
-  clearQuick();
+  hideMsg($("formBanner"));
   formDirty = false;
   return true;
 }
@@ -818,7 +792,7 @@ function startEdit(id){
   if (p.photo2){ $("photo2Preview").src = p.photo2; $("photo2Preview").style.display = "block"; } else { $("photo2Preview").style.display = "none"; $("photo2Preview").src = ""; }
   $("formTitle").innerHTML = 'Edit product';
   $("applyBtn").innerHTML = 'Update &amp; Save';
-  $("cancelEditBtn").hidden = false; hideMsg($("formMsg"));
+  $("cancelEditBtn").hidden = false; hideMsg($("formMsg")); hideMsg($("formBanner"));
   /* If this product HAS values in the collapsed fields (Indonesian name,
      stock, photo URLs, popular, hidden), open "More options" so nothing
      the owner saved is hiding out of sight while editing. */
@@ -838,6 +812,11 @@ function currentPhoto2Value(){
   if (pv.style.display !== "none" && pv.src && pv.src.indexOf("data:") === 0) return pv.src;
   return $("fPhoto2Url").value.trim();
 }
+/* Validate the form and put the product into state (the list re-renders).
+   The form itself is NOT cleared here: the Add & Save handler clears it
+   only after the GitHub save succeeds, so a failed save never throws
+   away what the owner typed. Result feedback lives in the big banner
+   (showFormBanner), not in this function. */
 function applyForm(){
   hideMsg($("formMsg"));
   var en = $("fEn").value.trim();
@@ -867,13 +846,11 @@ function applyForm(){
   if (editingId){
     var p = findProduct(editingId);
     if (p){ Object.assign(p, data); }
-    showMsg($("formMsg"), "Updated — now press Save.", "ok");
   } else {
     data.id = slugify(en);
     state.products.push(data);
-    showMsg($("formMsg"), "Added — now press Save.", "ok");
   }
-  markDirty(); renderAll(); clearForm();
+  markDirty(); renderAll();
   return true;
 }
 function deleteProduct(id){
@@ -1302,107 +1279,6 @@ function runOcr(dataUrl, ocrDataUrl){
       return runTesseractOcr(dataUrl);   /* online reader failed/timed out — silent fallback */
     });
 }
-
-/* ---------- Quick Add ----------
-   A simple card at the top of the Add-product section: pick a photo,
-   type the price, press one button. It does NOT duplicate any logic —
-   the photo is handed to the existing fPhotoFile pipeline (resize +
-   OCR auto-fill of the main form), the card's fields write through to
-   the main form fields, and "Add & Save" runs the existing applyForm()
-   followed by the existing saveToGitHub(). The main form stays the
-   single source of truth. */
-var qSyncTimer = null;
-function syncQuickFromForm(){
-  /* OCR fills the MAIN form fields — mirror what it filled into the card. */
-  var pv = $("photoPreview"), qp = $("qPhotoPreview");
-  if (pv.style.display !== "none" && pv.src){ qp.src = pv.src; qp.style.display = "block"; }
-  var pv2 = $("photo2Preview"), qp2 = $("qPhoto2Preview");
-  if (pv2.style.display !== "none" && pv2.src){ qp2.src = pv2.src; qp2.style.display = "block"; }
-  var om = $("ocrMsg");
-  if (om.textContent){ showMsg($("qOcrMsg"), om.textContent, om.className.indexOf("err") !== -1 ? "err" : "info"); }
-  if (document.activeElement !== $("qEn") && $("fEn").value) $("qEn").value = $("fEn").value;
-  if (formCats.length) $("qCat").value = formCats[0];   /* the card shows the form's PRIMARY category */
-}
-function startQuickSync(){
-  stopQuickSync();
-  qSyncTimer = setInterval(syncQuickFromForm, 400);
-  setTimeout(stopQuickSync, 120000);
-}
-function stopQuickSync(){ if (qSyncTimer){ clearInterval(qSyncTimer); qSyncTimer = null; } }
-function clearQuick(){
-  ["qEn", "qPrice", "qNewCat"].forEach(function(id){ $(id).value = ""; });
-  $("qPopular").checked = false; $("fPopular").checked = false;
-  $("qPhotoFile").value = ""; $("qPhoto2File").value = "";
-  $("qPhotoPreview").style.display = "none"; $("qPhotoPreview").src = "";
-  $("qPhoto2Preview").style.display = "none"; $("qPhoto2Preview").src = "";
-  hideMsg($("qOcrMsg"));
-}
-function quickAddSave(){
-  var qMsg = $("qMsg");
-  hideMsg(qMsg);
-  var nm = $("qEn").value, pr = $("qPrice").value, ct = $("qCat").value, nc = $("qNewCat").value;
-  var photo = currentPhotoValue();
-  var photo2 = currentPhoto2Value();
-  if (editingId) clearForm(); /* Quick Add always adds a NEW product */
-  $("fEn").value = nm; $("fPrice").value = pr; $("fNewCat").value = nc;
-  $("fPopular").checked = $("qPopular").checked;
-  if (ct){ setFormCats([ct]); catTouched = true; } /* Quick Add is add-only: cats = [the card's selected category] */
-  if (photo){
-    if (photo.indexOf("data:") === 0){ $("photoPreview").src = photo; $("photoPreview").style.display = "block"; }
-    else { $("fPhotoUrl").value = photo; }
-  }
-  if (photo2){
-    if (photo2.indexOf("data:") === 0){ $("photo2Preview").src = photo2; $("photo2Preview").style.display = "block"; }
-    else { $("fPhoto2Url").value = photo2; }
-  }
-  if (!nm.trim()){ showMsg(qMsg, "Please type the product name — or pick a clear photo of the packet so it fills in automatically.", "err"); return; }
-  if (pr.trim() === "" || isNaN(Number(pr)) || Number(pr) < 0){ showMsg(qMsg, "Please type the price.", "err"); return; }
-  if (!token()){ showMsg(qMsg, "No token yet — do the one-time setup in the ⚙️ Setup tab first, then try again.", "err"); return; }
-  var before = state.products.length;
-  applyForm();
-  if (state.products.length === before){
-    showMsg(qMsg, $("formMsg").textContent || "Could not add the product — please check the form below.", "err");
-    return;
-  }
-  stopQuickSync();
-  showMsg(qMsg, "Saving…", "info");
-  var btn = $("qAddSaveBtn"); btn.disabled = true;
-  saveToGitHub().then(function(){
-    showMsg(qMsg, "✅ Added and saved — it's live in the shop now.", "ok");
-    clearQuick();
-  }).catch(function(err){
-    showMsg(qMsg, "The product was added to the list, but saving failed (" + err.message + "). Press “💾 Save to shop” in the 📦 Products tab to try again.", "err");
-  }).finally(function(){ btn.disabled = false; });
-}
-$("qPhotoBox1").addEventListener("click", function(){ $("qPhotoFile").click(); });
-$("qPhotoFile").addEventListener("change", function(){
-  if (!this.files || !this.files.length) return;
-  try {
-    var dt = new DataTransfer();
-    for (var i = 0; i < this.files.length; i++) dt.items.add(this.files[i]);
-    $("fPhotoFile").files = dt.files;
-  } catch (e) {}
-  $("fPhotoFile").dispatchEvent(new Event("change"));
-  startQuickSync();
-});
-$("qPhotoBox2").addEventListener("click", function(){ $("qPhoto2File").click(); });
-$("qPhoto2File").addEventListener("change", function(){
-  var file = this.files && this.files[0]; if (!file) return;
-  try {
-    var dt = new DataTransfer();
-    dt.items.add(file);
-    $("fPhoto2File").files = dt.files;
-  } catch (e) {}
-  $("fPhoto2File").dispatchEvent(new Event("change"));
-  startQuickSync();
-});
-$("qEn").addEventListener("input", function(){ $("fEn").value = this.value; formDirty = true; });
-$("qPrice").addEventListener("input", function(){ $("fPrice").value = this.value; formDirty = true; });
-$("qNewCat").addEventListener("input", function(){ $("fNewCat").value = this.value; formDirty = true; });
-$("qCat").addEventListener("change", function(){ setFormCats([this.value]); catTouched = true; formDirty = true; });
-$("qPopular").addEventListener("change", function(){ $("fPopular").checked = this.checked; formDirty = true; });
-$("qAddSaveBtn").addEventListener("click", quickAddSave);
-$("qResetBtn").addEventListener("click", function(){ resetForm(); });
 
 /* ---------- 📢 News board (notices) ----------
    Owner announcements live in the "notices" array at the root of
@@ -2034,25 +1910,56 @@ $("reloadBtn").addEventListener("click", function(){
 });
 $("reloadDiscardBtn").addEventListener("click", function(){
   if ((dirty || formDirty) && !window.confirm("Discard ALL unsaved changes and reload the product list from the shop?")) return;
-  loadFromGitHub().then(function(){ clearForm(); clearQuick(); formDirty = false; });
+  loadFromGitHub().then(function(){ clearForm(); hideMsg($("formBanner")); formDirty = false; });
 });
 $("saveBtn").addEventListener("click", function(){ saveToGitHub().catch(function(){}); });
-/* The one big primary button: apply the form, then save to the shop in
-   the same press (the old two-step "Add, then press Save" confused the
-   owner). On a validation failure applyForm() returns false and its
-   message stays in the form. */
+/* The ONE big primary button of the single add/edit flow: apply the form,
+   then save to the shop in the same press. Every outcome is announced in
+   the big banner at the top of the form (showFormBanner scrolls it into
+   view — the result can never be missed, and it is never silent):
+   - validation problem → the error, in the form and in the banner;
+   - save succeeded → "✅ Added — <name> is now live on the shop." (new
+     product) or "✅ Saved — <name> updated." (edit), and the form then
+     resets itself to a blank "add a new product" state;
+   - save failed → a red banner with the error; the form KEEPS its
+     values, and a just-added product switches to edit mode so pressing
+     the button again updates it instead of adding a duplicate. */
 $("applyBtn").addEventListener("click", function(){
-  if (!applyForm()) return;
+  var wasEdit = !!editingId;
+  var name = $("fEn").value.trim();
+  var beforeIds = {};
+  state.products.forEach(function(p){ beforeIds[p.id] = true; });
+  hideMsg($("formBanner"));
+  if (!applyForm()){
+    var vm = $("formMsg").textContent;
+    if (vm) showFormBanner(vm, "err");
+    return;
+  }
+  var btn = $("applyBtn");
+  btn.disabled = true;
+  showFormBanner("Saving…", "info");
   saveToGitHub().then(function(){
-    showMsg($("formMsg"), "✅ Saved — it's live in the shop now.", "ok");
+    showFormBanner(wasEdit
+      ? "✅ Saved — " + name + " updated."
+      : "✅ Added — " + name + " is now live on the shop.", "ok");
+    clearForm(); /* auto-reset: blank add-mode, ready for the next product */
   }).catch(function(err){
-    showMsg($("formMsg"), "The change is in the list, but saving failed (" + err.message + "). Press “💾 Save to shop” below to try again.", "err");
-  });
+    if (!wasEdit){
+      var added = state.products.filter(function(p){ return !beforeIds[p.id]; })[0];
+      if (added){
+        editingId = added.id;
+        $("formTitle").innerHTML = "Edit product";
+        btn.innerHTML = "Update &amp; Save";
+        $("cancelEditBtn").hidden = false;
+      }
+    }
+    showFormBanner("❌ Saving to the shop FAILED (" + err.message + "). “" + name + "” is in the list below, but customers cannot see it yet. Your details are still in the form — check the connection and press the save button again.", "err");
+  }).finally(function(){ btn.disabled = false; });
 });
-$("cancelEditBtn").addEventListener("click", clearForm);
+$("cancelEditBtn").addEventListener("click", function(){ clearForm(); hideMsg($("formBanner")); });
 $("formResetBtn").addEventListener("click", function(){ resetForm(); });
 $("adminSearch").addEventListener("input", renderList);
-/* any typing/picking in the form (or its Quick Add mirror) marks it dirty,
+/* any typing/picking in the form marks it dirty,
    so ↺ Reset can ask before clearing */
 ["fEn","fJp","fIdn","fPrice","fSize","fStock","fNewCat","fPhotoUrl","fPhoto2Url"].forEach(function(id){
   $(id).addEventListener("input", function(){ formDirty = true; });
@@ -2470,7 +2377,6 @@ window.__supershopAdmin = { getState: function(){ return state; }, buildPayload:
   notices: { list: function(){ return state.notices; }, todayJst: todayJstStr, apply: applyNotice },
   coupons: { list: function(){ return state.coupons; }, apply: applyCoupon, summary: couponSummary, find: findCoupon },
   tax: { rate: function(){ return state.taxRate; }, syncFromInput: syncTaxFromInput, parse: parseTaxRate },
-  quick: { addSave: quickAddSave, sync: syncQuickFromForm, updateTokenNotice: updateTokenNotice },
   ocr: { parse: parseOcrText, run: runOcr, apply: applyOcrResult, online: ordersApiOcr, preprocess: preprocessForOcr, apiUrl: ordersApiUrl,
          isJunk: ocrIsJunkLine, detectSize: ocrDetectSize, linesFromTesseract: ocrLinesFromTesseract },
   form: { cats: function(){ return formCats.slice(); }, setCats: setFormCats, productCats: productCats,
