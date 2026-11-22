@@ -19,6 +19,16 @@ body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",syst
 header{background:var(--green); color:#fff; padding:16px; text-align:center; border-bottom:4px solid var(--gold);}
 header .t{font-size:1.35rem; font-weight:800;}
 header .s{color:var(--gold); font-size:.9rem;}
+/* 📲 Install Admin app — in-page install button in the header (owner
+   2026-11-22: his tablet's Chrome menu shows no install entry, so the
+   button lives on the page itself — same pattern as the menu site). */
+.install-btn{display:inline-flex; align-items:center; gap:7px; margin-top:10px; background:var(--gold); color:var(--green-dark); border:2px solid #fff; font-weight:800; font-size:.95rem; line-height:1.3; padding:9px 18px; border-radius:999px; cursor:pointer; box-shadow:0 3px 10px rgba(0,0,0,.2); max-width:100%;}
+.install-btn[hidden]{display:none;}
+.install-btn:active{transform:scale(.98);}
+.install-help{background:#fff; color:var(--ink); border-radius:12px; padding:10px 14px; margin:12px auto 2px; max-width:520px; font-size:.9rem; line-height:1.6; text-align:left;}
+.install-help[hidden]{display:none;}
+.install-help p{margin:5px 0;}
+.install-close{margin-top:6px; background:#fff; color:var(--green-dark); border:1.5px solid var(--green); border-radius:999px; padding:8px 16px; min-height:40px; font-weight:700; cursor:pointer; font-size:.9rem;}
 .wrap{max-width:860px; margin:0 auto; padding:16px 12px;}
 .panel{background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:16px;}
 .panel h2{color:var(--green); font-size:1.1rem; margin-bottom:8px;}
@@ -188,6 +198,12 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
 <header>
   <div class="t">MADINA HALAL SUPER</div>
   <div class="s">Admin Panel</div>
+  <button type="button" class="install-btn" id="btnInstallAdmin">📲 Install Admin app</button>
+  <div class="install-help" id="installHelpAdmin" hidden>
+    <p>Android Chrome: open the menu (⋮) and tap “Install app”. If it is not there, reload this page once and try again.</p>
+    <p>iPhone: tap the Share button, then “Add to Home Screen”.</p>
+    <button type="button" class="install-close" id="installHelpAdminClose">Close</button>
+  </div>
 </header>
 
 <div class="wrap">
@@ -2609,6 +2625,59 @@ if (token()){
 }
 updateLastSavedNote();
 renderTemplates();
+</script>
+<script>
+/* 📲 Install Admin app (PWA install) — same pattern as the menu site.
+   The button is visible by default; when Chrome offers an install
+   prompt (beforeinstallprompt) a tap calls it directly, otherwise the
+   tap opens the step-by-step panel (Android menu / iPhone Share).
+   Hidden when the admin is already running as an installed app, and
+   once the app gets installed. */
+(function () {
+  var deferredInstallPrompt = null;
+  var btn = document.getElementById("btnInstallAdmin");
+  var help = document.getElementById("installHelpAdmin");
+  function isStandaloneApp() {
+    try {
+      return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    } catch (e) { return false; }
+  }
+  function hideInstallButton() { if (btn) btn.hidden = true; }
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+  });
+  window.addEventListener("appinstalled", function () {
+    hideInstallButton();
+    if (help) help.hidden = true;
+  });
+  if (btn) {
+    btn.addEventListener("click", function () {
+      if (deferredInstallPrompt) {
+        var promptEvent = deferredInstallPrompt;
+        deferredInstallPrompt = null;
+        try {
+          /* the deferred prompt's own show method (the PWA
+             beforeinstallprompt API — not a dialog) */
+          var showInstallPrompt = promptEvent.prompt;
+          showInstallPrompt.call(promptEvent);
+          if (promptEvent.userChoice && promptEvent.userChoice.then) {
+            promptEvent.userChoice.then(function (choice) {
+              if (choice && choice.outcome === "accepted") hideInstallButton();
+            }).catch(function () {});
+          }
+        } catch (err) { if (help) help.hidden = false; }
+      } else if (help) {
+        help.hidden = false;
+      }
+    });
+  }
+  var closeBtn = document.getElementById("installHelpAdminClose");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", function () { if (help) help.hidden = true; });
+  }
+  if (isStandaloneApp()) hideInstallButton();
+})();
 </script>
 </body>
 </html>
