@@ -24,9 +24,11 @@ product (an earlier duplicate “⚡ Quick Add” card was removed — it confus
 The visible flow is just: two big photo boxes (**FRONT** / **BACK** — tap a box to pick
 that photo; picking two photos at once on FRONT makes the second one the BACK
 automatically) → English + Japanese names → Price and Size side by side → category chips
-→ one big **Add & Save** button (applies the form AND saves to the shop in a single
-press). The rarely-used fields — Indonesian name, stock, photo URL fields, the
-new-category box, and the Show-in-shop / ⭐ Popular switches — live in a collapsed
+→ the **⭐ Popular** switch → one big **Add & Save** button (applies the form AND saves
+to the shop in a single press). The ⭐ Popular switch sits in the main flow, directly
+under the category chips (the owner asked for it there — it used to hide in “More
+options”). The rarely-used fields — Indonesian name, stock, photo URL fields, the
+new-category box, and the Show-in-shop switch — live in a collapsed
 **“More options”** section; it opens automatically when editing a product that already
 has a value in one of those fields. Every press of the button ends with a **big
 confirmation banner** at the top of the form (it scrolls itself into view): green
@@ -71,6 +73,13 @@ inside the GitHub repository **goldfamilyjp/madina-supershop** (GitHub Pages hos
   front/back — the 🔍 button is the only way into the zoom view.
 - **⭐ Popular flag:** each product has an optional `popular` boolean (absent/false = not popular).
   Starred, visible products appear in the shop's top slideshow — see “⭐ Popular slideshow” below.
+- **NEW badge (`addedAt`):** when a product is first added in the admin, it is stamped
+  automatically with `addedAt` = the add date (JST, “YYYY-MM-DD”) — the owner does nothing,
+  and editing a product never changes the stamp. On the shop front, a product whose
+  `addedAt` is within the last 14 days wears a red **NEW** badge at the top-right of its
+  photo (grid card and ⭐ Popular slide alike); after 14 days the badge stops showing on
+  its own — no data change needed. Products without `addedAt` (everything added before
+  this feature) never show it.
 
 ## Business rules
 
@@ -502,6 +511,16 @@ category — please check before saving”). If no text can be read, a friendly 
 the form stays fully manual; OCR never blocks saving, and if the CDN library cannot load, the
 photo still uploads as before.
 
+- **Auto-translate of the Japanese name** — when the English name is filled (by OCR or by
+  typing) but the label had no Japanese text, the empty Japanese-name field is filled by
+  translating the English name, free and keyless (MyMemory API, with Google's free gtx
+  endpoint as fallback; size/weight fragments are stripped first, and a result with no
+  Japanese characters in it is treated as a failure and not filled). It runs after OCR
+  fills the name and when the English field loses focus, **only while the Japanese field
+  is empty** — a typed or OCR-found Japanese name is never overwritten — and a small note
+  under the field says “Japanese name auto-translated — please check it.” (or that the
+  auto-translate failed). Failures are silent and never block saving.
+
 **Honest note:** OCR reads **printed packet text** — clear, flat, well-lit photos of the front
 of the packet work best. Handwriting, curved/foil packaging, glare and small print can be
 misread or missed, so the auto-filled fields must always be checked before saving.
@@ -761,7 +780,8 @@ and that the key elements stay visible and usable.
 ## ⭐ Popular slideshow (shop front)
 
 - **How to star a product:** in the admin, tap the ⭐ button on a product row in the 📦 Products tab, or use
-  the “⭐ Popular — show in the top slideshow” switch in the Add/Edit form. This sets the
+  the “⭐ Popular — show in the Popular slideshow on the shop page” switch in the Add/Edit
+  form (main flow, directly under the category chips). This sets the
   product's `popular` field; Save publishes it like any other change.
 - **Where it shows:** directly under the shop's search bar, above the category chips, with the
   trilingual heading “⭐ 人気商品 / Popular / Populer”. One product at a time — large photo, name,
