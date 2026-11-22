@@ -238,11 +238,17 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .lookup-msg{background:#e8f5e9; color:#1e7d32; border:1px solid #1e7d32; border-radius:10px; padding:9px 12px; font-size:.9rem; font-weight:700; margin:8px 0 0;}
 #lookupMsg[hidden]{display:none;}
 .points-bal-card{background:#fffdf4; border:1.5px solid var(--gold); color:var(--green-dark); border-radius:12px; padding:10px 12px; margin:8px 0 0;}
-.pbc-row{display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:2px 0;}
-.pbc-label{font-weight:700;}
-.pbc-val{font-weight:800; white-space:nowrap;}
-.pbc-yen{font-weight:700;}
-.pbc-note{margin:6px 0 0; padding-top:6px; border-top:1px dashed var(--gold); font-size:.88rem; line-height:1.5;}
+/* Colourful balance boxes — the same family as the admin panel's points
+   summary boxes: a deep-green Available box (white text, label on top, BIG
+   number, "(= ¥X)" under it) and an amber/gold Pending box (dark text).
+   Side by side when there is room; they stack on narrow phones. */
+.pbc-stats{display:flex; gap:10px; flex-wrap:wrap;}
+.pbc-stat{flex:1 1 140px; border-radius:14px; padding:12px 14px;}
+.pbc-stat.avail{background:var(--green); color:#fff;}
+.pbc-stat.pend{background:var(--gold); color:var(--green-dark);}
+.pbc-stat-num{font-size:1.7rem; font-weight:800; line-height:1.25;}
+.pbc-stat-yen{font-size:.95rem; font-weight:700;}
+.pbc-note{margin:8px 0 0; padding-top:6px; border-top:1px dashed var(--gold); font-size:.88rem; line-height:1.5;}
 #checkoutPointsLine[hidden]{display:none;}
 /* "remember my details" note inside the checkout form */
 .saved-note{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; background:#eef6f0; border:1px solid var(--green); border-radius:10px; padding:8px 10px; margin-bottom:6px; font-size:.85rem;}
@@ -1609,21 +1615,30 @@ function pointsMaturesText(iso){
   if (!m || !d || m < 1 || m > 12) return null;
   return { jp: m + "月" + d + "日", en: "~" + d + " " + PBC_MONTHS_EN[m - 1], idn: "~" + d + " " + PBC_MONTHS_IDN[m - 1] };
 }
+/* The colourful balance card shared by BOTH shop points displays (the
+   standalone points check and the checkout card): green Available stat box
+   + amber Pending stat box, maturity note under the boxes. `mt` is the
+   pointsMaturesText() result for the earliest pending earn, or null. */
+function pointsBalCardHtml(avail, pending, mt){
+  var h = '<div class="pbc-stats">'
+    + '<div class="pbc-stat avail"><div class="pbc-stat-label">' + stack3("Available points", "利用可能ポイント", "Poin tersedia") + '</div>'
+    + '<div class="pbc-stat-num">' + avail + ' pt</div>'
+    + '<div class="pbc-stat-yen">(= ¥' + avail + ')</div></div>';
+  if (pending > 0){
+    h += '<div class="pbc-stat pend"><div class="pbc-stat-label">' + stack3("Pending points", "利用待ちポイント", "Poin menunggu") + '</div>'
+      + '<div class="pbc-stat-num">' + pending + ' pt</div></div>';
+  }
+  h += '</div>';
+  if (pending > 0 && mt){
+    h += '<p class="pbc-note">' + stack3("These pending points are usable from " + mt.en, "このポイントは" + mt.jp + "ごろから使えます", "Poin menunggu ini bisa dipakai mulai " + mt.idn) + '</p>';
+  }
+  return h;
+}
 function renderCheckoutPoints(){
   var el = document.getElementById("checkoutPointsLine");
   if (!el) return;
   if (checkoutPoints && checkoutPointsPhone === phoneDigitsForLookup()){
-    var h = '<div class="pbc-row"><span class="pbc-label">' + stack3("Available points", "利用可能ポイント", "Poin tersedia") + '</span>'
-      + '<span class="pbc-val">' + checkoutPoints.available + ' pt <span class="pbc-yen">(= ¥' + checkoutPoints.available + ')</span></span></div>';
-    if (checkoutPoints.pending > 0){
-      h += '<div class="pbc-row"><span class="pbc-label">' + stack3("Pending points", "利用待ちポイント", "Poin menunggu") + '</span>'
-        + '<span class="pbc-val">' + checkoutPoints.pending + ' pt</span></div>';
-      var mt = pointsMaturesText(checkoutPointsFrom);
-      if (mt){
-        h += '<p class="pbc-note">' + stack3("These pending points are usable from " + mt.en, "このポイントは" + mt.jp + "ごろから使えます", "Poin menunggu ini bisa dipakai mulai " + mt.idn) + '</p>';
-      }
-    }
-    el.innerHTML = h;
+    el.innerHTML = pointsBalCardHtml(checkoutPoints.available, checkoutPoints.pending, pointsMaturesText(checkoutPointsFrom));
     el.hidden = false;
   } else {
     el.hidden = true;
@@ -2170,19 +2185,9 @@ document.getElementById("pcBtn").addEventListener("click", function(){
       var rec = (data.customers || []).filter(function(c){ return c.hash === hash; })[0] || null;
       if (!rec){ box.innerHTML = PC_NOT_FOUND; return; }
       var b = computePointBalances(rec);
-      var h = '<div class="points-bal-card" style="margin:0;">'
-        + '<div class="pbc-row"><span class="pbc-label">' + stack3("Available points", "利用可能ポイント", "Poin tersedia") + '</span>'
-        + '<span class="pbc-val">' + b.available + ' pt <span class="pbc-yen">(= ¥' + b.available + ')</span></span></div>';
-      if (b.pending > 0){
-        h += '<div class="pbc-row"><span class="pbc-label">' + stack3("Pending points", "利用待ちポイント", "Poin menunggu") + '</span>'
-          + '<span class="pbc-val">' + b.pending + ' pt</span></div>';
-        var mt = pointsMaturesText(earliestPendingMatures(rec));
-        if (mt){
-          h += '<p class="pbc-note">' + stack3("These pending points are usable from " + mt.en, "このポイントは" + mt.jp + "ごろから使えます", "Poin menunggu ini bisa dipakai mulai " + mt.idn) + '</p>';
-        }
-      }
-      h += '</div>';
-      box.innerHTML = h;
+      box.innerHTML = '<div class="points-bal-card" style="margin:0;">'
+        + pointsBalCardHtml(b.available, b.pending, pointsMaturesText(earliestPendingMatures(rec)))
+        + '</div>';
     });
   }).catch(function(){ box.innerHTML = PC_NOT_FOUND; });
 });
