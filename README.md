@@ -849,13 +849,13 @@ apart by colour alone:
   `icon-shop-192.png`, `apple-touch-icon-shop.png` (180×180). Shortcut name **“Madina Super”**
   (`apple-mobile-web-app-title` + `manifest-shop.json`: name “MADINA HALAL SUPER”,
   short_name “Madina Super”, `start_url "."`).
-- **Admin** — **deep navy-blue band** (`#123a6d`) says **ADMIN**. Files: `icon-admin-512.png`,
+- **Admin** — **deep orange band** (`#cc5500`) says **ADMIN**. Files: `icon-admin-512.png`,
   `icon-admin-192.png`, `apple-touch-icon-admin.png` (180×180). Shortcut name **“Madina Admin”**
   (`apple-mobile-web-app-title` + `manifest-admin.json`: name “MADINA HALAL SUPER — Admin”,
   short_name “Madina Admin”, `start_url "admin.html"`).
 
 Both manifests use `display: standalone` and `background_color #ffffff`; `theme_color`
-matches the icon band — shop `#0b4530` (green), admin `#123a6d` (navy).
+matches the icon band — shop `#0b4530` (green), admin `#cc5500` (deep orange).
 The older generic icons (`icon-192.png`, `icon-512.png`, `apple-touch-icon.png`) are still in
 the repo — nothing references them from these two pages any more, but they are kept in place.
 
