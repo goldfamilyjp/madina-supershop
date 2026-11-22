@@ -278,7 +278,10 @@ the phone digits and totalled with the ledger's own `pointBalances` rule
 `points.json` cannot be loaded, the customer list still renders with
 “0 pt” everywhere — points never block the list.
 
-A big search box sits over the list: typing filters it live by phone
+A big search box sits over the list — **phone box full width on top, the
+“🔍 Find customer” button full width below it** (the same stacked layout
+as the Points tab's phone lookup; a side-by-side row squeezed the phone
+box too narrow to type in). Typing filters the list live by phone
 number (or name), and the **“🔍 Find customer”** button loads the list
 first if needed, applies the search, then scrolls to the first match and
 opens its detail. Tapping a customer opens that detail: their points as
