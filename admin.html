@@ -141,7 +141,12 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 .pt-cancel-btn{display:block; margin-top:6px;}
 .mini.undo{background:#fff; color:var(--green-dark); border:2px solid var(--green); border-radius:8px; padding:8px 14px; font-size:.9rem; font-weight:800; cursor:pointer; min-height:40px; margin-left:8px;}
 .mini.undo:disabled{opacity:.5; cursor:default;}
-.search-row .find-btn{flex:0 0 auto; width:auto; margin-top:0; padding:12px 20px; font-size:1.05rem;}
+/* Customers search: phone box full width ON TOP, Find button BELOW it —
+   the old side-by-side row squeezed the phone box too narrow to type in. */
+.phone-stack{display:flex; flex-direction:column; gap:8px; margin-bottom:10px;}
+.phone-stack .phone-input{width:100%; margin-top:0;}
+.phone-stack .find-btn{width:100%; min-height:48px; margin-top:0;}
+.phone-stack .mini{align-self:flex-start; border:none; border-radius:8px; padding:8px 12px; font-size:.9rem; font-weight:700; cursor:pointer; min-height:40px;}
 /* BIG highlighted phone-number inputs (Customers search + Points find) —
    the first thing the eye lands on: thick green frame, soft gold ring. */
 .phone-input{width:100%; border:3px solid var(--green); border-radius:16px; padding:14px 18px; background:#fffdf4; font-size:1.2rem; font-weight:700; margin-top:4px; box-shadow:0 0 0 4px var(--gold-soft);}
@@ -371,7 +376,7 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
     <div class="help-box">👥 <strong>Customers and their points, in one place:</strong> tap a customer (or their <strong>＋ Add points</strong> button) to see their points history.<br>
     To find someone fast: type their phone number (or name) in the big box below and tap <strong>🔍 Find customer</strong>.<br>
     Points from orders are worth <strong>1% of the order</strong> and can be used <strong>1 month later</strong>; points you add by hand can be used <strong>right away</strong>.</div>
-    <div class="search-row">
+    <div class="phone-stack">
       <input type="tel" id="custSearch" class="phone-input" placeholder="Phone number — e.g. 09012345678" autocomplete="off">
       <button type="button" class="big-btn find-btn" id="custFindBtn">🔍 Find customer</button>
       <button type="button" class="mini edit" id="custSearchClear" hidden>✕ Clear</button>
