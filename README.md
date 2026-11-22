@@ -186,6 +186,12 @@ layer; this feature is the second, permanent layer.
   **X pt (= ¥X)**, and when points are still maturing a *Pending points* row (**Y pt**)
   plus the earliest date they become usable (the smallest `matures` date among the
   pending earn entries — shown only when that date is actually stored, never guessed).
+  Both shop points cards (this checkout card and the standalone points check under the
+  hero) render the balances as **colourful stat boxes — the same green/amber boxes as
+  the admin panel's points summary**: a deep-green *Available* box (white text, big
+  number, "(= ¥X)" under it) and, when there are pending points, an amber/gold
+  *Pending* box beside it (stacked on narrow phones), with the maturity note under
+  the boxes.
   The **Points to use** input sits directly under the card, so balance → use reads as
   one flow. No record or a failed fetch shows nothing. This works **with or without**
   the Apps Script feature, since `points.json` already lives next to the page. The points-phone field is prefilled
