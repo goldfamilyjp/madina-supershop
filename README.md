@@ -682,7 +682,8 @@ a custom category typed in the admin displays exactly as entered.
   **slideshow** — slide 1 is the Anjo shop front, followed by the owner's own interior photos
   (dining area, partition seating, grocery shelves, freezer aisle, buffet corner). The slides
   are separate files in the repo root, **`hero-slide-1.jpg` … `hero-slide-7.jpg`**, all
-  prepared at **1400×1050** (≤350 KB each) so the strip's fixed 4:3 box never changes height.
+  prepared at **1400×1050** (≤350 KB each) for the strip's fixed-height box (see the
+  sizing note below).
   `hero-slide-1.jpg` is the same Anjo front as `shop-banner-full.jpg`, re-exported at the
   slideshow size; `shop-banner-full.jpg` itself is still in the repo, unreferenced by the
   strip. The show crossfades every ~5 s and pauses on touch/hover and while the tab is
@@ -690,6 +691,20 @@ a custom category typed in the admin displays exactly as entered.
   ⭐ Popular slideshow). Slide 1 loads eagerly, the rest are `loading="lazy"`. To change a
   photo, replace the matching `hero-slide-N.jpg` file (keep it 1400×1050); to add or remove
   a slide, edit the `<img class="hero-slide">` list in the `#heroShow` block in `index.html`.
+- **Hero strip size (owner, 2026-11-22):** the strip is a **capped banner, not a full
+  photo** — `.hero-show` is `height: clamp(190px, 26vh, 420px)` (it was a full-width 4:3
+  box before: 576 px tall on a tablet, 960 px on a desktop — the whole first screen was
+  photo and no product was visible). Measured heights now: **219 px** on a 390×844 phone,
+  **266 px** on a 768×1024 tablet, **208 px** on a 1280×800 desktop — 26% of the viewport
+  height at every size, so the offer chips and the points card heading sit inside (or
+  just under) the first screen and the products are one short scroll away. Slides fill
+  the strip with `object-fit: cover`, centred, so the 4:3 photos trim a little top and
+  bottom — the owner accepted that trade for the smaller strip. An active news notice
+  adds its own bar + board above the points card and pushes it a little lower; the
+  sizing was tuned for the plain hero composition (name band + strip + chips + card).
+  The fixed height still means the layout below never jumps, and all slideshow
+  behaviour (crossfade ~5 s, dots, arrows, swipe, pause on touch/hover/hidden tab,
+  lazy loading) is unchanged.
 
 ## 📢 News board (owner announcements)
 
