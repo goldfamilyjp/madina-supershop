@@ -403,6 +403,14 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
   </div><!-- /tabpage customers -->
 
   <div data-tabpage="sales" hidden>
+  <!-- ===== Visitors (Google Analytics, via the Apps Script) ===== -->
+  <section class="panel" id="visitorsPanel">
+    <h2>📈 Visitors (Google Analytics)</h2>
+    <p class="hint">How many people visited the shop page — <strong>today, yesterday, the last 7 days and the last 28 days</strong> — plus the top countries and pages they looked at. This tab loads the figures by itself when opened; the button fetches them again.</p>
+    <button type="button" class="big-btn" id="visitorsLoadBtn">📈 Load visitor stats</button>
+    <div class="msg" id="visitorsMsg"></div>
+    <div id="visitorsResult"></div>
+  </section>
   <!-- ===== Sales report (from the Orders sheet, via the Apps Script) ===== -->
   <section class="panel" id="salesPanel">
     <h2>Sales report</h2>
@@ -1683,6 +1691,73 @@ $("salesLoadBtn").addEventListener("click", function(){
   }).finally(function(){ btn.disabled = false; });
 });
 
+/* ---------- 📈 Visitors (Google Analytics) ----------
+   Asks the same Apps Script endpoint for action "visitors": the script
+   reads the shop's GA4 property (the Data API) and answers with
+   { ok:true, today/yesterday/last7/last28: { users, sessions, views },
+   countries: [{ name, value }], pages: [{ name, value }] } — counting
+   started 22 Nov 2026, so earlier days are empty. Read-only. The card
+   loads by itself when the Sales tab opens (see showTab) and can be
+   refreshed with its button; a failure only fills this panel's message
+   line — the sales report below is never affected. */
+function visitorsApi(){
+  return fetchWithTimeout(ordersApiUrl(), {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },   /* simple request — no CORS preflight */
+    body: JSON.stringify({ action: "visitors" })
+  }, 30000).then(function(r){
+    if (!r.ok) throw new Error("visitor stats HTTP " + r.status);
+    return r.json();
+  }).then(function(j){
+    if (!j || j.ok !== true) throw new Error("visitor stats bad response");
+    return j;
+  });
+}
+function visitorCardHtml(title, b){
+  b = b || {};
+  return '<div class="sales-card"><div class="sc-title">' + title + '</div>'
+    + '<div class="sc-sales">' + salesCount(b.users) + ' <span style="font-size:.85rem;">users</span></div>'
+    + '<div class="sc-sub">Sessions ' + salesCount(b.sessions) + ' · Views ' + salesCount(b.views) + '</div></div>';
+}
+function visitorListHtml(title, rows){
+  rows = Array.isArray(rows) ? rows : [];
+  if (!rows.length)
+    return '<p class="hint" style="margin-top:10px;">' + title + ': nothing recorded yet.</p>';
+  return '<div class="sales-top"><strong>' + title + '</strong><ol>'
+    + rows.map(function(r){
+        return '<li>' + esc(r.name) + ' — ' + salesCount(r.value) + '</li>';
+      }).join("")
+    + '</ol></div>';
+}
+function renderVisitors(v){
+  var html = '<div class="sales-cards">'
+    + visitorCardHtml("TODAY", v.today)
+    + visitorCardHtml("YESTERDAY", v.yesterday)
+    + visitorCardHtml("LAST 7 DAYS", v.last7)
+    + visitorCardHtml("LAST 28 DAYS", v.last28)
+    + '</div>';
+  html += visitorListHtml("Top countries", v.countries);
+  html += visitorListHtml("Top pages", v.pages);
+  $("visitorsResult").innerHTML = html;
+}
+var visitorsLoaded = false, visitorsLoading = false;
+function loadVisitors(){
+  if (visitorsLoading) return;
+  visitorsLoading = true;
+  var btn = $("visitorsLoadBtn");
+  btn.disabled = true;
+  showMsg($("visitorsMsg"), "Loading visitor stats…", "info");
+  visitorsApi().then(function(v){
+    visitorsLoaded = true;
+    renderVisitors(v);
+    showMsg($("visitorsMsg"), "✅ Visitor stats loaded.", "ok");
+  }).catch(function(err){
+    $("visitorsResult").innerHTML = "";
+    showMsg($("visitorsMsg"), "Visitor stats could not be loaded — try again, or open the Google Analytics page.", "err");
+  }).finally(function(){ visitorsLoading = false; btn.disabled = false; });
+}
+$("visitorsLoadBtn").addEventListener("click", loadVisitors);
+
 /* ---------- 👥 Customers ----------
    Asks the same Apps Script endpoint (the one the sales report and the
    photo reader use) for action "customers": the script reads the
@@ -1993,6 +2068,10 @@ function showTab(name){
   document.querySelectorAll("[data-tabpage]").forEach(function(p){
     p.hidden = p.getAttribute("data-tabpage") !== name;
   });
+  /* The 📈 Visitors card fetches its figures by itself the first time
+     the Sales tab is opened (its button can refresh them afterwards). */
+  if (name === "sales" && !visitorsLoaded && !visitorsLoading
+      && typeof loadVisitors === "function") loadVisitors();
 }
 document.querySelectorAll("[data-tab-btn]").forEach(function(b){
   b.addEventListener("click", function(){ showTab(b.getAttribute("data-tab-btn")); });
