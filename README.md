@@ -861,10 +861,33 @@ the shortcut must be **deleted and re-added** (open the page in the browser → 
 “Add to Home Screen”) to pick up the new SHOP/ADMIN icon and name. The same applies on
 Android/desktop Chrome via “Install app / Create shortcut”, which reads the manifest.
 
+### Installable on Android Chrome (service worker)
+
+A manifest and icons alone were NOT enough: on the owner's Android tablet, Chrome's menu
+showed no “Install app” / “Add to Home screen” entry at all (2026-11-22). Chrome also
+requires a **registered service worker with a fetch handler**, which the shop now has:
+
+- **`sw.js`** (repo root), registered by `index.html` near the end of the page
+  (`navigator.serviceWorker.register("sw.js")`, failures silent). The **admin page
+  registers nothing**, and the worker never intercepts `admin.html`, any POST request,
+  or any cross-origin request (Google Forms, Apps Script, FormSubmit, GA, zipcloud).
+- **Network-first** for navigations, `index.html`, `products.json` and `points.json` —
+  prices, stock and point balances always come from the network; the cache is only a
+  fallback when the network is unreachable.
+- **Cache-first** (network fill on first sight) only for static images — hero slides,
+  icons, `logo.jpg`, shop banners — and the two manifests.
+- The cache name is versioned (**`madina-super-v1`**); on activation the worker deletes
+  every older cache, so no visitor can get stuck on a stale copy.
+
+**Owner note:** with `sw.js` live, open the shop once in Chrome and let it load fully —
+the “Install app” / “Add to Home screen” entry then appears in Chrome's ⋮ menu (on the
+tablet it sits further down the menu — scroll the menu). A shortcut saved before this
+must still be **deleted and re-added** to pick up the SHOP icon and “Madina Super” name.
+
 ## Setup (one time, done by Manager)
 
 1. Create the public GitHub repo **goldfamilyjp/madina-supershop**.
-2. Put `index.html`, `admin.html`, `products.json`, `logo.jpg`, `shop-banner-full.jpg` in the repo root; enable GitHub Pages (main branch, root).
+2. Put `index.html`, `admin.html`, `products.json`, `logo.jpg`, `shop-banner-full.jpg`, `sw.js` (shop service worker) and the icon/manifest files in the repo root; enable GitHub Pages (main branch, root).
    (`points.json` does not need to be created by hand — the admin panel creates it on the first “Save points”.)
    Shop URL becomes `https://goldfamilyjp.github.io/madina-supershop/`,
    admin URL is the same + `admin.html`.
