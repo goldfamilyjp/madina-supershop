@@ -11,7 +11,7 @@ where it belongs — branch / pickup names, the logo, contact lines.)
 
 **Admin panel layout — TABS:** the admin is organised as a sticky tab bar under the
 header; exactly one section shows at a time, so anyone in the office can run it without
-scrolling through everything. Tabs: **📦 Products** (the ⚡ Quick Add card + the Add/Edit
+scrolling through everything. Tabs: **📦 Products** (the Add/Edit
 form + the product list) · **🧾 Orders** · **👥 Customers** · **🪙 Points** · **📊 Sales** ·
 **📢 News** · **🎟 Coupons & Tax** · **💬 Templates** · **⚙️ Setup** (GitHub token, one-time).
 The last-open tab is remembered on the device (`localStorage` key `madina_admin_tab`,
@@ -19,15 +19,24 @@ default Products). If no token is saved on the device, the Products tab shows a
 “setup needed” notice instead of the product panels (the Setup tab stays reachable, and
 the other tabs keep working — they never needed the token).
 
-**Add/Edit form (Products tab) — simplified:** the visible flow is just: two big photo
-boxes (**FRONT** / **BACK** — tap a box to pick that photo; picking two photos at once on
-FRONT makes the second one the BACK automatically) → English + Japanese names → Price and
-Size side by side → category chips → one big **Add & Save** button (applies the form AND
-saves to the shop in a single press). The rarely-used fields — Indonesian name, stock,
-photo URL fields, the new-category box, and the Show-in-shop / ⭐ Popular switches — live
-in a collapsed **“More options”** section; it opens automatically when editing a product
-that already has a value in one of those fields. The ⚡ Quick Add card uses the same two
-photo boxes.
+**Add/Edit form (Products tab) — the ONE add flow:** there is exactly one way to add a
+product (an earlier duplicate “⚡ Quick Add” card was removed — it confused the owner).
+The visible flow is just: two big photo boxes (**FRONT** / **BACK** — tap a box to pick
+that photo; picking two photos at once on FRONT makes the second one the BACK
+automatically) → English + Japanese names → Price and Size side by side → category chips
+→ one big **Add & Save** button (applies the form AND saves to the shop in a single
+press). The rarely-used fields — Indonesian name, stock, photo URL fields, the
+new-category box, and the Show-in-shop / ⭐ Popular switches — live in a collapsed
+**“More options”** section; it opens automatically when editing a product that already
+has a value in one of those fields. Every press of the button ends with a **big
+confirmation banner** at the top of the form (it scrolls itself into view): green
+“✅ Added — <name> is now live on the shop.” for a new product, “✅ Saved — <name>
+updated.” for an edit, or a red banner with the error if the save failed — never
+silence. After a successful add (or edit) the form **resets itself** to a blank
+“add a new product” state, ready for the next product, and the product is in the list
+below. If the save fails, the form keeps everything the owner typed, and a just-added
+product switches to edit mode so pressing the button again updates it instead of
+adding a duplicate. A manual **↺ Reset form** button is still there too.
 
 ## How saving works (GitHub is the database)
 
@@ -47,7 +56,7 @@ inside the GitHub repository **goldfamilyjp/madina-supershop** (GitHub Pages hos
   image hosting is needed. Keep photos small; very large `products.json` files load slowly.
 - **Two photos per product (front + back):** each product has the main `photo` field and an optional
   `photo2` field (the back side — same URL / data-URI format). In the admin, the Add/Edit form
-  and the ⚡ Quick Add card each show two big photo boxes — **FRONT** and **BACK** — and tapping
+  shows two big photo boxes — **FRONT** and **BACK** — and tapping
   a box picks that photo (the photo URL fields live in the form's “More options” section);
   photo files go through the same resize pipeline (OCR reads Photo 1 only). On the shop front, a product with both photos shows a small “1 / 2” badge on the photo —
   the customer taps the photo — or swipes it sideways — to switch to the back (“2 / 2”) and taps or
@@ -490,40 +499,40 @@ misread or missed, so the auto-filled fields must always be checked before savin
 
 ## Reset & recovery (admin panel)
 
-- **↺ Reset form** (in the Add/Edit form, and **↺ Reset** in the Quick Add card — same action):
-  clears every form field — names, price, size, category ticks, stock, both photo URL/file
-  inputs and previews, the Popular/Show switches — and exits edit mode back to “add new”.
-  If the form holds un-applied input it asks for confirmation first.
+- **↺ Reset form** (in the Add/Edit form): clears every form field — names, price, size,
+  category ticks, stock, both photo URL/file inputs and previews, the Popular/Show
+  switches — and exits edit mode back to “add new”. If the form holds un-applied input it
+  asks for confirmation first. (A successful Add & Save also resets the form
+  automatically — see “Add/Edit form” near the top.)
 - **↺ Reload from shop — discard unsaved changes** (📦 Products tab, next to “💾 Save to shop”):
   re-downloads `products.json` and throws away every unsaved local change (with a confirmation
   when there are any), so a bad edit/save session can be abandoned cleanly. The small
   “↺ Reload” button in the search row does the same reload without clearing the form.
 
-## Quick Add (admin panel)
+## Adding a product (admin panel)
 
-At the top of the 📦 Products tab's Add product form there is a **⚡ Quick Add** card — the fastest way to
-add a product:
+There is **one** add flow — the Add/Edit form at the top of the 📦 Products tab (a
+separate “⚡ Quick Add” card used to duplicate it; it was removed because two add
+options for the same thing confused the owner):
 
 1. Tap the **FRONT** photo box and choose the packet photo (the **BACK** box takes the
-   optional back-side photo; picking two photos at once on FRONT makes the second the BACK).
-   The photo goes through the exact same pipeline as the main form (resize + OCR auto-fill —
-   see above), so the name, size and category fill in automatically; the status line is shown
-   in the card too.
-2. Type the **price** (the one thing OCR never reads).
-3. Press **“⚡ Add & Save — goes live now”**. That one press runs the normal Add-product logic
-   and then the normal Save, so the product is live in the shop immediately — no separate
-   “Save to shop” press needed. If the name or price is missing, the card shows the error and
-   nothing is saved; if no token is set up yet, it says to do the one-time ⚙️ Setup first.
-
-The card's fields write through to the main form below (the form stays the single source of
-truth), and the full form still works exactly as before for stock, Japanese / Indonesian
-names, photo URLs and editing existing products.
+   optional back-side photo; picking two photos at once on FRONT makes the second the
+   BACK). The photo goes through the resize + OCR auto-fill pipeline (see above), so the
+   name, size and category fill in automatically.
+2. Type the **price** (the one thing OCR never reads) and check the filled-in fields.
+3. Press the one big **Add & Save** button. That press applies the form and saves to
+   GitHub, so the product is live in the shop immediately — no separate “Save to shop”
+   press needed. The result is always announced in the **big banner at the top of the
+   form**: green “✅ Added — <name> is now live on the shop.” on success (the form then
+   resets itself blank, ready for the next product), or a red banner with the error if
+   anything failed — a missing name/price, no token yet (do the one-time ⚙️ Setup
+   first), or a failed save (the form keeps the typed values, so nothing is lost).
 
 **New categories:** type the new category's name in the **“New category name (only if you
-need a new one)”** box — in the Quick Add card or in the main form — and it is created when
-the product is added/saved, and ticked for that product (as its main category). It then
-appears in the form's category chips, in the Quick Add dropdown and as a filter chip on the
-shop front automatically (the shop builds its chips from the `categories` array in
+need a new one)”** box in the form's “More options” section, and it is created when the
+product is added/saved, and ticked for that product (as its main category). It then
+appears in the form's category chips and as a filter chip on the shop front
+automatically (the shop builds its chips from the `categories` array in
 `products.json`). Leave the box empty to use existing categories.
 
 ## Multiple categories per product
@@ -538,8 +547,6 @@ A product can belong to **several categories** (e.g. a frozen spice mix: Spices 
   as many as apply. The first ticked chip is badged **MAIN**. If nothing is ticked when the
   product is added, the first category in the list is used. Editing a product pre-ticks its
   categories. The admin product list shows **all** of a product's category names.
-- **Quick Add** keeps its single category dropdown — it sets the (only/primary) category:
-  a quick-added product gets `cats = [selected]`.
 - **Photo OCR** ticks its guessed category as the primary one and never unticks categories
   the owner picked by hand.
 - **Shop front:** the category filter matches a product when the tapped chip is in the
@@ -733,8 +740,8 @@ and that the key elements stay visible and usable.
 ## ⭐ Popular slideshow (shop front)
 
 - **How to star a product:** in the admin, tap the ⭐ button on a product row in the 📦 Products tab, or use
-  the “⭐ Popular — show in the top slideshow” switch in the Add/Edit form (the ⚡ Quick Add card has
-  the same checkbox). This sets the product's `popular` field; Save publishes it like any other change.
+  the “⭐ Popular — show in the top slideshow” switch in the Add/Edit form. This sets the
+  product's `popular` field; Save publishes it like any other change.
 - **Where it shows:** directly under the shop's search bar, above the category chips, with the
   trilingual heading “⭐ 人気商品 / Popular / Populer”. One product at a time — large photo, name,
   size, price and a working Add button (same cart, stock and sold-out rules as the grid cards).
