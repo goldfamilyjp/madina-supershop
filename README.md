@@ -841,18 +841,21 @@ and that the key elements stay visible and usable.
 
 The shop page and the admin page have **separate home-screen icons and names**, so the two
 shortcuts can be told apart at a glance (owner request, 2026-11-22). Each icon is the Madina
-logo on white with a deep-green band across the bottom carrying the word in bold white:
+logo on white with a coloured band across the bottom carrying the word in bold white — and
+the bands are **colour-coded** (owner request, 2026-11-22) so the two shortcuts can be told
+apart by colour alone:
 
-- **Shop** — band says **SHOP**. Files: `icon-shop-512.png`, `icon-shop-192.png`,
-  `apple-touch-icon-shop.png` (180×180). Shortcut name **“Madina Super”**
+- **Shop** — **deep-green band** (`#0b4530`) says **SHOP**. Files: `icon-shop-512.png`,
+  `icon-shop-192.png`, `apple-touch-icon-shop.png` (180×180). Shortcut name **“Madina Super”**
   (`apple-mobile-web-app-title` + `manifest-shop.json`: name “MADINA HALAL SUPER”,
   short_name “Madina Super”, `start_url "."`).
-- **Admin** — band says **ADMIN**. Files: `icon-admin-512.png`, `icon-admin-192.png`,
-  `apple-touch-icon-admin.png` (180×180). Shortcut name **“Madina Admin”**
+- **Admin** — **deep navy-blue band** (`#123a6d`) says **ADMIN**. Files: `icon-admin-512.png`,
+  `icon-admin-192.png`, `apple-touch-icon-admin.png` (180×180). Shortcut name **“Madina Admin”**
   (`apple-mobile-web-app-title` + `manifest-admin.json`: name “MADINA HALAL SUPER — Admin”,
   short_name “Madina Admin”, `start_url "admin.html"`).
 
-Both manifests use `display: standalone`, `theme_color #0b4530`, `background_color #ffffff`.
+Both manifests use `display: standalone` and `background_color #ffffff`; `theme_color`
+matches the icon band — shop `#0b4530` (green), admin `#123a6d` (navy).
 The older generic icons (`icon-192.png`, `icon-512.png`, `apple-touch-icon.png`) are still in
 the repo — nothing references them from these two pages any more, but they are kept in place.
 
