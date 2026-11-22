@@ -857,3 +857,41 @@ and that the key elements stay visible and usable.
 - Firebase project: `madina-halal-super` (Spark, free). GA4 Property ID: 565406123. Web stream: "Madina Halal Super Web".
 - **Measurement ID: G-VRHLH0YXC6** — the gtag snippet sits in the shop's index.html <head>. Counting starts 2026-11-22; no earlier visitor data exists.
 - View stats: Admin 📊 Sales tab → "Visitor stats (Google Analytics)" link, or analytics.google.com (property 565406123).
+
+### 📈 Visitors card (admin 📊 Sales tab)
+
+The top of the admin's **📊 Sales** tab is a **“📈 Visitors (Google
+Analytics)”** card: four stat boxes — **Today / Yesterday / Last 7 days /
+Last 28 days** — each with Users, Sessions and Views, plus the **Top
+countries** and **Top pages** lists. It loads by itself the first time
+the Sales tab is opened, and its **“📈 Load visitor stats”** button
+fetches the figures again. The data comes from the same Apps Script
+endpoint as the sales report: the admin POSTs `{ "action": "visitors" }`
+and the script reads the GA4 property through the Data API and answers
+`{ ok, today, yesterday, last7, last28, countries, pages }`. If the load
+fails, the card just shows “Visitor stats could not be loaded — try
+again, or open the Google Analytics page.” and the sales report below is
+unaffected. The full-detail Google Analytics link stays under the card,
+at the top of the Sales report panel.
+
+### 🛒 Item interest events (which products visitors look at)
+
+The shop page fires two GA4 ecommerce events through the same gtag
+(both guarded — if the gtag script is blocked or removed, shopping
+carries on untouched):
+
+- **`view_item`** — when a customer opens a product's photo lightbox
+  (the zoom button, on a grid card or on a ⭐ Popular slide).
+- **`add_to_cart`** — when a product's cart quantity goes up: an Add
+  tap or a stepper **+** tap (never on **−**), with the quantity of
+  that tap.
+
+Each event carries the GA4 item payload — `item_id` (the product slug),
+`item_name` (the English name) and `price` (the effective/sale price) —
+which is what GA's **itemName** reports read. Per-item reports (e.g.
+GA → Reports → Monetisation → Ecommerce purchases, or an Explore report
+grouped by Item name) only appear **after data has accumulated** — GA
+can take 24–48 hours to process events, and counting started
+2026-11-22, so the item lists build up over the following days. A
+script-side “top items” summary inside the admin (like the sales
+report) is a possible later step; it is not built yet.
