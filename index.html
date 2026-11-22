@@ -122,7 +122,7 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .ss-photo .ph-badge{position:absolute; right:8px; bottom:8px; background:rgba(7,48,31,.85); color:#fff; font-size:.78rem; font-weight:700; border-radius:999px; padding:2px 9px; pointer-events:none;}
 .ss-photo img{width:100%; height:100%; object-fit:cover; display:block;}
 .ss-photo .ph-tile{width:100%; height:100%; background:linear-gradient(135deg,var(--green) 0%,#146344 100%); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:800;}
-.ss-photo .zoom-btn{position:absolute; left:8px; top:8px; width:44px; height:44px; border:none; border-radius:50%; background:rgba(7,48,31,.85); color:#fff; font-size:1.05rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2;}
+.ss-photo .zoom-btn{position:absolute; left:8px; top:8px; width:36px; height:36px; border:2px solid var(--green); border-radius:50%; background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,.35);}
 .ss-info{flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;}
 .ss-info .en-name{font-weight:800; font-size:1.05rem; color:var(--ink); line-height:1.3;}
 .ss-info .jp{font-size:.9rem; font-weight:400; line-height:1.3;}
@@ -147,8 +147,13 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .card .photo img{width:100%; height:100%; object-fit:cover;}
 .card .photo.two{cursor:pointer; touch-action:pan-y;}
 .card .photo .ph-badge{position:absolute; right:8px; bottom:8px; background:rgba(7,48,31,.85); color:#fff; font-size:.78rem; font-weight:700; border-radius:999px; padding:2px 9px; pointer-events:none;}
-.card .photo .zoom-btn{position:absolute; left:8px; top:8px; width:44px; height:44px; border:none; border-radius:50%; background:rgba(7,48,31,.85); color:#fff; font-size:1.05rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2;}
-.card .photo .zoom-btn:active{background:var(--green);}
+/* "NEW" badge — top-right of the photo (zoom button owns top-left, the
+   "1 / 2" badge bottom-right, the sold-out bar sits below the photo, so
+   nothing clashes). Shown for a product's first 14 days (addedAt). */
+.card .photo .new-badge,.ss-photo .new-badge{position:absolute; right:8px; top:8px; background:#d42a1e; color:#fff; font-size:.82rem; font-weight:800; letter-spacing:.05em; border-radius:999px; padding:3px 11px; pointer-events:none; z-index:2; box-shadow:0 2px 6px rgba(0,0,0,.35);}
+.card .photo .zoom-btn{position:absolute; left:8px; top:8px; width:36px; height:36px; border:2px solid var(--green); border-radius:50%; background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,.35);}
+.card .photo .zoom-btn:active,.ss-photo .zoom-btn:active{background:#e3efe6;}
+.zoom-btn svg{width:20px; height:20px; display:block;}
 /* photo zoom lightbox */
 .lb-overlay{position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:120; display:none;}
 .lb-overlay.show{display:block;}
@@ -167,11 +172,15 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .card .jp,.card .en-name,.card .id-name,.ss-info .jp,.ss-info .en-name,.ss-info .id-name{overflow-wrap:break-word;}
 .card .size{font-size:.8rem; color:var(--muted);}
 .card .price{font-size:1.15rem; font-weight:800; color:var(--green); margin-top:auto; padding-top:6px;}
-.add-btn{margin-top:8px; background:var(--green); color:#fff; border:none; border-radius:10px; padding:13px 11px; font-size:1rem; font-weight:700; cursor:pointer; width:100%; min-height:44px;}
+/* Compact professional pill (owner request 2026-11-22): single-line
+   short trilingual label "Add · 追加 · Tambah", ~34px tall. The sold-out
+   (disabled) state keeps its stacked trilingual label, so it overrides
+   back to block/auto-height below. */
+.add-btn{margin-top:8px; background:var(--green); color:#fff; border:none; border-radius:999px; padding:0 16px; height:34px; font-size:.78rem; font-weight:700; letter-spacing:.02em; white-space:nowrap; cursor:pointer; width:100%; box-shadow:0 2px 6px rgba(7,48,31,.25); display:flex; align-items:center; justify-content:center;}
 .add-btn:active{background:var(--green-dark);}
-.stepper{margin-top:8px; display:flex; align-items:center; justify-content:space-between; background:var(--gold-soft); border-radius:10px; padding:4px;}
-.stepper button{width:44px; height:44px; font-size:1.3rem; border:none; background:var(--green); color:#fff; border-radius:8px; cursor:pointer;}
-.stepper .qty{font-size:1.1rem; font-weight:800;}
+.stepper{margin-top:8px; display:flex; align-items:center; justify-content:space-between; background:var(--gold-soft); border-radius:999px; padding:2px; height:34px;}
+.stepper button{width:30px; height:30px; font-size:1.05rem; line-height:1; border:none; background:var(--green); color:#fff; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}
+.stepper .qty{font-size:.95rem; font-weight:800;}
 .show-more{display:block; margin:18px auto 4px; background:#fff; border:2px solid var(--green); color:var(--green); font-size:1rem; font-weight:700; border-radius:12px; padding:12px 28px; cursor:pointer;}
 .count-line{text-align:center; color:var(--muted); font-size:.85rem; margin-top:8px;}
 .empty-note{text-align:center; color:var(--muted); padding:34px 10px; font-size:1rem;}
@@ -215,7 +224,7 @@ header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
 .seg button .en,.seg button .idn{display:block;}
 .soldout-badge{background:var(--red); color:#fff; font-weight:800; font-size:1rem; text-align:center; padding:8px 6px; line-height:1.35;}
 .few-note{color:var(--red); font-weight:700; font-size:1rem; margin-top:4px;}
-.add-btn:disabled{background:#9db3a0; cursor:default;}
+.add-btn:disabled{background:#9db3a0; cursor:default; display:block; text-align:center; height:auto; min-height:34px; padding:5px 12px; line-height:1.25; box-shadow:none;}
 .stepper button:disabled{background:#9db3a0; cursor:default;}
 #stockToast{position:fixed; left:50%; transform:translateX(-50%); bottom:228px; background:var(--red); color:#fff; font-weight:700; font-size:.95rem; padding:11px 18px; border-radius:999px; z-index:75; display:none; box-shadow:0 4px 14px rgba(0,0,0,.3); text-align:center; max-width:92vw;}
 #stockToast.show{display:block;}
@@ -679,6 +688,28 @@ function renderChips(){
   });
 }
 
+/* ---------- "NEW" badge ----------
+   A product added within the last 14 days wears a red NEW badge on its
+   photo (grid card and ⭐ Popular slide). The admin stamps addedAt
+   ("YYYY-MM-DD", JST) when a product is first added; after 14 days the
+   badge simply stops showing — no data change is ever needed. A missing
+   or invalid addedAt means no badge. */
+function isNewProduct(p){
+  if (!p || typeof p.addedAt !== "string") return false;
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(p.addedAt.trim());
+  if (!m) return false;
+  var t = /^(\d{4})-(\d{2})-(\d{2})$/.exec(todayJstStr());
+  if (!t) return false;
+  var diff = Math.round((Date.UTC(+t[1], +t[2] - 1, +t[3]) - Date.UTC(+m[1], +m[2] - 1, +m[3])) / 86400000);
+  return diff >= 0 && diff <= 14;
+}
+/* Zoom button icon — a magnifying glass with a bold "+" inside the lens
+   (the universal zoom-in symbol), drawn in the shop's deep green with
+   thick strokes so it reads clearly at small size on any photo. Shared
+   by the grid cards and the Popular slides. */
+var ZOOM_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0b4530" stroke-width="2.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="6.2"/><path d="M10 7.1v5.8M7.1 10h5.8"/><path d="M14.6 14.6 20.2 20.2" stroke-width="3.6"/></svg>';
+function newBadgeHTML(p){ return isNewProduct(p) ? '<span class="new-badge">NEW</span>' : ''; }
+
 /* ---------- grid ---------- */
 var gridEl = document.getElementById("grid");
 var showMoreBtn = document.getElementById("showMore");
@@ -695,19 +726,19 @@ function cardHTML(p){
     ? '<img src="' + esc(mainPhoto) + '" alt="' + esc(p.en) + '" loading="lazy" draggable="false"'
       + (hasTwo ? ' data-front="' + esc(p.photo) + '" data-back="' + esc(p.photo2) + '"' : '') + '>'
       + (hasTwo ? '<span class="ph-badge">1 / 2</span>' : '')
-      + '<button type="button" class="zoom-btn" data-zoom="' + esc(p.id) + '" aria-label="Zoom">🔍</button>'
+      + '<button type="button" class="zoom-btn" data-zoom="' + esc(p.id) + '" title="Zoom / 拡大" aria-label="Zoom / 拡大">' + ZOOM_SVG + '</button>'
     : '<div class="ph-tile">' + esc((p.en || p.jp || "?").trim().charAt(0).toUpperCase()) + '</div>';
   var action;
   if (soldOut){
     action = '<button type="button" class="add-btn" data-add="' + esc(p.id) + '" disabled>' + stack3("Sold out", "売り切れ", "Habis") + '</button>';
   } else if (qty === 0){
-    action = '<button type="button" class="add-btn" data-add="' + esc(p.id) + '">' + stack3("Add", "カートに入れる", "Tambah") + '</button>';
+    action = '<button type="button" class="add-btn" data-add="' + esc(p.id) + '">Add · 追加 · Tambah</button>';
   } else {
     var atCap = tracked && qty >= p.stock;
     action = '<div class="stepper"><button type="button" data-dec="' + esc(p.id) + '">−</button><span class="qty">' + qty + '</span><button type="button" data-inc="' + esc(p.id) + '"' + (atCap ? " disabled" : "") + '>＋</button></div>';
   }
   return '<article class="card" data-card="' + esc(p.id) + '">'
-    + '<div class="photo' + (hasTwo ? ' two' : '') + '">' + photo + '</div>'
+    + '<div class="photo' + (hasTwo ? ' two' : '') + '">' + photo + newBadgeHTML(p) + '</div>'
     + (soldOut ? '<div class="soldout-badge">' + stack3("Sold out", "売り切れ", "Habis") + '</div>' : '')
     + '<div class="body"><div class="en-name">' + esc(p.en || p.jp || "") + '</div>'
     + (p.jp && p.jp !== p.en ? '<div class="jp">' + esc(p.jp) + '</div>' : '')
@@ -749,7 +780,7 @@ function flipPhotoIn(container){
    the browser only ever takes over vertical gestures, and a pointercancel
    simply resets the tracker). A real swipe (|dx| >= 30) also swallows the
    click the browser fires on release, so it never toggles twice, opens
-   the lightbox, or triggers the 🔍 button. */
+   the lightbox, or triggers the zoom button. */
 var swipeLastEl = null, swipeLastAt = 0;
 document.addEventListener("click", function(e){
   if (swipeLastEl && Date.now() - swipeLastAt < 700 && swipeLastEl.contains(e.target)){
@@ -1055,7 +1086,7 @@ function slideActionHTML(p){
   var tracked = typeof p.stock === "number";
   var soldOut = tracked && p.stock <= 0;
   if (soldOut) return '<button type="button" class="add-btn" data-sadd="' + esc(p.id) + '" disabled>' + stack3("Sold out", "売り切れ", "Habis") + '</button>';
-  if (qty === 0) return '<button type="button" class="add-btn" data-sadd="' + esc(p.id) + '">' + stack3("Add", "カートに入れる", "Tambah") + '</button>';
+  if (qty === 0) return '<button type="button" class="add-btn" data-sadd="' + esc(p.id) + '">Add · 追加 · Tambah</button>';
   var atCap = tracked && qty >= p.stock;
   return '<div class="stepper"><button type="button" data-sdec="' + esc(p.id) + '">−</button><span class="qty">' + qty + '</span><button type="button" data-sinc="' + esc(p.id) + '"' + (atCap ? " disabled" : "") + '>＋</button></div>';
 }
@@ -1069,10 +1100,10 @@ function slideHTML(p){
     ? '<img src="' + esc(mainPhoto) + '" alt="' + esc(p.en) + '" loading="lazy" draggable="false"'
       + (hasTwo ? ' data-front="' + esc(p.photo) + '" data-back="' + esc(p.photo2) + '"' : '') + '>'
       + (hasTwo ? '<span class="ph-badge">1 / 2</span>' : '')
-      + '<button type="button" class="zoom-btn" data-szoom="' + esc(p.id) + '" aria-label="Zoom">🔍</button>'
+      + '<button type="button" class="zoom-btn" data-szoom="' + esc(p.id) + '" title="Zoom / 拡大" aria-label="Zoom / 拡大">' + ZOOM_SVG + '</button>'
     : '<div class="ph-tile">' + esc((p.en || p.jp || "?").trim().charAt(0).toUpperCase()) + '</div>';
   return '<div class="ss-slide" data-slide="' + esc(p.id) + '">'
-    + '<div class="ss-photo" data-sphoto="' + esc(p.id) + '">' + photo + '</div>'
+    + '<div class="ss-photo" data-sphoto="' + esc(p.id) + '">' + photo + newBadgeHTML(p) + '</div>'
     + '<div class="ss-info">'
     + (soldOut ? '<div class="soldout-badge">' + stack3("Sold out", "売り切れ", "Habis") + '</div>' : '')
     + '<div class="en-name">' + esc(p.en || p.jp || "") + '</div>'
