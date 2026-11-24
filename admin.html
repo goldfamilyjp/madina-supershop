@@ -208,7 +208,7 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
 
 <div class="wrap">
 
-  <div class="msg info" id="tokenNotice">Setup needed: paste your GitHub token — tap the ⚙️ Setup tab at the top of this page.</div>
+  <div class="msg info" id="tokenNotice">Setup needed: log in with your password — tap the ⚙️ Setup tab at the top of this page.</div>
 
   <!-- ===== Tab bar — one section at a time ===== -->
   <nav class="tabbar" id="tabBar">
@@ -227,7 +227,7 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
   <!-- Shown instead of the product panels until a GitHub token is saved on this device. -->
   <div class="panel" id="productsNoToken" hidden>
     <h2>Products</h2>
-    <p class="hint">Products appear here after the one-time setup. Paste your GitHub token in the ⚙️ Setup tab, then come back to this tab.</p>
+    <p class="hint">Products appear here after the one-time setup. Log in with your password in the ⚙️ Setup tab, then come back to this tab.</p>
   </div>
 
   <!-- ===== Add / Edit form ===== -->
@@ -494,10 +494,23 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
   </div><!-- /tabpage coupons -->
 
   <div data-tabpage="setup" hidden>
-  <!-- ===== Setup / token ===== -->
+  <!-- ===== Setup / password login ===== -->
   <section class="panel" id="setupPanel">
-    <h2>Setup — GitHub Token</h2>
-    <p class="hint">A GitHub token (a password-like string) is needed once so this page can save products. Paste it below — it is stored <strong>only on this device</strong> (in this browser), never in any file.</p>
+    <h2>Setup — Password Login</h2>
+    <div id="pwLoginBlock">
+      <p class="hint">Log in with the shop password. Saves then go through the shop's server — no token to paste on each device. The password is stored <strong>only on this device</strong> (in this browser), never in any file.</p>
+      <label for="pwInput">Shop password</label>
+      <input type="password" id="pwInput" placeholder="Password" autocomplete="current-password">
+      <button type="button" class="big-btn" id="pwLoginBtn">Log in</button>
+    </div>
+    <div id="pwLoggedInBlock" hidden>
+      <p class="hint">✅ <strong>Logged in</strong> — saves go through the server.</p>
+      <button type="button" class="big-btn grey" id="pwLogoutBtn">Log out</button>
+    </div>
+    <div class="msg" id="pwMsg"></div>
+    <hr>
+    <h3>Legacy: GitHub token</h3>
+    <p class="hint">The old way: a GitHub token (a password-like string) pasted on each device so this page can save products directly. It is stored <strong>only on this device</strong> (in this browser), never in any file. If a password is logged in above, saves use the server and this token is not used for saving.</p>
     <label for="tokenInput">Paste token</label>
     <input type="password" id="tokenInput" placeholder="github_pat_…" autocomplete="off">
     <button type="button" class="big-btn" id="saveTokenBtn">Save token &amp; load products</button>
@@ -513,6 +526,7 @@ var REPO = "goldfamilyjp/madina-supershop";
 var FILE_PATH = "products.json";
 var API = "https://api.github.com/repos/" + REPO + "/contents/" + FILE_PATH;
 var TOKEN_KEY = "madina_supershop_token";
+var PW_KEY = "madina_supershop_pw";
 var SAVED_KEY = "madina_supershop_lastsaved";
 var DEFAULT_CATEGORIES = [
   { id: "rice", en: "Rice & Grains", jp: "お米・穀物" },
@@ -555,6 +569,51 @@ function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 function yen(n){ return "¥" + Number(n).toLocaleString("ja-JP"); }
 function token(){ return localStorage.getItem(TOKEN_KEY) || ""; }
+/* ---------- password login (server-side saves) ----------
+   When the owner logs in with the shop password (⚙️ Setup tab), the
+   password is kept on this device and every save is POSTed to the
+   shop's Apps Script endpoint instead: the script holds the GitHub
+   token on the server and commits the file itself. With NO password
+   stored, the original per-device GitHub token flow is used,
+   completely unchanged. */
+function adminPw(){ try { return localStorage.getItem(PW_KEY) || ""; } catch (e) { return ""; } }
+/* POST to the shop's Apps Script endpoint exactly like the photo
+   reader does: a text/plain simple request (no CORS preflight), and
+   fetch follows the script's redirect to the JSON answer. */
+function adminApiPost(obj, ms){
+  return fetchWithTimeout(ordersApiUrl(), {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify(obj)
+  }, ms || 30000).then(function(r){
+    if (!r.ok) throw new Error("server HTTP " + r.status);
+    return r.json();
+  });
+}
+function adminErrText(j){
+  var e = j && j.error ? String(j.error) : "unknown error";
+  if (e === "bad_password") return "Wrong password — please try again.";
+  if (e === "admin_not_setup") return "Password login is not switched on yet (no password set on the server). Please use the GitHub token below for now.";
+  if (e === "token_not_setup") return "The server has no GitHub token yet, so it cannot save. Please use the GitHub token below for now.";
+  if (e.indexOf("github_") === 0) return "GitHub refused the save (" + e.slice(7) + (j.detail ? ": " + j.detail : "") + ").";
+  return e;
+}
+function adminServerErr_(j){
+  var err = new Error(adminErrText(j));
+  err.code = j && j.error ? String(j.error) : "";
+  return err;
+}
+function syncPwUi(){
+  var has = !!adminPw();
+  var loginBlock = $("pwLoginBlock"), inBlock = $("pwLoggedInBlock");
+  if (loginBlock) loginBlock.hidden = has;
+  if (inBlock) inBlock.hidden = !has;
+}
+function clearAdminPw(){
+  try { localStorage.removeItem(PW_KEY); } catch (e) {}
+  syncPwUi();
+  updateTokenNotice();
+}
 function showMsg(el, text, kind){ el.textContent = text; el.className = "msg show " + kind; }
 function hideMsg(el){ el.className = "msg"; }
 /* The product form's big result banner (top of the form): same show/hide
@@ -616,6 +675,7 @@ function apiHeaders(){
   };
 }
 function loadFromGitHub(){
+  if (!token() && adminPw()) return loadFromPublic();
   if (!token()){ showMsg($("setupMsg"), "No token yet — paste it above.", "err"); return Promise.reject(new Error("no token")); }
   return fetch(API, { headers: apiHeaders() })
     .then(function(r){
@@ -647,6 +707,40 @@ function loadFromGitHub(){
       showMsg($("setupMsg"), "Load failed (" + err.message + ") — check the token and connection.", "err");
     });
 }
+/* Password login without a token on this device: products.json is a
+   public file served next to this page, so it can be read directly.
+   There is no blob sha on this path (fileSha stays null) — saves go
+   through the server, which looks the sha up itself. */
+function loadFromPublic(){
+  return fetch(FILE_PATH, { cache: "no-store" })
+    .then(function(r){
+      if (r.status === 404) { fileSha = null; state = { categories: DEFAULT_CATEGORIES.slice(), products: [], notices: [], coupons: [], taxRate: 8 }; extraRoot = {}; return "new"; }
+      if (!r.ok) throw new Error("load error " + r.status);
+      return r.json().then(function(data){
+        fileSha = null;
+        state = { categories: data.categories || [], products: data.products || [], notices: data.notices || [], coupons: data.coupons || [], taxRate: parseTaxRate(data.taxRate) };
+        extraRoot = {};
+        Object.keys(data).forEach(function(k){
+          if (k !== "categories" && k !== "products" && k !== "notices" && k !== "coupons" && k !== "taxRate") extraRoot[k] = data[k];
+        });
+        return "loaded";
+      });
+    })
+    .then(function(how){
+      state.products.forEach(normalizeActive);
+      state.products.forEach(normalizeCats);
+      dirty = false; editingId = null;
+      $("mainPanel").hidden = false; $("formPanel").hidden = false;
+      syncProductsGate();
+      renderAll(); clearNoticeForm(); clearCouponForm(); updateLastSavedNote();
+      showMsg($("setupMsg"), how === "new"
+        ? "products.json is not in the repo yet — add products and press Save to create it."
+        : "Loaded " + state.products.length + " products.", "ok");
+    })
+    .catch(function(err){
+      showMsg($("setupMsg"), "Load failed (" + err.message + ") — check the connection.", "err");
+    });
+}
 function buildPayload(){
   /* Rebuilt from state on every save — notices, coupons, taxRate and any
      unknown root fields (extraRoot) are written back too, so a
@@ -660,8 +754,36 @@ function buildPayload(){
   out.taxRate = state.taxRate;
   return out;
 }
+/* Password-login save for products.json: the serialized payload is
+   sent to the shop's server (Apps Script), which commits it to GitHub
+   with the server-held token. Same success/failure contract as the
+   token path below: resolves on success, rejects on failure. */
+function saveProductsViaServer(){
+  var btn = $("saveBtn"); btn.disabled = true;
+  return adminApiPost({ action: "admin_save", password: adminPw(), kind: "products", content: JSON.stringify(buildPayload(), null, 2) }, 60000)
+    .then(function(j){
+      if (!j || j.ok !== true) throw adminServerErr_(j);
+      if (j.contentSha) fileSha = j.contentSha;
+      dirty = false; $("dirtyNote").style.display = "none"; $("newsDirty").style.display = "none"; $("couponDirty").style.display = "none";
+      var when = new Date().toLocaleString("en-US");
+      localStorage.setItem(SAVED_KEY, when);
+      updateLastSavedNote();
+      showMsg($("saveMsg"), "✅ Saved! The shop updates in 1–2 minutes.", "ok");
+    })
+    .catch(function(err){
+      if (err && err.code === "bad_password"){
+        clearAdminPw();
+        showMsg($("saveMsg"), "That password is no longer accepted — please log in again in the ⚙️ Setup tab.", "err");
+      } else {
+        showMsg($("saveMsg"), "Save failed (" + err.message + ") — please try again.", "err");
+      }
+      throw err;
+    })
+    .finally(function(){ btn.disabled = false; });
+}
 function saveToGitHub(){
   syncTaxFromInput();   /* the tax field rides along with every save, whichever button is pressed */
+  if (adminPw()) return saveProductsViaServer();
   if (!token()){ showMsg($("saveMsg"), "No token — set it up in the ⚙️ Setup tab first.", "err"); return Promise.reject(new Error("no token")); }
   var body = {
     message: "Update products via Madina Supershop admin panel",
@@ -1492,7 +1614,7 @@ function applyNotice(){
   hideMsg($("newsMsg"));
   var jp = $("nJp").value.trim(), en = $("nEn").value.trim(), idn = $("nIdn").value.trim();
   if (!jp && !en && !idn){ showMsg($("newsMsg"), "Please write the message in at least one language.", "err"); return; }
-  if (!token()){ showMsg($("newsMsg"), "No token — set it up in the ⚙️ Setup tab first.", "err"); return; }
+  if (!token() && !adminPw()){ showMsg($("newsMsg"), "No login — set it up in the ⚙️ Setup tab first.", "err"); return; }
   var date = $("nDate").value || todayJstStr();
   var wasEdit = !!editingNoticeId;
   if (wasEdit){
@@ -1601,7 +1723,7 @@ function applyCoupon(){
   if (dup && String(dup.code).trim().toUpperCase() !== editingCouponCode){
     showMsg($("couponMsg"), "That code is already used — please pick a different code.", "err"); return;
   }
-  if (!token()){ showMsg($("couponMsg"), "No token — set it up in the ⚙️ Setup tab first.", "err"); return; }
+  if (!token() && !adminPw()){ showMsg($("couponMsg"), "No login — set it up in the ⚙️ Setup tab first.", "err"); return; }
   var wasEdit = !!editingCouponCode;
   if (wasEdit){
     var c = findCoupon(editingCouponCode);
@@ -1628,8 +1750,8 @@ $("couponSaveBtn").addEventListener("click", function(){
   saveToGitHub().then(function(){
     showMsg($("couponMsg"), "✅ Saved! The shop updates in 1–2 minutes.", "ok");
   }).catch(function(err){
-    showMsg($("couponMsg"), !token()
-      ? "No token — set it up in the ⚙️ Setup tab first."
+    showMsg($("couponMsg"), !token() && !adminPw()
+      ? "No login — set it up in the ⚙️ Setup tab first."
       : "Save failed (" + err.message + ") — please try again.", "err");
   }).finally(function(){ btn.disabled = false; });
 });
@@ -1925,7 +2047,7 @@ function custCancelEntry(rowIdx, entryIdx){
   if (!e || (e.type !== "earn" && e.type !== "adjust") || e.cancelled) return;
   var amtTxt = signedPtsText(e);
   if (!window.confirm("Cancel this " + amtTxt + " entry? The points will be removed.")) return;
-  if (!token()){ showMsg($("custMsg"), "No token — set it up in the ⚙️ Setup tab first.", "err"); return; }
+  if (!token() && !adminPw()){ showMsg($("custMsg"), "No login — set it up in the ⚙️ Setup tab first.", "err"); return; }
   var ready = pointsLoaded ? Promise.resolve(true) : loadPoints();
   ready.then(function(ok){
     if (!ok){ showMsg($("custMsg"), "Could not load the points list — check the connection and try again.", "err"); return; }
@@ -2103,8 +2225,8 @@ function syncProductsGate(){
   if (gate) gate.hidden = !$("formPanel").hidden;
 }
 function updateTokenNotice(){
-  if (token()){ hideMsg($("tokenNotice")); }
-  else { showMsg($("tokenNotice"), "Setup needed: paste your GitHub token — tap the ⚙️ Setup tab at the top of this page.", "info"); }
+  if (token() || adminPw()){ hideMsg($("tokenNotice")); }
+  else { showMsg($("tokenNotice"), "Setup needed: log in with your password — tap the ⚙️ Setup tab at the top of this page.", "info"); }
   syncProductsGate();
 }
 
@@ -2123,6 +2245,42 @@ $("forgetTokenBtn").addEventListener("click", function(){
   localStorage.removeItem(TOKEN_KEY);
   updateTokenNotice();
   showMsg($("setupMsg"), "Token removed from this device.", "info");
+});
+/* Password login: verify against the server (admin_check). Only a
+   verified password is stored on this device; a wrong one is never
+   kept. No auto-verify on page load — the password is checked again
+   by the server on every save anyway. */
+$("pwLoginBtn").addEventListener("click", function(){
+  var pw = $("pwInput").value;
+  if (!pw){ showMsg($("pwMsg"), "Please type the password.", "err"); return; }
+  var btn = $("pwLoginBtn"); btn.disabled = true;
+  hideMsg($("pwMsg"));
+  adminApiPost({ action: "admin_check", password: pw }, 30000)
+    .then(function(j){
+      if (j && j.ok === true){
+        try { localStorage.setItem(PW_KEY, pw); } catch (e) {}
+        $("pwInput").value = "";
+        syncPwUi();
+        updateTokenNotice();
+        showMsg($("pwMsg"), "✅ Logged in — saves now go through the server.", "ok");
+        loadFromGitHub();
+        loadPoints();
+        showTab("products");
+      } else {
+        showMsg($("pwMsg"), adminErrText(j), "err");
+      }
+    })
+    .catch(function(err){
+      showMsg($("pwMsg"), "Could not reach the server (" + err.message + ") — check the connection and try again.", "err");
+    })
+    .finally(function(){ btn.disabled = false; });
+});
+$("pwInput").addEventListener("keydown", function(ev){
+  if (ev.key === "Enter"){ ev.preventDefault(); $("pwLoginBtn").click(); }
+});
+$("pwLogoutBtn").addEventListener("click", function(){
+  clearAdminPw();
+  showMsg($("pwMsg"), "Logged out on this device. Until you log in again, saves need the GitHub token.", "info");
 });
 $("reloadBtn").addEventListener("click", function(){
   if (dirty && !window.confirm("Unsaved changes will be lost. Reload anyway?")) return;
@@ -2303,6 +2461,7 @@ function pointBalances(rec){
 }
 function markPointsDirty(){ pointsDirty = true; $("pointsDirty").style.display = "block"; hideMsg($("pointsMsg")); }
 function loadPoints(){
+  if (!token() && adminPw()) return loadPointsPublic();
   if (!token()){ showMsg($("pointsMsg"), "No token — set it up in the ⚙️ Setup tab first.", "err"); return Promise.resolve(false); }
   return fetch(POINTS_API, { headers: apiHeaders() })
     .then(function(r){
@@ -2321,7 +2480,51 @@ function loadPoints(){
       return false;
     });
 }
+/* Password login without a token on this device: points.json is a
+   public file served next to this page, so it can be read directly
+   (pointsSha stays null — server saves look the sha up themselves). */
+function loadPointsPublic(){
+  return fetch(POINTS_PATH, { cache: "no-store" })
+    .then(function(r){
+      if (r.status === 404){ pointsSha = null; pointsData = { customers: [] }; return true; }
+      if (!r.ok) throw new Error("load error " + r.status);
+      return r.json().then(function(data){
+        pointsSha = null;
+        pointsData = { customers: data.customers || [] };
+        return true;
+      });
+    })
+    .then(function(){ pointsLoaded = true; pointsDirty = false; $("pointsDirty").style.display = "none"; return true; })
+    .catch(function(err){
+      showMsg($("pointsMsg"), "Loading points failed (" + err.message + ").", "err");
+      return false;
+    });
+}
+/* Password-login save for points.json, through the shop's server.
+   Same contract as the token path below: resolves true/false. */
+function savePointsViaServer(){
+  var btn = $("ptSaveBtn"); btn.disabled = true;
+  return adminApiPost({ action: "admin_save", password: adminPw(), kind: "points", content: JSON.stringify(pointsData, null, 2) }, 60000)
+    .then(function(j){
+      if (!j || j.ok !== true) throw adminServerErr_(j);
+      if (j.contentSha) pointsSha = j.contentSha;
+      pointsLoaded = true; pointsDirty = false; $("pointsDirty").style.display = "none";
+      showMsg($("pointsMsg"), "✅ Points saved.", "ok");
+      return true;
+    })
+    .catch(function(err){
+      if (err && err.code === "bad_password"){
+        clearAdminPw();
+        showMsg($("pointsMsg"), "That password is no longer accepted — please log in again in the ⚙️ Setup tab.", "err");
+      } else {
+        showMsg($("pointsMsg"), "Saving points failed (" + err.message + ") — please try again.", "err");
+      }
+      return false;
+    })
+    .finally(function(){ btn.disabled = false; });
+}
 function savePoints(){
+  if (adminPw()) return savePointsViaServer();
   if (!token()){ showMsg($("pointsMsg"), "No token — set it up in the ⚙️ Setup tab first.", "err"); return Promise.resolve(false); }
   var body = {
     message: "Update points via Madina Supershop admin panel",
@@ -2467,7 +2670,7 @@ function undoLastAdd(rec, idx, msgEl, after){
    caller's message box. Resolves true when the entry was saved. */
 function pointsAddAdjust(digits, pts, note, msgEl, onOk){
   if (!digits){ showMsg(msgEl, "No phone number for this customer.", "err"); return Promise.resolve(false); }
-  if (!token()){ showMsg(msgEl, "No token — set it up in the ⚙️ Setup tab first.", "err"); return Promise.resolve(false); }
+  if (!token() && !adminPw()){ showMsg(msgEl, "No login — set it up in the ⚙️ Setup tab first.", "err"); return Promise.resolve(false); }
   var ready = pointsLoaded ? Promise.resolve(true) : loadPoints();
   return ready.then(function(ok){
     if (!ok){ showMsg(msgEl, "Could not load the points list — check the connection and try again.", "err"); return false; }
@@ -2596,6 +2799,7 @@ $("ptSaveBtn").addEventListener("click", function(){ savePoints(); });
 
 /* expose for testing */
 window.__supershopAdmin = { getState: function(){ return state; }, buildPayload: buildPayload, saveToGitHub: saveToGitHub, loadFromGitHub: loadFromGitHub, templates: REPLY_TEMPLATES, bankInfo: BANK_INFO,
+  auth: { hasPw: function(){ return !!adminPw(); }, sync: syncPwUi, clear: clearAdminPw },
   notices: { list: function(){ return state.notices; }, todayJst: todayJstStr, apply: applyNotice },
   coupons: { list: function(){ return state.coupons; }, apply: applyCoupon, summary: couponSummary, find: findCoupon },
   tax: { rate: function(){ return state.taxRate; }, syncFromInput: syncTaxFromInput, parse: parseTaxRate },
@@ -2613,6 +2817,7 @@ $("nDate").value = todayJstStr();
 renderNoticeList();
 renderCouponList();
 updateTokenNotice();
+syncPwUi();
 var savedTab = "products";
 try { savedTab = localStorage.getItem(TAB_KEY) || "products"; } catch (e) {}
 showTab(savedTab);
@@ -2620,8 +2825,12 @@ if (token()){
   showMsg($("setupMsg"), "Token found on this device — loading…", "info");
   loadFromGitHub();
   loadPoints();
+} else if (adminPw()){
+  showMsg($("setupMsg"), "Logged in with your password — loading…", "info");
+  loadFromGitHub();
+  loadPoints();
 } else {
-  showMsg($("setupMsg"), "Setup: paste your GitHub token to begin.", "info");
+  showMsg($("setupMsg"), "Setup: log in with your password to begin.", "info");
 }
 updateLastSavedNote();
 renderTemplates();
