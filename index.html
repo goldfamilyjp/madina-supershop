@@ -642,16 +642,27 @@ var PAGE_SIZE = 60;
 /* Trilingual labels for the seeded categories (JP / EN / ID).
    Custom categories typed in the admin are shown exactly as entered. */
 var CAT_TRILINGUAL = {
-  rice:   { jp: "米・穀物", en: "Rice & Grains", idn: "Beras & Biji-bijian" },
-  dal:    { jp: "豆類", en: "Dal & Lentils", idn: "Kacang & Lentil" },
-  spices: { jp: "スパイス", en: "Spices", idn: "Rempah" },
-  tea:    { jp: "お茶", en: "Tea", idn: "Teh" },
-  fish:   { jp: "魚", en: "Fish", idn: "Ikan" },
-  meat:   { jp: "肉", en: "Meat", idn: "Daging" },
-  frozen: { jp: "冷凍", en: "Frozen", idn: "Beku" },
-  snacks: { jp: "お菓子", en: "Snacks", idn: "Camilan" },
-  drinks: { jp: "飲み物", en: "Drinks", idn: "Minuman" },
-  other:  { jp: "その他", en: "Other", idn: "Lainnya" }
+  rice:          { jp: "お米・穀物", en: "Rice & Grains", idn: "Beras & Biji-bijian" },
+  flour:         { jp: "小麦粉・アタ", en: "Flour & Atta", idn: "Tepung & Atta" },
+  dal:           { jp: "豆・ダル", en: "Dal & Lentils", idn: "Kacang & Lentil" },
+  nuts:          { jp: "ナッツ・デーツ・ドライフルーツ", en: "Nuts, Dates & Dry Fruits", idn: "Kacang, Kurma & Buah Kering" },
+  spices:        { jp: "スパイス・マサラ", en: "Spices & Masala", idn: "Rempah & Masala" },
+  "oil-ghee":    { jp: "油・ギー", en: "Oil & Ghee", idn: "Minyak & Ghee" },
+  sauces:        { jp: "ソース・漬物・ペースト", en: "Sauces, Pickles & Paste", idn: "Saus, Acar & Bumbu Pasta" },
+  "salt-sugar":  { jp: "塩・砂糖", en: "Salt & Sugar", idn: "Garam & Gula" },
+  meat:          { jp: "ハラール肉", en: "Halal Meat", idn: "Daging Halal" },
+  fish:          { jp: "魚・干し魚", en: "Fish & Dry Fish", idn: "Ikan & Ikan Kering" },
+  frozen:        { jp: "冷凍食品", en: "Frozen Food", idn: "Makanan Beku" },
+  "ready-to-eat":{ jp: "レトルト・即食品", en: "Ready to Eat", idn: "Siap Saji" },
+  noodles:       { jp: "麺類", en: "Noodles & Pasta", idn: "Mie & Pasta" },
+  vegetables:    { jp: "果物・野菜", en: "Fruits & Vegetables", idn: "Buah & Sayur" },
+  snacks:        { jp: "お菓子・ビスケット", en: "Snacks & Biscuits", idn: "Camilan & Biskuit" },
+  sweets:        { jp: "スイーツ・デザート", en: "Sweets & Desserts", idn: "Manisan & Pencuci Mulut" },
+  drinks:        { jp: "飲み物・ジュース", en: "Drinks & Juice", idn: "Minuman & Jus" },
+  tea:           { jp: "紅茶・コーヒー", en: "Tea & Coffee", idn: "Teh & Kopi" },
+  "personal-care":{ jp: "美容・日用品", en: "Personal Care", idn: "Perawatan Diri" },
+  ramadan:       { jp: "ラマダン・イード特集", en: "Ramadan & Eid Special", idn: "Spesial Ramadan & Lebaran" },
+  other:         { jp: "その他", en: "Other", idn: "Lainnya" }
 };
 function catChipLabel(c){
   var t = CAT_TRILINGUAL[c.id];
