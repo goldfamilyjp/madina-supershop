@@ -536,27 +536,31 @@ var TOKEN_KEY = "madina_supershop_token";
 var PW_KEY = "madina_supershop_pw";
 var SAVED_KEY = "madina_supershop_lastsaved";
 var DEFAULT_CATEGORIES = [
-  { id: "rice", en: "Rice & Grains", jp: "お米・穀物" },
-  { id: "flour", en: "Flour & Atta", jp: "小麦粉・アタ" },
-  { id: "dal", en: "Dal & Lentils", jp: "豆・ダル" },
-  { id: "nuts", en: "Nuts, Dates & Dry Fruits", jp: "ナッツ・デーツ・ドライフルーツ" },
-  { id: "spices", en: "Spices & Masala", jp: "スパイス・マサラ" },
-  { id: "oil-ghee", en: "Oil & Ghee", jp: "油・ギー" },
-  { id: "sauces", en: "Sauces, Pickles & Paste", jp: "ソース・漬物・ペースト" },
-  { id: "salt-sugar", en: "Salt & Sugar", jp: "塩・砂糖" },
-  { id: "meat", en: "Halal Meat", jp: "ハラール肉" },
-  { id: "fish", en: "Fish & Dry Fish", jp: "魚・干し魚" },
-  { id: "frozen", en: "Frozen Food", jp: "冷凍食品" },
-  { id: "ready-to-eat", en: "Ready to Eat", jp: "レトルト・即食品" },
-  { id: "noodles", en: "Noodles & Pasta", jp: "麺類" },
-  { id: "vegetables", en: "Fruits & Vegetables", jp: "果物・野菜" },
-  { id: "snacks", en: "Snacks & Biscuits", jp: "お菓子・ビスケット" },
-  { id: "sweets", en: "Sweets & Desserts", jp: "スイーツ・デザート" },
-  { id: "drinks", en: "Drinks & Juice", jp: "飲み物・ジュース" },
-  { id: "tea", en: "Tea & Coffee", jp: "紅茶・コーヒー" },
-  { id: "personal-care", en: "Personal Care", jp: "美容・日用品" },
-  { id: "ramadan", en: "Ramadan & Eid Special", jp: "ラマダン・イード特集" },
-  { id: "other", en: "Other", jp: "その他" }
+  { id: "rice", en: "Rice & Grains", jp: "お米・穀物", icon: "🍚" },
+  { id: "flour", en: "Flour & Atta", jp: "小麦粉・アタ", icon: "🌾" },
+  { id: "dal", en: "Dal & Lentils", jp: "豆・ダル", icon: "🫘" },
+  { id: "nuts", en: "Nuts, Dates & Dry Fruits", jp: "ナッツ・デーツ・ドライフルーツ", icon: "🥜" },
+  { id: "spices", en: "Spices & Masala", jp: "スパイス・マサラ", icon: "🌶️" },
+  { id: "oil-ghee", en: "Oil & Ghee", jp: "油・ギー", icon: "🫒" },
+  { id: "sauces", en: "Sauces, Pickles & Paste", jp: "ソース・漬物・ペースト", icon: "🫙" },
+  { id: "salt-sugar", en: "Salt & Sugar", jp: "塩・砂糖", icon: "🧂" },
+  { id: "meat", en: "Meat", jp: "肉", icon: "🥩" },
+  { id: "beef", en: "Beef", jp: "牛肉", icon: "🐄" },
+  { id: "chicken", en: "Chicken", jp: "鶏肉", icon: "🍗" },
+  { id: "mutton", en: "Mutton", jp: "マトン（山羊肉）", icon: "🐐" },
+  { id: "lamb", en: "Lamb", jp: "ラム肉", icon: "🐑" },
+  { id: "fish", en: "Fish & Dry Fish", jp: "魚・干し魚", icon: "🐟" },
+  { id: "frozen", en: "Frozen Food", jp: "冷凍食品", icon: "❄️" },
+  { id: "ready-to-eat", en: "Ready to Eat", jp: "レトルト・即食品", icon: "🍱" },
+  { id: "noodles", en: "Noodles & Pasta", jp: "麺類", icon: "🍜" },
+  { id: "vegetables", en: "Fruits & Vegetables", jp: "果物・野菜", icon: "🥦" },
+  { id: "snacks", en: "Snacks & Biscuits", jp: "お菓子・ビスケット", icon: "🍪" },
+  { id: "sweets", en: "Sweets & Desserts", jp: "スイーツ・デザート", icon: "🧁" },
+  { id: "drinks", en: "Drinks & Juice", jp: "飲み物・ジュース", icon: "🥤" },
+  { id: "tea", en: "Tea & Coffee", jp: "紅茶・コーヒー", icon: "☕" },
+  { id: "personal-care", en: "Personal Care", jp: "美容・日用品", icon: "🧴" },
+  { id: "ramadan", en: "Ramadan & Eid Special", jp: "ラマダン・イード特集", icon: "🌙" },
+  { id: "other", en: "Other", jp: "その他", icon: "📦" }
 ];
 
 /* Bank details used in the staff reply templates below.
@@ -885,7 +889,7 @@ function renderCatChips(){
     var first = on && formCats[0] === c.id;
     return '<label class="cat-chip' + (on ? " on" : "") + (first ? " first" : "") + '">'
       + '<input type="checkbox" data-cat-chip="' + esc(c.id) + '"' + (on ? " checked" : "") + "> "
-      + esc(c.en) + ' <span class="primary-tag">MAIN</span></label>';
+      + (c.icon ? esc(c.icon) + " " : "") + esc(c.en) + ' <span class="primary-tag">MAIN</span></label>';
   }).join("");
   box.querySelectorAll("[data-cat-chip]").forEach(function(cb){
     cb.addEventListener("change", function(){
@@ -1187,7 +1191,11 @@ var OCR_CAT_KEYWORDS = [
   ["rice",   ["basmati", "rice", "beras", "pulao", "biryani"]],
   ["dal",    ["dal", "lentil", "lentils", "chana", "chickpea", "chickpeas", "masoor", "mung", "urad", "toor"]],
   ["spices", ["masala", "spice", "spices", "chilli", "chili", "turmeric", "cumin", "coriander", "garam", "curry powder", "cardamom", "cinnamon", "pepper"]],
-  ["meat",   ["chicken", "beef", "mutton", "lamb", "goat", "meat"]],
+  ["beef",   ["beef"]],
+  ["chicken", ["chicken"]],
+  ["mutton", ["mutton", "goat"]],
+  ["lamb",   ["lamb"]],
+  ["meat",   ["meat", "sausage", "keema", "mince"]],
   ["frozen", ["frozen"]],
   ["snacks", ["biscuit", "biscuits", "cookie", "cookies", "snack", "snacks", "chocolate", "candy"]],
   ["drinks", ["juice", "drink", "drinks", "cola", "soda", "coffee"]],
