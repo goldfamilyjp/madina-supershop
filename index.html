@@ -46,6 +46,7 @@ body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",syst
 .jp{display:block; font-size:.85em; font-weight:400; color:inherit;}
 .idn{display:block; font-size:.85em; font-weight:400; color:inherit; opacity:.75;}
 .chip-labels{display:block; text-align:left;}
+.cat-icon{font-size:1.2rem; margin-right:7px; line-height:1;}
 .ci-price{display:block; color:var(--muted); font-size:.9em; margin-top:2px;}
 /* hero: a solid Madina-green band (logo + two-line name + JP name + tagline);
    the full shop photo sits UNDER it as its own full-width strip (.hero-photo)
@@ -650,7 +651,11 @@ var CAT_TRILINGUAL = {
   "oil-ghee":    { jp: "油・ギー", en: "Oil & Ghee", idn: "Minyak & Ghee" },
   sauces:        { jp: "ソース・漬物・ペースト", en: "Sauces, Pickles & Paste", idn: "Saus, Acar & Bumbu Pasta" },
   "salt-sugar":  { jp: "塩・砂糖", en: "Salt & Sugar", idn: "Garam & Gula" },
-  meat:          { jp: "ハラール肉", en: "Halal Meat", idn: "Daging Halal" },
+  meat:          { jp: "肉", en: "Meat", idn: "Daging" },
+  beef:          { jp: "牛肉", en: "Beef", idn: "Daging Sapi" },
+  chicken:       { jp: "鶏肉", en: "Chicken", idn: "Ayam" },
+  mutton:        { jp: "マトン（山羊肉）", en: "Mutton", idn: "Daging Kambing" },
+  lamb:          { jp: "ラム肉", en: "Lamb", idn: "Daging Domba" },
   fish:          { jp: "魚・干し魚", en: "Fish & Dry Fish", idn: "Ikan & Ikan Kering" },
   frozen:        { jp: "冷凍食品", en: "Frozen Food", idn: "Makanan Beku" },
   "ready-to-eat":{ jp: "レトルト・即食品", en: "Ready to Eat", idn: "Siap Saji" },
@@ -736,10 +741,10 @@ function renderChips(){
   var vis = visibleProducts();
   var counts = {};
   vis.forEach(function(p){ productCats(p).forEach(function(c){ counts[c] = (counts[c]||0)+1; }); });
-  var html = '<button type="button" class="chip' + (activeCat==="all" ? " active" : "") + '" data-cat="all"><span class="chip-labels">' + stack3("All", "すべて", "Semua") + '</span><span class="cnt">' + vis.length + '</span></button>';
+  var html = '<button type="button" class="chip' + (activeCat==="all" ? " active" : "") + '" data-cat="all"><span class="cat-icon">🛒</span><span class="chip-labels">' + stack3("All", "すべて", "Semua") + '</span><span class="cnt">' + vis.length + '</span></button>';
   CATEGORIES.forEach(function(c){
     if (!counts[c.id]) return;
-    html += '<button type="button" class="chip' + (activeCat===c.id ? " active" : "") + '" data-cat="' + esc(c.id) + '"><span class="chip-labels">' + catChipLabel(c) + '</span><span class="cnt">' + counts[c.id] + '</span></button>';
+    html += '<button type="button" class="chip' + (activeCat===c.id ? " active" : "") + '" data-cat="' + esc(c.id) + '">' + (c.icon ? '<span class="cat-icon">' + esc(c.icon) + '</span>' : '') + '<span class="chip-labels">' + catChipLabel(c) + '</span><span class="cnt">' + counts[c.id] + '</span></button>';
   });
   chipsEl.innerHTML = html;
   var btns = chipsEl.querySelectorAll(".chip");
