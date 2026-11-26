@@ -506,6 +506,13 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
     <div id="pwLoggedInBlock" hidden>
       <p class="hint">✅ <strong>Logged in</strong> — saves go through the server.</p>
       <button type="button" class="big-btn grey" id="pwLogoutBtn">Log out</button>
+      <h3 style="margin-top:20px;">Change password</h3>
+      <label for="cpCurrent">Current password</label>
+      <input type="password" id="cpCurrent" placeholder="Current password" autocomplete="current-password">
+      <label for="cpNew">New password</label>
+      <input type="password" id="cpNew" placeholder="New password" autocomplete="new-password">
+      <button type="button" class="big-btn" id="cpBtn">Change password</button>
+      <div class="msg" id="cpMsg"></div>
     </div>
     <div class="msg" id="pwMsg"></div>
     <hr>
@@ -593,6 +600,7 @@ function adminApiPost(obj, ms){
 function adminErrText(j){
   var e = j && j.error ? String(j.error) : "unknown error";
   if (e === "bad_password") return "Wrong password — please try again.";
+  if (e === "bad_new_password") return "The new password is too short — please use at least 4 characters.";
   if (e === "admin_not_setup") return "Password login is not switched on yet (no password set on the server). Please use the GitHub token below for now.";
   if (e === "token_not_setup") return "The server has no GitHub token yet, so it cannot save. Please use the GitHub token below for now.";
   if (e.indexOf("github_") === 0) return "GitHub refused the save (" + e.slice(7) + (j.detail ? ": " + j.detail : "") + ").";
@@ -2317,6 +2325,29 @@ $("pwInput").addEventListener("keydown", function(ev){
 $("pwLogoutBtn").addEventListener("click", function(){
   clearAdminPw();
   showMsg($("pwMsg"), "Logged out on this device. Until you log in again, saves need the GitHub token.", "info");
+});
+/* Change password: the server verifies the current password, then
+   stores the new one — no settings page, no token. On success this
+   device switches to the new password straight away. */
+$("cpBtn").addEventListener("click", function(){
+  var cur = $("cpCurrent").value, np = $("cpNew").value;
+  if (!cur){ showMsg($("cpMsg"), "Please type the current password.", "err"); return; }
+  if (!np || np.length < 4){ showMsg($("cpMsg"), "Please type a new password (at least 4 characters).", "err"); return; }
+  var btn = $("cpBtn"); btn.disabled = true; hideMsg($("cpMsg"));
+  adminApiPost({ action: "admin_change_password", password: cur, newPassword: np }, 30000)
+    .then(function(j){
+      if (j && j.ok === true){
+        try { localStorage.setItem(PW_KEY, np); } catch (e) {}
+        $("cpCurrent").value = ""; $("cpNew").value = "";
+        showMsg($("cpMsg"), "✅ Password changed — this device now uses the new password.", "ok");
+      } else {
+        showMsg($("cpMsg"), adminErrText(j), "err");
+      }
+    })
+    .catch(function(err){
+      showMsg($("cpMsg"), "Could not reach the server (" + err.message + ") — check the connection and try again.", "err");
+    })
+    .finally(function(){ btn.disabled = false; });
 });
 $("reloadBtn").addEventListener("click", function(){
   if (dirty && !window.confirm("Unsaved changes will be lost. Reload anyway?")) return;
