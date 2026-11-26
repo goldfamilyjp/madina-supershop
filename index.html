@@ -48,23 +48,20 @@ body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",syst
 .chip-labels{display:block; text-align:left;}
 .cat-icon{font-size:1.2rem; margin-right:7px; line-height:1;}
 .ci-price{display:block; color:var(--muted); font-size:.9em; margin-top:2px;}
-/* hero: a solid Madina-green band (logo + two-line name + JP name + tagline);
-   the full shop photo sits UNDER it as its own full-width strip (.hero-photo)
-   at natural aspect — the whole shop front shows, never cropped. */
-header{background:var(--green); color:#fff; padding:24px 16px 20px; text-align:center; border-bottom:4px solid var(--gold);}
+/* hero (owner 2026-11-27, supersedes the 2026-11-22 capped banner): the
+   name band (logo + two-line name + JP name + tagline) OVERLAYS the top of
+   the slideshow on a deep-green gradient scrim, bold enough to read over
+   any photo; the slideshow shows each photo WHOLE — the box is the
+   photos' own 4:3 aspect (centred, max 1180px wide), and object-fit:
+   contain on a green ground guarantees nothing is ever cropped, even
+   when the 86vh height cap binds on wide screens. */
+.hero-wrap{position:relative; max-width:1180px; margin:0 auto;}
+header{position:absolute; top:0; left:0; right:0; z-index:6; color:#fff; padding:20px 16px 42px; text-align:center; background:linear-gradient(180deg, rgba(6,45,32,.93) 0%, rgba(6,45,32,.68) 58%, rgba(6,45,32,0) 100%); pointer-events:none;}
 .hero-photo{display:block; width:100%; height:auto;}
-/* hero slideshow (owner 2026-11-22): the Anjo shop front + the owner's own
-   interior photos as separate hero-slide-N.jpg files, crossfading in the
-   strip under the name band. The strip is a capped BANNER, not a full
-   photo: height clamp(190px, 26vh, 420px) — tall enough to read as a
-   photo, short enough that the offer chips, the points card and the
-   products below stay within (or just under) the first screen on phone,
-   tablet and desktop. Slides are object-fit:cover centred, so the 4:3
-   photos trim a little top/bottom — accepted by the owner (2026-11-22)
-   in exchange for the smaller strip. The fixed height means the layout
-   below never jumps. */
-.hero-show{position:relative; height:clamp(190px, 26vh, 420px); background:var(--green-dark); overflow:hidden; touch-action:pan-y;}
-.hero-slide{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; opacity:0; transition:opacity .6s ease; pointer-events:none;}
+/* hero slideshow: the Anjo shop front + the owner's own interior photos
+   as separate hero-slide-N.jpg files (all 1400x1050), crossfading. */
+.hero-show{position:relative; aspect-ratio:4/3; max-height:86vh; background:var(--green-dark); overflow:hidden; touch-action:pan-y;}
+.hero-slide{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:var(--green-dark); display:block; opacity:0; transition:opacity .6s ease; pointer-events:none;}
 .hero-slide.active{opacity:1; pointer-events:auto; z-index:1;}
 .hero-arrow{position:absolute; top:50%; transform:translateY(-50%); width:44px; height:52px; border:none; border-radius:10px; background:rgba(7,48,31,.75); color:#fff; font-size:1.7rem; line-height:1; cursor:pointer; z-index:3; padding:0;}
 .hero-arrow:active{background:var(--green);}
@@ -77,17 +74,17 @@ header{background:var(--green); color:#fff; padding:24px 16px 20px; text-align:c
 header .hero-logo{width:72px; height:72px; object-fit:cover; border-radius:50%; border:2px solid var(--gold); background:#fff; margin-bottom:6px;}
 /* the shop name in gold-gradient display type (CSS only — no font downloads) */
 header .shop-name{
-  font-size:clamp(1.55rem, 8.5vw, 2.1rem); font-weight:900; letter-spacing:.05em; line-height:1.15;
+  font-size:clamp(1.9rem, 9vw, 2.7rem); font-weight:900; letter-spacing:.05em; line-height:1.15;
   background:linear-gradient(180deg,#f8e28d 0%, var(--gold) 48%, #b8912a 82%, #f3d97b 100%);
   -webkit-background-clip:text; background-clip:text;
   -webkit-text-fill-color:transparent; color:transparent;
-  filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.65));
 }
 @supports not ((-webkit-background-clip:text) or (background-clip:text)){
   header .shop-name{color:var(--gold); -webkit-text-fill-color:currentColor; filter:none;}
 }
-header .shop-name-jp{font-size:1rem; color:#eaf5ec; margin-top:3px; font-weight:700; letter-spacing:.32em;}
-header .tagline{font-size:.8rem; color:#cfe6d4; margin-top:6px;}
+header .shop-name-jp{font-size:1.05rem; color:#eaf5ec; margin-top:3px; font-weight:800; letter-spacing:.32em; text-shadow:0 1px 6px rgba(0,0,0,.6);}
+header .tagline{font-size:.82rem; color:#eaf5ec; margin-top:6px; font-weight:700; text-shadow:0 1px 5px rgba(0,0,0,.6);}
 .ship-strip{background:var(--gold-soft); color:#4a3d08; text-align:center; font-size:.85rem; padding:9px 12px; border-bottom:1px solid var(--line);}
 /* 📢 news banner — gold bar at the very top; the badge gently pulses and the
    owner's active notices rotate through it one at a time (fade + slide). */
@@ -366,7 +363,7 @@ textarea{min-height:64px;}
 footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px 6px;}
 /* small phones: tighten the hero + slideshow so everything fits 360px */
 @media(max-width:560px){
-  header{padding:14px 10px 12px;}
+  header{padding:12px 10px 30px;}
   header .hero-logo{width:60px; height:60px;}
   .hero-chip{font-size:.95rem; padding:8px 12px;}
   .ss-slide{gap:10px; padding:10px;}
@@ -393,6 +390,7 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
   <div class="nb-track" id="nbTrack"></div>
 </div>
 
+<div class="hero-wrap">
 <header>
   <img class="hero-logo" src="logo.jpg" alt="Madina Halal Restaurant &amp; Foods">
   <div class="shop-name">MADINA<br>HALAL SUPER</div>
@@ -412,6 +410,7 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
   <button type="button" class="hero-arrow hero-prev" id="heroPrev" aria-label="Previous photo">‹</button>
   <button type="button" class="hero-arrow hero-next" id="heroNext" aria-label="Next photo">›</button>
   <div class="hero-dots" id="heroDots"></div>
+</div>
 </div>
 <div class="hero-chips">
   <span class="hero-chip"><span class="en">Free delivery over ¥10,000</span><span class="jp">送料無料（¥10,000以上）</span><span class="idn">Gratis ongkir ¥10,000+</span></span>
