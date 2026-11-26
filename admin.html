@@ -674,6 +674,24 @@ function apiHeaders(){
     "X-GitHub-Api-Version": "2022-11-28"
   };
 }
+/* GitHub's Contents API withholds the content field for files over
+   1 MB (products.json passed that size in Nov 2026; product photos are
+   embedded in it). When that happens, read the same file through its
+   raw download URL instead. Resolves with the parsed JSON data. */
+function parseContentsJson(j){
+  if (j && j.content) {
+    try { return Promise.resolve(JSON.parse(b64decodeUtf8(j.content))); }
+    catch (e) { return Promise.reject(e); }
+  }
+  if (j && j.download_url){
+    return fetch(j.download_url, { headers: apiHeaders() })
+      .then(function(r){
+        if (!r.ok) throw new Error("GitHub error " + r.status);
+        return r.json();
+      });
+  }
+  return Promise.reject(new Error("GitHub returned no file content"));
+}
 function loadFromGitHub(){
   if (!token() && adminPw()) return loadFromPublic();
   if (!token()){ showMsg($("setupMsg"), "No token yet — paste it above.", "err"); return Promise.reject(new Error("no token")); }
@@ -683,7 +701,8 @@ function loadFromGitHub(){
       if (!r.ok) throw new Error("GitHub error " + r.status);
       return r.json().then(function(j){
         fileSha = j.sha;
-        var data = JSON.parse(b64decodeUtf8(j.content));
+        return parseContentsJson(j);
+      }).then(function(data){
         state = { categories: data.categories || [], products: data.products || [], notices: data.notices || [], coupons: data.coupons || [], taxRate: parseTaxRate(data.taxRate) };
         extraRoot = {};
         Object.keys(data).forEach(function(k){
@@ -785,19 +804,36 @@ function saveToGitHub(){
   syncTaxFromInput();   /* the tax field rides along with every save, whichever button is pressed */
   if (adminPw()) return saveProductsViaServer();
   if (!token()){ showMsg($("saveMsg"), "No token — set it up in the ⚙️ Setup tab first.", "err"); return Promise.reject(new Error("no token")); }
-  var body = {
-    message: "Update products via Madina Supershop admin panel",
-    content: b64encodeUtf8(JSON.stringify(buildPayload(), null, 2))
-  };
-  if (fileSha) body.sha = fileSha;
   var btn = $("saveBtn"); btn.disabled = true;
-  return fetch(API, { method: "PUT", headers: Object.assign({ "Content-Type": "application/json" }, apiHeaders()), body: JSON.stringify(body) })
-    .then(function(r){
-      if (!r.ok) return r.text().then(function(t){ throw new Error("GitHub error " + r.status + " " + t.slice(0, 120)); });
-      return r.json();
+  /* Save through the Git Data API, not the Contents PUT: the Contents
+     API refuses files over 1 MB and products.json passed that size in
+     Nov 2026 (product photos are embedded in it). The blob → tree →
+     commit → ref flow works at any size. */
+  var G = "https://api.github.com/repos/" + REPO;
+  function gh(path, method, body){
+    return fetch(G + path, { method: method || "GET", headers: Object.assign({ "Content-Type": "application/json" }, apiHeaders()), body: body ? JSON.stringify(body) : undefined })
+      .then(function(r){
+        if (!r.ok) return r.text().then(function(t){ throw new Error("GitHub error " + r.status + " " + t.slice(0, 120)); });
+        return r.json();
+      });
+  }
+  var headSha = null, baseTree = null, blobSha = null;
+  return gh("/git/ref/heads/main")
+    .then(function(j){ headSha = j.object.sha; return gh("/git/commits/" + headSha); })
+    .then(function(j){
+      baseTree = j.tree.sha;
+      return gh("/git/blobs", "POST", { content: b64encodeUtf8(JSON.stringify(buildPayload(), null, 2)), encoding: "base64" });
     })
     .then(function(j){
-      if (j && j.content && j.content.sha) fileSha = j.content.sha;
+      blobSha = j.sha;
+      return gh("/git/trees", "POST", { base_tree: baseTree, tree: [{ path: FILE_PATH, mode: "100644", type: "blob", sha: blobSha }] });
+    })
+    .then(function(j){
+      return gh("/git/commits", "POST", { message: "Update products via Madina Supershop admin panel", tree: j.sha, parents: [headSha] });
+    })
+    .then(function(j){ return gh("/git/refs/heads/main", "PATCH", { sha: j.sha }); })
+    .then(function(){
+      fileSha = blobSha;
       dirty = false; $("dirtyNote").style.display = "none"; $("newsDirty").style.display = "none"; $("couponDirty").style.display = "none";
       var when = new Date().toLocaleString("en-US");
       localStorage.setItem(SAVED_KEY, when);
@@ -2469,7 +2505,8 @@ function loadPoints(){
       if (!r.ok) throw new Error("GitHub error " + r.status);
       return r.json().then(function(j){
         pointsSha = j.sha;
-        var data = JSON.parse(b64decodeUtf8(j.content));
+        return parseContentsJson(j);
+      }).then(function(data){
         pointsData = { customers: data.customers || [] };
         return true;
       });
