@@ -3,107 +3,152 @@
     {
       "id": "rice",
       "en": "Rice & Grains",
-      "jp": "お米・穀物"
+      "jp": "お米・穀物",
+      "icon": "🍚"
     },
     {
       "id": "flour",
       "en": "Flour & Atta",
-      "jp": "小麦粉・アタ"
+      "jp": "小麦粉・アタ",
+      "icon": "🌾"
     },
     {
       "id": "dal",
       "en": "Dal & Lentils",
-      "jp": "豆・ダル"
+      "jp": "豆・ダル",
+      "icon": "🫘"
     },
     {
       "id": "nuts",
       "en": "Nuts, Dates & Dry Fruits",
-      "jp": "ナッツ・デーツ・ドライフルーツ"
+      "jp": "ナッツ・デーツ・ドライフルーツ",
+      "icon": "🥜"
     },
     {
       "id": "spices",
       "en": "Spices & Masala",
-      "jp": "スパイス・マサラ"
+      "jp": "スパイス・マサラ",
+      "icon": "🌶️"
     },
     {
       "id": "oil-ghee",
       "en": "Oil & Ghee",
-      "jp": "油・ギー"
+      "jp": "油・ギー",
+      "icon": "🫒"
     },
     {
       "id": "sauces",
       "en": "Sauces, Pickles & Paste",
-      "jp": "ソース・漬物・ペースト"
+      "jp": "ソース・漬物・ペースト",
+      "icon": "🫙"
     },
     {
       "id": "salt-sugar",
       "en": "Salt & Sugar",
-      "jp": "塩・砂糖"
+      "jp": "塩・砂糖",
+      "icon": "🧂"
     },
     {
       "id": "meat",
-      "en": "Halal Meat",
-      "jp": "ハラール肉"
+      "en": "Meat",
+      "jp": "肉",
+      "icon": "🥩"
+    },
+    {
+      "id": "beef",
+      "en": "Beef",
+      "jp": "牛肉",
+      "icon": "🐄"
+    },
+    {
+      "id": "chicken",
+      "en": "Chicken",
+      "jp": "鶏肉",
+      "icon": "🍗"
+    },
+    {
+      "id": "mutton",
+      "en": "Mutton",
+      "jp": "マトン（山羊肉）",
+      "icon": "🐐"
+    },
+    {
+      "id": "lamb",
+      "en": "Lamb",
+      "jp": "ラム肉",
+      "icon": "🐑"
     },
     {
       "id": "fish",
       "en": "Fish & Dry Fish",
-      "jp": "魚・干し魚"
+      "jp": "魚・干し魚",
+      "icon": "🐟"
     },
     {
       "id": "frozen",
       "en": "Frozen Food",
-      "jp": "冷凍食品"
+      "jp": "冷凍食品",
+      "icon": "❄️"
     },
     {
       "id": "ready-to-eat",
       "en": "Ready to Eat",
-      "jp": "レトルト・即食品"
+      "jp": "レトルト・即食品",
+      "icon": "🍱"
     },
     {
       "id": "noodles",
       "en": "Noodles & Pasta",
-      "jp": "麺類"
+      "jp": "麺類",
+      "icon": "🍜"
     },
     {
       "id": "vegetables",
       "en": "Fruits & Vegetables",
-      "jp": "果物・野菜"
+      "jp": "果物・野菜",
+      "icon": "🥦"
     },
     {
       "id": "snacks",
       "en": "Snacks & Biscuits",
-      "jp": "お菓子・ビスケット"
+      "jp": "お菓子・ビスケット",
+      "icon": "🍪"
     },
     {
       "id": "sweets",
       "en": "Sweets & Desserts",
-      "jp": "スイーツ・デザート"
+      "jp": "スイーツ・デザート",
+      "icon": "🧁"
     },
     {
       "id": "drinks",
       "en": "Drinks & Juice",
-      "jp": "飲み物・ジュース"
+      "jp": "飲み物・ジュース",
+      "icon": "🥤"
     },
     {
       "id": "tea",
       "en": "Tea & Coffee",
-      "jp": "紅茶・コーヒー"
+      "jp": "紅茶・コーヒー",
+      "icon": "☕"
     },
     {
       "id": "personal-care",
       "en": "Personal Care",
-      "jp": "美容・日用品"
+      "jp": "美容・日用品",
+      "icon": "🧴"
     },
     {
       "id": "ramadan",
       "en": "Ramadan & Eid Special",
-      "jp": "ラマダン・イード特集"
+      "jp": "ラマダン・イード特集",
+      "icon": "🌙"
     },
     {
       "id": "other",
       "en": "Other",
-      "jp": "その他"
+      "jp": "その他",
+      "icon": "📦"
     }
   ],
   "products": [
