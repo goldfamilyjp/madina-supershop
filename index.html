@@ -48,19 +48,18 @@ body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",syst
 .chip-labels{display:block; text-align:left;}
 .cat-icon{font-size:1.2rem; margin-right:7px; line-height:1;}
 .ci-price{display:block; color:var(--muted); font-size:.9em; margin-top:2px;}
-/* hero (owner 2026-11-27, supersedes the 2026-11-22 capped banner): the
-   name band (logo + two-line name + JP name + tagline) OVERLAYS the top of
-   the slideshow on a deep-green gradient scrim, bold enough to read over
-   any photo; the slideshow shows each photo WHOLE — the box is the
-   photos' own 4:3 aspect (centred, max 1180px wide), and object-fit:
-   contain on a green ground guarantees nothing is ever cropped, even
-   when the 86vh height cap binds on wide screens. */
+/* hero (owner 2026-11-27, two instructions the same night): the name band
+   (logo + two-line name + JP name + tagline) OVERLAYS the top of the
+   slideshow on a deep-green gradient scrim, bold enough to read over any
+   photo; the slideshow takes ~30% of the screen height so the products
+   stay visible on the same page, and object-fit: contain on a green
+   ground keeps each photo WHOLE — never cropped. */
 .hero-wrap{position:relative; max-width:1180px; margin:0 auto;}
-header{position:absolute; top:0; left:0; right:0; z-index:6; color:#fff; padding:20px 16px 42px; text-align:center; background:linear-gradient(180deg, rgba(6,45,32,.93) 0%, rgba(6,45,32,.68) 58%, rgba(6,45,32,0) 100%); pointer-events:none;}
+header{position:absolute; top:0; left:0; right:0; z-index:6; color:#fff; padding:14px 16px 30px; display:flex; align-items:center; justify-content:center; gap:14px; text-align:left; background:linear-gradient(180deg, rgba(6,45,32,.93) 0%, rgba(6,45,32,.68) 58%, rgba(6,45,32,0) 100%); pointer-events:none;}
 .hero-photo{display:block; width:100%; height:auto;}
 /* hero slideshow: the Anjo shop front + the owner's own interior photos
    as separate hero-slide-N.jpg files (all 1400x1050), crossfading. */
-.hero-show{position:relative; aspect-ratio:4/3; max-height:86vh; background:var(--green-dark); overflow:hidden; touch-action:pan-y;}
+.hero-show{position:relative; height:30vh; min-height:200px; background:var(--green-dark); overflow:hidden; touch-action:pan-y;}
 .hero-slide{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:var(--green-dark); display:block; opacity:0; transition:opacity .6s ease; pointer-events:none;}
 .hero-slide.active{opacity:1; pointer-events:auto; z-index:1;}
 .hero-arrow{position:absolute; top:50%; transform:translateY(-50%); width:44px; height:52px; border:none; border-radius:10px; background:rgba(7,48,31,.75); color:#fff; font-size:1.7rem; line-height:1; cursor:pointer; z-index:3; padding:0;}
@@ -71,10 +70,10 @@ header{position:absolute; top:0; left:0; right:0; z-index:6; color:#fff; padding
 .hero-dot{width:26px; height:26px; border-radius:50%; border:none; background:transparent; padding:0; cursor:pointer; position:relative;}
 .hero-dot::after{content:""; position:absolute; left:50%; top:50%; width:11px; height:11px; border-radius:50%; border:2px solid #fff; background:rgba(7,48,31,.35); transform:translate(-50%,-50%); box-sizing:border-box;}
 .hero-dot.active::after{background:var(--gold); border-color:var(--gold);}
-header .hero-logo{width:72px; height:72px; object-fit:cover; border-radius:50%; border:2px solid var(--gold); background:#fff; margin-bottom:6px;}
+header .hero-logo{width:72px; height:72px; object-fit:cover; border-radius:50%; border:2px solid var(--gold); background:#fff; flex-shrink:0;}
 /* the shop name in gold-gradient display type (CSS only — no font downloads) */
 header .shop-name{
-  font-size:clamp(1.9rem, 9vw, 2.7rem); font-weight:900; letter-spacing:.05em; line-height:1.15;
+  font-size:clamp(1.8rem, 8vw, 2.4rem); font-weight:900; letter-spacing:.05em; line-height:1.15;
   background:linear-gradient(180deg,#f8e28d 0%, var(--gold) 48%, #b8912a 82%, #f3d97b 100%);
   -webkit-background-clip:text; background-clip:text;
   -webkit-text-fill-color:transparent; color:transparent;
@@ -363,7 +362,7 @@ textarea{min-height:64px;}
 footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px 6px;}
 /* small phones: tighten the hero + slideshow so everything fits 360px */
 @media(max-width:560px){
-  header{padding:12px 10px 30px;}
+  header{padding:10px 10px 24px; gap:10px;}
   header .hero-logo{width:60px; height:60px;}
   .hero-chip{font-size:.95rem; padding:8px 12px;}
   .ss-slide{gap:10px; padding:10px;}
@@ -393,9 +392,11 @@ footer{text-align:center; color:var(--muted); font-size:.8rem; padding:22px 10px
 <div class="hero-wrap">
 <header>
   <img class="hero-logo" src="logo.jpg" alt="Madina Halal Restaurant &amp; Foods">
+  <div class="hero-text">
   <div class="shop-name">MADINA<br>HALAL SUPER</div>
   <div class="shop-name-jp">マディナ ハラルスーパー</div>
   <div class="tagline"><span class="en">100% Halal groceries (Anjo &amp; Toyota)</span><span class="jp">100%ハラール食品のお店</span><span class="idn">Bahan makanan 100% Halal</span></div>
+  </div>
 </header>
 <!-- 🏠 Hero slideshow — the Anjo shop front + the owner's interior photos
      (hero-slide-N.jpg, all 1400x1050; slide 1 = the full shop front) -->
