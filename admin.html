@@ -261,9 +261,10 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
     <div class="photo-tools">
       <button type="button" class="bg-btn" id="bgBtn1">✨ FRONT — white background</button>
       <button type="button" class="bg-btn" id="bgBtn2">✨ BACK — white background</button>
+      <button type="button" class="bg-btn" id="enhBtn">✨ Brighten loaded photos</button>
     </div>
     <div class="msg" id="bgMsg"></div>
-    <p class="hint">Picked photos are auto-brightened. “White background” cuts the product out onto white — best for boxes, bottles and tins. ⚠️ Do NOT use it for clear packets (snacks or spices in see-through film): it can erase the food showing through the film. After using it, the same button brings the original back.</p>
+    <p class="hint">Picked photos are auto-brightened. For a product that ALREADY has photos: open it above, then tap “Brighten loaded photos” — the same brightening is applied to the photos already there (then press Save). “White background” cuts the product out onto white — best for boxes, bottles and tins; it also works on a loaded photo. ⚠️ Do NOT use white background for clear packets (snacks or spices in see-through film): it can erase the food showing through the film. After using it, the same button brings the original back.</p>
     <div class="msg" id="ocrMsg"></div>
     <p class="hint">Tip: pick a clear photo of the packet FRONT — the product name, size and category are read from it and filled in automatically. Always check them; you only need to type the price yourself. In the shop, customers tap or swipe the product photo to switch between the front and back photos.</p>
     <!-- 2) Names -->
@@ -1243,18 +1244,35 @@ function setSlotPhoto(slot, dataUrl){
   else { $("photo2Preview").src = dataUrl; $("photo2Preview").style.display = "block"; $("fPhoto2Url").value = ""; }
   formDirty = true;
 }
+/* The source for reprocessing: the freshly picked file when there is
+   one, otherwise the photo already loaded in the form (existing
+   products) converted from its data URL. cb(null) when neither exists. */
+function slotSourceBlob(slot, cb){
+  if (pickedPhotoFile[slot]){ cb(pickedPhotoFile[slot]); return; }
+  var pv = slot === 1 ? $("photoPreview") : $("photo2Preview");
+  var src = (pv && pv.src) ? pv.src : "";
+  if (src.indexOf("data:") === 0){
+    fetch(src).then(function(r){ return r.blob(); }).then(cb).catch(function(){ cb(null); });
+  } else cb(null);
+}
 function applyWhiteBackground(slot){
   var msg = $("bgMsg");
-  var file = pickedPhotoFile[slot];
   if (bgApplied[slot]){
-    if (file){
-      resizePhotoFile(file, function(d){ setSlotPhoto(slot, d); });
-      bgApplied[slot] = false; updateBgButtons();
-      msg.textContent = "Back to the original photo (auto-brightened).";
-    }
+    slotSourceBlob(slot, function(file){
+      if (file){
+        resizePhotoFile(file, function(d){ setSlotPhoto(slot, d); });
+        bgApplied[slot] = false; updateBgButtons();
+        msg.textContent = "Back to the original photo (auto-brightened).";
+      }
+    });
     return;
   }
-  if (!file){ msg.textContent = "Pick the " + (slot === 1 ? "FRONT" : "BACK") + " photo first, then tap white background."; return; }
+  slotSourceBlob(slot, function(file){
+    if (!file){ msg.textContent = "Pick the " + (slot === 1 ? "FRONT" : "BACK") + " photo first, then tap white background."; return; }
+    applyWhiteBackgroundWith(slot, file, msg);
+  });
+}
+function applyWhiteBackgroundWith(slot, file, msg){
   msg.textContent = "Removing the background… the first time downloads the model (~40 MB) — best on Wi-Fi. Please wait.";
   loadBgModule().then(function(mod){
     return mod.removeBackground(file, {
@@ -1286,6 +1304,40 @@ function applyWhiteBackground(slot){
 }
 $("bgBtn1").addEventListener("click", function(){ applyWhiteBackground(1); });
 $("bgBtn2").addEventListener("click", function(){ applyWhiteBackground(2); });
+
+/* Brighten the photos ALREADY loaded in the form (existing products):
+   draws each visible preview to a canvas, applies the same per-pixel
+   brightening as a fresh pick, and puts it back — then Save stores it. */
+function brightenLoadedSlot(slot, done){
+  var pv = slot === 1 ? $("photoPreview") : $("photo2Preview");
+  if (!pv || !pv.src || pv.style.display === "none"){ done(false); return; }
+  var img = new Image();
+  img.onload = function(){
+    try {
+      var scale = Math.min(1, 480 / Math.max(img.width, img.height));
+      var canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      enhanceCanvasPixels(canvas);
+      setSlotPhoto(slot, canvas.toDataURL("image/jpeg", 0.82));
+      done(true);
+    } catch (e) { done(false); }
+  };
+  img.onerror = function(){ done(false); };
+  img.src = pv.src;
+}
+$("enhBtn").addEventListener("click", function(){
+  var msg = $("bgMsg");
+  brightenLoadedSlot(1, function(ok1){
+    brightenLoadedSlot(2, function(ok2){
+      var n = (ok1 ? 1 : 0) + (ok2 ? 1 : 0);
+      msg.textContent = n
+        ? "Brightened " + n + " loaded photo" + (n > 1 ? "s" : "") + " — check them above, then press Save to keep the change."
+        : "No loaded photo could be brightened — open a product with photos, or pick a photo first.";
+    });
+  });
+});
 
 /* ---------- photo text reading (OCR pre-fill) ----------
    After the owner picks a packet photo, read its printed text and
