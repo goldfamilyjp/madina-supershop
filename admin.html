@@ -168,6 +168,8 @@ code{background:#eef3ee; padding:1px 6px; border-radius:6px; font-size:.9em;}
 #ptPhone{box-shadow:0 0 0 5px var(--gold-soft), 0 2px 10px rgba(11,69,48,.18);}
 /* ---------- big photo boxes (Add form) ---------- */
 .photo-boxes{display:flex; gap:12px; margin-top:6px;}
+.photo-tools{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+.bg-btn{border:1.5px solid var(--green); background:#fff; color:var(--green-dark); border-radius:999px; padding:7px 14px; font:inherit; font-size:.85rem; font-weight:700; cursor:pointer;}
 .photo-box{position:relative; flex:1 1 0; min-height:150px; border:2px dashed var(--green); border-radius:14px; background:#f2f7f3; color:var(--green-dark); cursor:pointer; overflow:hidden; padding:0; font:inherit;}
 .photo-box .ph-empty{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:10px; text-align:center;}
 .photo-box .ph-icon{font-size:2rem; line-height:1;}
@@ -256,6 +258,12 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
     </div>
     <input type="file" id="fPhotoFile" accept="image/*" multiple hidden>
     <input type="file" id="fPhoto2File" accept="image/*" hidden>
+    <div class="photo-tools">
+      <button type="button" class="bg-btn" id="bgBtn1">✨ FRONT — white background</button>
+      <button type="button" class="bg-btn" id="bgBtn2">✨ BACK — white background</button>
+    </div>
+    <div class="msg" id="bgMsg"></div>
+    <p class="hint">Picked photos are auto-brightened. “White background” cuts the product out onto white — best for boxes, bottles and tins. ⚠️ Do NOT use it for clear packets (snacks or spices in see-through film): it can erase the food showing through the film. After using it, the same button brings the original back.</p>
     <div class="msg" id="ocrMsg"></div>
     <p class="hint">Tip: pick a clear photo of the packet FRONT — the product name, size and category are read from it and filled in automatically. Always check them; you only need to type the price yourself. In the shop, customers tap or swipe the product photo to switch between the front and back photos.</p>
     <!-- 2) Names -->
@@ -997,6 +1005,7 @@ function clearForm(){
   $("fPhotoFile").value = ""; $("fPhoto2File").value = ""; $("fOn").checked = true; $("fPopular").checked = false;
   $("photoPreview").style.display = "none"; $("photoPreview").src = "";
   $("photo2Preview").style.display = "none"; $("photo2Preview").src = "";
+  if (typeof pickedPhotoFile !== "undefined"){ pickedPhotoFile[1] = null; pickedPhotoFile[2] = null; bgApplied[1] = false; bgApplied[2] = false; updateBgButtons(); }
   $("moreOptions").open = false;
   $("formTitle").innerHTML = 'Add product';
   $("applyBtn").innerHTML = 'Add &amp; Save';
@@ -1119,7 +1128,7 @@ function deleteProduct(id){
 }
 
 /* ---------- photo upload: resize to a max dimension, JPEG data-URI ---------- */
-function resizePhotoFileSized(file, maxDim, quality, cb){
+function resizePhotoFileSized(file, maxDim, quality, cb, enhance){
   var url = URL.createObjectURL(file);
   var img = new Image();
   img.onload = function(){
@@ -1128,17 +1137,45 @@ function resizePhotoFileSized(file, maxDim, quality, cb){
     canvas.width = Math.round(img.width * scale);
     canvas.height = Math.round(img.height * scale);
     canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+    if (enhance) enhanceCanvasPixels(canvas);
     URL.revokeObjectURL(url);
     cb(canvas.toDataURL("image/jpeg", quality));
   };
   img.src = url;
 }
-/* The photo SAVED with the product stays small: max 480px wide, q0.82. */
-function resizePhotoFile(file, cb){ resizePhotoFileSized(file, 480, 0.82, cb); }
+/* Gentle auto-brighten for picked photos: brightness ×1.06, contrast ×1.07,
+   saturation ×1.08, per pixel (works in every browser, unlike ctx.filter).
+   Tested 2026-11-28 on real packet photos — improves clarity, never harms. */
+function enhanceCanvasPixels(canvas){
+  try {
+    var ctx = canvas.getContext("2d");
+    var id = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var d = id.data, B = 1.06, C = 1.07, S = 1.08;
+    for (var i = 0; i < d.length; i += 4){
+      var r = d[i], g = d[i + 1], b = d[i + 2];
+      r = ((r - 128) * C + 128) * B;
+      g = ((g - 128) * C + 128) * B;
+      b = ((b - 128) * C + 128) * B;
+      var lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      d[i]     = Math.max(0, Math.min(255, lum + (r - lum) * S));
+      d[i + 1] = Math.max(0, Math.min(255, lum + (g - lum) * S));
+      d[i + 2] = Math.max(0, Math.min(255, lum + (b - lum) * S));
+    }
+    ctx.putImageData(id, 0, 0);
+  } catch (e) { /* enhancement is best-effort — the plain photo still saves */ }
+}
+/* The photo SAVED with the product stays small: max 480px wide, q0.82,
+   auto-brightened. */
+function resizePhotoFile(file, cb){ resizePhotoFileSized(file, 480, 0.82, cb, true); }
+/* The picked files are kept so the white-background tool can reprocess
+   the true original, and so "use original" can restore it. */
+var pickedPhotoFile = { 1: null, 2: null };
+var bgApplied = { 1: false, 2: false };
 /* FRONT photo: resize for saving, then OCR on a larger copy. */
 function handleFrontPhotoFile(file){
   if (!file) return;
   formDirty = true;
+  pickedPhotoFile[1] = file; bgApplied[1] = false; updateBgButtons();
   resizePhotoFile(file, function(dataUrl){
     $("photoPreview").src = dataUrl; $("photoPreview").style.display = "block";
     $("fPhotoUrl").value = "";
@@ -1167,6 +1204,7 @@ $("fPhotoUrl").addEventListener("input", function(){
 function handleBackPhotoFile(file){
   if (!file) return;
   formDirty = true;
+  pickedPhotoFile[2] = file; bgApplied[2] = false; updateBgButtons();
   resizePhotoFile(file, function(dataUrl){
     $("photo2Preview").src = dataUrl; $("photo2Preview").style.display = "block";
     $("fPhoto2Url").value = "";
@@ -1179,6 +1217,75 @@ $("fPhoto2Url").addEventListener("input", function(){
   var v = this.value.trim();
   if (v){ $("photo2Preview").src = v; $("photo2Preview").style.display = "block"; }
 });
+
+/* ---------- white background (optional, per photo) ----------
+   On-device cutout with @imgly/background-removal (free, no API key; the
+   photo never leaves the phone). The library is loaded lazily on first
+   use — that first use downloads the model (~40 MB), later uses are
+   cached. IMPORTANT (tested 2026-11-28 on Madina's real photos): the
+   cutout ERASES clear packet film and the food showing through it, so it
+   is offered ONLY as a manual per-photo step with the result shown in
+   the preview and a one-tap way back — never applied automatically. */
+var bgModulePromise = null;
+function loadBgModule(){
+  if (!bgModulePromise){
+    bgModulePromise = import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm");
+  }
+  return bgModulePromise;
+}
+function updateBgButtons(){
+  var b1 = $("bgBtn1"), b2 = $("bgBtn2");
+  if (b1) b1.textContent = bgApplied[1] ? "↩ FRONT — use original" : "✨ FRONT — white background";
+  if (b2) b2.textContent = bgApplied[2] ? "↩ BACK — use original" : "✨ BACK — white background";
+}
+function setSlotPhoto(slot, dataUrl){
+  if (slot === 1){ $("photoPreview").src = dataUrl; $("photoPreview").style.display = "block"; $("fPhotoUrl").value = ""; }
+  else { $("photo2Preview").src = dataUrl; $("photo2Preview").style.display = "block"; $("fPhoto2Url").value = ""; }
+  formDirty = true;
+}
+function applyWhiteBackground(slot){
+  var msg = $("bgMsg");
+  var file = pickedPhotoFile[slot];
+  if (bgApplied[slot]){
+    if (file){
+      resizePhotoFile(file, function(d){ setSlotPhoto(slot, d); });
+      bgApplied[slot] = false; updateBgButtons();
+      msg.textContent = "Back to the original photo (auto-brightened).";
+    }
+    return;
+  }
+  if (!file){ msg.textContent = "Pick the " + (slot === 1 ? "FRONT" : "BACK") + " photo first, then tap white background."; return; }
+  msg.textContent = "Removing the background… the first time downloads the model (~40 MB) — best on Wi-Fi. Please wait.";
+  loadBgModule().then(function(mod){
+    return mod.removeBackground(file, {
+      model: "small",
+      progress: function(key, cur, tot){ if (tot > 1) msg.textContent = "Working… " + Math.round(100 * cur / tot) + "%"; }
+    });
+  }).then(function(blob){
+    var url = URL.createObjectURL(blob);
+    var img = new Image();
+    img.onload = function(){
+      var scale = Math.min(1, 480 / Math.max(img.width, img.height));
+      var canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      var ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      enhanceCanvasPixels(canvas);
+      setSlotPhoto(slot, canvas.toDataURL("image/jpeg", 0.82));
+      bgApplied[slot] = true; updateBgButtons();
+      msg.textContent = "White background applied — check the photo above. If it looks wrong, tap the same button to go back to the original.";
+    };
+    img.onerror = function(){ msg.textContent = "White background failed — the original photo is unchanged."; };
+    img.src = url;
+  }).catch(function(err){
+    msg.textContent = "White background failed (" + (err && err.message ? err.message : "error") + ") — the original photo is unchanged.";
+  });
+}
+$("bgBtn1").addEventListener("click", function(){ applyWhiteBackground(1); });
+$("bgBtn2").addEventListener("click", function(){ applyWhiteBackground(2); });
 
 /* ---------- photo text reading (OCR pre-fill) ----------
    After the owner picks a packet photo, read its printed text and
