@@ -2115,12 +2115,12 @@ function buildInvoiceText(name, phone, address, note, preview, orderNo){
   return lines.join("\n");
 }
 
-/* ---------- confirmation email (Apps Script mail action, optional) ----------
-   If the customer entered an email, the order is POSTed to the shop's own
-   Apps Script "mail_order" action (v13), which sends the order to the shop
-   inbox (goldfamilyjp@yahoo.com) from the owner's Google account and sends
-   the customer a confirmation copy (buildAutoresponse below) — fast, with
-   the shop's own name as sender. Bank details come from the BANK_INFO
+/* ---------- order email (Apps Script mail action) ----------
+   EVERY order is POSTed to the shop's own Apps Script "mail_order" action
+   (v13+), which sends the order to the shop inbox (goldfamilyjp@yahoo.com)
+   from the owner's Google account — fast, with the shop's own name as
+   sender. When the customer entered an email, they also get a confirmation
+   copy (buildAutoresponse below). Bank details come from the BANK_INFO
    constants at the top — fill those in once and both the ticket and this
    email use them. Fire-and-forget: a failed POST never blocks the order. */
 function buildAutoresponse(f){
@@ -2346,14 +2346,14 @@ function finishOrder(f, orderNo, viaScript){
   if (!viaScript) sendOrderToSheet(f, orderNo);
   /* Remember the checkout details on this device for the next order. */
   saveCheckoutDetails();
-  /* Optional confirmation email — fire-and-forget, never blocks the order. */
+  /* Order email — fire-and-forget, never blocks the order. The shop copy
+     goes on EVERY order; the customer copy only when an email was given.
+     The ticket's "confirmation sent" note shows only in that case. */
   var emailNote = document.getElementById("emailSentNote");
   emailNote.hidden = true;
-  if (f.email){
-    sendConfirmationEmail(f, orderNo).then(function(r){
-      if (r && r.ok) emailNote.hidden = false;
-    }).catch(function(){ /* offline / service down: the WhatsApp order still stands */ });
-  }
+  sendConfirmationEmail(f, orderNo).then(function(r){
+    if (r && r.ok && f.email) emailNote.hidden = false;
+  }).catch(function(){ /* offline / service down: the WhatsApp order still stands */ });
   ticketBox.scrollIntoView({ block: "start" });
 }
 document.getElementById("orderForm").addEventListener("submit", function(e){
