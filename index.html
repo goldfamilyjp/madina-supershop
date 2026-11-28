@@ -637,6 +637,7 @@ var WA_NUMBER = "819065842039";
    exactly as before (orders go to the Google Form). Tests may override it
    via window.__ORDER_API_URL. */
 var ORDER_API_URL = "https://script.google.com/macros/s/AKfycby_-upjOI-USCbrD8b9wjcnYC7APdUrcIOVKY8S3zcB_r0ptbMgxAU-5k6hji53bDOhYA/exec";
+var MAIL_KEY = "madina-mail-2026-x7k2";
 function orderApiUrl(){
   return (typeof window !== "undefined" && window.__ORDER_API_URL != null) ? String(window.__ORDER_API_URL) : ORDER_API_URL;
 }
@@ -2114,13 +2115,14 @@ function buildInvoiceText(name, phone, address, note, preview, orderNo){
   return lines.join("\n");
 }
 
-/* ---------- confirmation email (FormSubmit, optional) ----------
-   If the customer entered an email, the order is also POSTed to FormSubmit,
-   which emails the order to the shop (goldfamilyjp@yahoo.com) and sends the
-   customer an automatic confirmation (the _autoresponse below). Bank details
-   come from the BANK_INFO constants at the top — fill those in once and both
-   the ticket and this email use them. Fire-and-forget: a failed POST never
-   blocks the WhatsApp order. */
+/* ---------- confirmation email (Apps Script mail action, optional) ----------
+   If the customer entered an email, the order is POSTed to the shop's own
+   Apps Script "mail_order" action (v13), which sends the order to the shop
+   inbox (goldfamilyjp@yahoo.com) from the owner's Google account and sends
+   the customer a confirmation copy (buildAutoresponse below) — fast, with
+   the shop's own name as sender. Bank details come from the BANK_INFO
+   constants at the top — fill those in once and both the ticket and this
+   email use them. Fire-and-forget: a failed POST never blocks the order. */
 function buildAutoresponse(f){
   var isDelivery = fulfill === "delivery";
   var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount(), total = st - disc + tax + fee;
@@ -2155,43 +2157,49 @@ function buildAutoresponse(f){
   L.push("ご不明な点はお気軽にご連絡ください。 Questions? Anjo 0566-98-9995 / Toyota 0565-41-5616.");
   return L.join("\n");
 }
-function sendConfirmationEmail(f){
+function sendConfirmationEmail(f, orderNo){
   var isDelivery = fulfill === "delivery";
   var st = subtotal(), fee = deliveryFee(), disc = couponDiscount(), tax = taxAmount(), total = st - disc + tax + fee;
   var orderLines = sortedCartIds().map(function(id, i){
     var p = productById(id);
     return (i+1) + ". " + p.en + " (" + (p.jp||"") + ") " + (p.size||"") + " — " + yen(effectivePrice(p)) + " x " + cart[id] + " = " + yen(effectivePrice(p)*cart[id]);
   }).join("\n");
-  var payload = {
-    "email": f.email,
-    "_replyto": f.email,
-    "_subject": "【MADINA HALAL SUPER SHOP】ご注文確認 / Order Confirmation",
-    "_template": "table",
-    "_autoresponse": buildAutoresponse(f),
-    "お名前 Name": f.name,
-    "電話 Phone": f.phone,
-    "受取方法 Fulfillment": fulfillmentText(),
-    "注文内容 Order": orderLines,
-    "小計 Subtotal": yen(st),
-    "送料 Courier fee": isDelivery ? yen(fee) : "¥0",
-    "合計 Grand Total": yen(total)
-  };
-  if (disc > 0 && appliedCoupon) payload["クーポン割引 Coupon discount"] = appliedCoupon.code + ": −" + yen(disc);
-  if (tax > 0) payload["消費税 Tax"] = "(" + taxRateText() + "%) " + yen(tax);
+  var L = [];
+  L.push("【MADINA HALAL SUPER SHOP — 新規注文 / New Order】" + (orderNo || ""));
+  L.push("お名前 Name: " + f.name);
+  L.push("電話 Phone: " + f.phone);
+  if (f.email) L.push("メール Email: " + f.email);
+  L.push("受取方法 Fulfillment: " + fulfillmentText());
+  L.push("──────────");
+  L.push(orderLines);
+  L.push("──────────");
+  L.push("小計 Subtotal: " + yen(st));
+  if (disc > 0 && appliedCoupon) L.push("クーポン割引 Coupon discount: " + appliedCoupon.code + ": −" + yen(disc));
+  if (tax > 0) L.push("消費税 Tax: (" + taxRateText() + "%) " + yen(tax));
+  L.push("送料 Courier fee: " + (isDelivery ? yen(fee) : "¥0"));
+  L.push("合計 Grand Total: " + yen(total));
   if (isDelivery){
-    payload["住所 Address"] = f.address;
-    payload["お支払い Payment"] = PAY_LABELS[payment];
+    L.push("住所 Address: " + f.address);
+    L.push("お支払い Payment: " + PAY_LABELS[payment]);
   } else {
-    payload["お支払い Payment"] = "店頭払い Pay at the shop (" + branch + ")";
+    L.push("お支払い Payment: 店頭払い Pay at the shop (" + branch + ")");
   }
-  if (f.note) payload["メッセージ Note"] = f.note;
+  if (f.note) L.push("メッセージ Note: " + f.note);
   var pLine2 = pointsLine(f.phone);
-  if (pLine2) payload["ポイント利用希望 Points"] = pLine2;
-  return fetch("https://formsubmit.co/ajax/goldfamilyjp@yahoo.com", {
+  if (pLine2) L.push("ポイント利用希望 Points: " + pLine2);
+  return fetch(ORDER_API_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Accept": "application/json" },
-    body: JSON.stringify(payload)
-  });
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      action: "mail_order",
+      key: MAIL_KEY,
+      subject: "Madina Super Shop Order — " + (orderNo || ""),
+      message: L.join("\n"),
+      customerEmail: f.email,
+      customerSubject: "Madina Super Shop — Order Confirmation / ご注文確認 — " + (orderNo || ""),
+      customerMessage: buildAutoresponse(f)
+    })
+  }).then(function(r){ return r.json(); });
 }
 
 /* ---------- order auto-save (Google Form → owner's private Sheet) ----------
@@ -2342,7 +2350,7 @@ function finishOrder(f, orderNo, viaScript){
   var emailNote = document.getElementById("emailSentNote");
   emailNote.hidden = true;
   if (f.email){
-    sendConfirmationEmail(f).then(function(r){
+    sendConfirmationEmail(f, orderNo).then(function(r){
       if (r && r.ok) emailNote.hidden = false;
     }).catch(function(){ /* offline / service down: the WhatsApp order still stands */ });
   }
