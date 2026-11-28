@@ -283,6 +283,13 @@ details.more summary{cursor:pointer; font-weight:700; color:var(--green-dark); p
       <input type="number" id="fSalePrice" min="0" step="1" inputmode="numeric" placeholder="Blank = no sale">
       <p class="hint">Lower than the price — the shop shows the old price struck through with a -% badge.</p>
     </div>
+    <!-- 3c) Competitor price check (server v11): the server looks up
+         what AL MODINA and Gunma Halal Food charge for a similar item
+         and shows their prices next to ours in a popup -->
+    <div>
+      <button type="button" class="big-btn" id="pcBtn">🔍 Check competitor prices</button>
+      <p class="hint">See what other halal online shops charge for this item, next to your price.</p>
+    </div>
     <!-- 4) Categories -->
     <label>Categories — tick all that apply (the first one ticked is the main category)</label>
     <div class="cat-chips" id="fCats"></div>
@@ -2983,6 +2990,94 @@ renderTemplates();
     closeBtn.addEventListener("click", function () { if (help) help.hidden = true; });
   }
   if (isStandaloneApp()) hideInstallButton();
+})();
+</script>
+<!-- 🔍 Competitor price check popup (server v11, admin_price_check) -->
+<style>
+  .pcx-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 9999; display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 18px 10px; }
+  .pcx-overlay[hidden] { display: none; }
+  .pcx-card { background: #fff; color: #222; border-radius: 14px; max-width: 520px; width: 100%; padding: 18px; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+  .pcx-card h3 { margin: 0 0 6px; font-size: 1.15rem; }
+  .pcx-ours { background: #e8f5ee; border: 1px solid #0b4530; border-radius: 10px; padding: 8px 12px; margin: 8px 0 12px; font-weight: 700; }
+  .pcx-row { display: flex; gap: 8px; margin: 10px 0; }
+  .pcx-row input { flex: 1; padding: 10px; border: 1px solid #bbb; border-radius: 8px; font-size: 1rem; }
+  .pcx-shop { font-weight: 800; margin: 14px 0 4px; color: #0b4530; }
+  .pcx-item { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid #eee; }
+  .pcx-item a { color: #14532d; }
+  .pcx-price { text-align: right; white-space: nowrap; font-weight: 800; }
+  .pcx-diff { display: block; font-size: .8rem; font-weight: 700; }
+  .pcx-cheaper { color: #c0392b; } .pcx-higher { color: #1e8449; } .pcx-same { color: #777; }
+  .pcx-note { font-size: .82rem; color: #666; margin-top: 12px; }
+  .pcx-status { margin: 10px 0; color: #555; }
+</style>
+<div class="pcx-overlay" id="pcModal" hidden>
+  <div class="pcx-card">
+    <h3>🔍 Competitor prices</h3>
+    <div class="pcx-ours" id="pcOurs"></div>
+    <label for="pcQuery">Search words (the item name — change them if the results are not the same item)</label>
+    <div class="pcx-row">
+      <input type="text" id="pcQuery">
+      <button type="button" class="big-btn gold" id="pcSearchBtn">Search</button>
+    </div>
+    <div class="pcx-status" id="pcStatus"></div>
+    <div id="pcResults"></div>
+    <p class="pcx-note">Reference prices, fetched live from each shop's website just now. Matching is by name — always check the brand and size are the same before comparing. Tap a name to open that shop's page.</p>
+    <button type="button" class="big-btn" id="pcCloseBtn">Close</button>
+  </div>
+</div>
+<script>
+(function(){
+  function yen(n){ return "¥" + Number(n).toLocaleString("en-US"); }
+  function ourPrice(){ var v = parseFloat($("fPrice").value); return isFinite(v) && v > 0 ? Math.round(v) : 0; }
+  function openPc(){
+    var name = $("fEn").value.trim();
+    $("pcQuery").value = name;
+    var ours = ourPrice();
+    $("pcOurs").textContent = "Our shop: " + (name || "(no name typed yet)") + (ours ? " — " + yen(ours) : " — no price typed yet");
+    $("pcResults").innerHTML = ""; $("pcStatus").textContent = "";
+    $("pcModal").hidden = false;
+    if (name) runPc();
+  }
+  function runPc(){
+    var q = $("pcQuery").value.trim();
+    var box = $("pcResults"), st = $("pcStatus");
+    box.innerHTML = "";
+    if (q.length < 2) { st.textContent = "Type at least 2 letters of the item name."; return; }
+    if (!adminPw()) { st.textContent = "This check runs on the server, so it needs the password login — set it in the ⚙️ Setup tab first."; return; }
+    var btn = $("pcSearchBtn"); btn.disabled = true;
+    st.textContent = "Checking AL MODINA and Gunma Halal Food… this can take up to a minute.";
+    adminApiPost({ action: "admin_price_check", password: adminPw(), q: q }, 120000).then(function(j){
+      btn.disabled = false;
+      if (!j || !j.ok) { st.textContent = "Could not check: " + adminErrText(j || {}); return; }
+      st.textContent = "";
+      var ours = ourPrice(), html = "", any = false;
+      (j.shops || []).forEach(function(shop){
+        html += '<div class="pcx-shop">' + esc(shop.shop) + "</div>";
+        if (!shop.results || !shop.results.length) { html += '<div class="pcx-status">No similar item found.</div>'; return; }
+        any = true;
+        shop.results.forEach(function(r){
+          var diff = "";
+          if (ours) {
+            var d = Math.round(r.price) - ours;
+            if (d < 0) diff = '<span class="pcx-diff pcx-cheaper">' + yen(-d) + " cheaper than ours</span>";
+            else if (d > 0) diff = '<span class="pcx-diff pcx-higher">' + yen(d) + " higher than ours</span>";
+            else diff = '<span class="pcx-diff pcx-same">Same price as ours</span>';
+          }
+          html += '<div class="pcx-item"><a href="' + esc(r.url) + '" target="_blank" rel="noopener">' + esc(r.title) + '</a><span class="pcx-price">' + yen(r.price) + diff + "</span></div>";
+        });
+      });
+      if (j.errors && (j.errors.almodina || j.errors.gunma)) html += '<p class="pcx-note">One shop could not be reached just now — try again in a moment.</p>';
+      box.innerHTML = html || '<div class="pcx-status">No results.</div>';
+    }).catch(function(e){
+      btn.disabled = false;
+      st.textContent = "Could not check: " + (e && e.message ? e.message : e);
+    });
+  }
+  $("pcBtn").addEventListener("click", openPc);
+  $("pcSearchBtn").addEventListener("click", runPc);
+  $("pcCloseBtn").addEventListener("click", function(){ $("pcModal").hidden = true; });
+  $("pcModal").addEventListener("click", function(e){ if (e.target === $("pcModal")) $("pcModal").hidden = true; });
+  $("pcQuery").addEventListener("keydown", function(e){ if (e.key === "Enter") { e.preventDefault(); runPc(); } });
 })();
 </script>
 </body>
